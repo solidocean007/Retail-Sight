@@ -17,13 +17,11 @@ import { Dialog } from "@mui/material";
 
 import { db } from "../utils/firebase";
 import { selectUser } from "../Slices/userSlice";
-import {
-  CollectionWithId,
-  PlaybookPostSnapshot,
-  PostWithID,
-} from "../utils/types";
+import { PostWithID } from "../utils/types";
+import { CollectionWithId } from "../types/library";
 import { addOrUpdateCollection } from "../utils/database/indexedDBUtils";
 import { showMessage } from "../Slices/snackbarSlice";
+import { buildPlaybookPostSnapshot } from "../utils/helperFunctions/buildPlaybookPostSnapshot";
 
 import "./addPostToCollectionModal.css";
 
@@ -59,58 +57,21 @@ const normalizeCollection = (id: string, data: any): CollectionWithId => {
   } as CollectionWithId;
 };
 
-const getPostDisplayDate = (post: PostWithID) => {
-  const value: any = post.displayDate;
+const buildPlayNameSuggestion = (post: PostWithID) => {
+  const cases = Number(post.totalCaseCount);
+  const caseLabel =
+    Number.isFinite(cases) && cases > 0 ? `${Math.round(cases)} Case` : "";
+  const productType = post.productType?.[0]?.trim() || "";
+  const brand = post.brands?.[0]?.trim() || "";
+  const accountType = post.account?.typeOfAccount?.trim() || "";
 
-  if (!value) return "";
+  if (caseLabel && productType) return `${caseLabel} ${productType} Display`;
+  if (caseLabel && brand) return `${caseLabel} ${brand} Display`;
+  if (productType && accountType) return `${productType} ${accountType} Display`;
+  if (productType) return `${productType} Display`;
+  if (brand) return `${brand} Power Display`;
 
-  if (typeof value === "string") return value;
-
-  if (value?.toDate) {
-    return value.toDate().toISOString();
-  }
-
-  return "";
-};
-
-const buildPlaybookPostSnapshot = (
-  post: PostWithID,
-): PlaybookPostSnapshot => {
-  return {
-    postId: post.id,
-
-    imageUrl: post.imageUrl || "",
-    originalImageUrl: post.originalImageUrl || "",
-
-    accountName: post.accountName || post.account?.accountName || "",
-    accountNumber:
-      post.accountNumber?.toString() ||
-      post.account?.accountNumber?.toString() ||
-      "",
-    accountAddress: post.accountAddress || post.account?.accountAddress || "",
-    city: post.city || post.account?.city || "",
-    state: post.state || post.account?.state || "",
-    chain: post.chain || post.account?.chain || "",
-    chainType: post.chainType || post.account?.chainType || "",
-
-    brands: post.brands ?? [],
-    brandIds: post.brandIds ?? [],
-    productType: post.productType ?? [],
-
-    description: post.description || "",
-    totalCaseCount: Number(post.totalCaseCount ?? 0),
-
-    postUserUid: post.postUserUid || post.postUser?.uid || "",
-    postUserFirstName:
-      post.postUserFirstName || post.postUser?.firstName || "",
-    postUserLastName:
-      post.postUserLastName || post.postUser?.lastName || "",
-    postUserCompanyName:
-      post.postUserCompanyName || post.postUser?.company || "",
-
-    displayDate: getPostDisplayDate(post),
-    addedToPlaybookAt: new Date().toISOString(),
-  };
+  return "Power Front of Store Display";
 };
 
 const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
@@ -141,9 +102,28 @@ const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
     useState(false);
   const [newCollectionTitle, setNewCollectionTitle] = useState("");
   const [newCollectionDescription, setNewCollectionDescription] = useState("");
+  const [playName, setPlayName] = useState("");
+  const [playDescription, setPlayDescription] = useState("");
   const [creating, setCreating] = useState(false);
 
   const postImageUrl = post.imageUrl || post.originalImageUrl || "";
+  const playNameSuggestion = useMemo(() => buildPlayNameSuggestion(post), [post]);
+
+  useEffect(() => {
+    if (activeTarget !== "playbooks") return;
+    if (!playName.trim()) {
+      setPlayName(playNameSuggestion);
+    }
+    if (!playDescription.trim() && post.description?.trim()) {
+      setPlayDescription(post.description.trim());
+    }
+  }, [
+    activeTarget,
+    playName,
+    playDescription,
+    playNameSuggestion,
+    post.description,
+  ]);
 
   const collections = useMemo(() => {
     return allCollections.filter(
@@ -209,6 +189,13 @@ const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
 
   const handleAddPostToLibraryItem = async (collectionId: string) => {
     if (!collectionId || !post.id || !companyId) return;
+    const trimmedPlayName = playName.trim();
+    const trimmedPlayDescription = playDescription.trim();
+
+    if (activeTarget === "playbooks" && !trimmedPlayName) {
+      dispatch(showMessage("Add a short play name before adding to playbook."));
+      return;
+    }
 
     setAddingCollectionId(collectionId);
 
@@ -272,7 +259,11 @@ const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
       }
 
       if (activeTarget === "playbooks") {
-        const postSnapshot = buildPlaybookPostSnapshot(post);
+        const postSnapshot = buildPlaybookPostSnapshot(post, {
+          playName: trimmedPlayName,
+          playDescription: trimmedPlayDescription,
+          isFeatured: playbookAddMode === "featured",
+        });
 
         if (!alreadyAdded) {
           updates.playbookPostSnapshots = arrayUnion(postSnapshot);
@@ -310,8 +301,8 @@ const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
         showMessage(
           activeTarget === "playbooks"
             ? playbookAddMode === "featured"
-              ? "Display added as a featured playbook display."
-              : "Display added to playbook."
+              ? `Added "${trimmedPlayName}" as a featured play.`
+              : `Added "${trimmedPlayName}" to playbook.`
             : "Display added to collection.",
         ),
       );
@@ -490,6 +481,43 @@ const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
           </div>
         )}
 
+        {canManagePlaybooks && activeTarget === "playbooks" && (
+          <div className="playbook-play-details">
+            <label>
+              Play Name
+              <input
+                value={playName}
+                onChange={(e) => setPlayName(e.target.value)}
+                placeholder="Example: 5 Case Power Front of Store"
+                maxLength={80}
+              />
+            </label>
+
+            <p className="playbook-play-help">
+              Use a repeatable display type (not store/person names).
+            </p>
+
+            <button
+              type="button"
+              className="btn-secondary-small"
+              onClick={() => setPlayName(playNameSuggestion)}
+            >
+              Use Suggestion: {playNameSuggestion}
+            </button>
+
+            <label>
+              Short Play Description
+              <textarea
+                value={playDescription}
+                onChange={(e) => setPlayDescription(e.target.value)}
+                placeholder="Optional: one-line guidance reps can quickly understand."
+                rows={2}
+                maxLength={200}
+              />
+            </label>
+          </div>
+        )}
+
         <div className="add-collection-body">
           <div className="collection-list-header">
             <h3>
@@ -582,6 +610,7 @@ const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
 
                 const disabled =
                   isAdding ||
+                  (activeTarget === "playbooks" && !playName.trim()) ||
                   (activeTarget === "collections" && alreadyAdded) ||
                   (activeTarget === "playbooks" &&
                     playbookAddMode === "supporting" &&

@@ -114,6 +114,8 @@ export type CreateCollectionInput = {
 
 export interface PlaybookPostSnapshot {
   postId: string;
+  playName?: string;
+  playDescription?: string;
 
   imageUrl: string;
   originalImageUrl?: string;

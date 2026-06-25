@@ -1,5 +1,6 @@
 // src/components/Playbooks/PlaybooksPage.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { PostWithID } from "../../utils/types";
 import PlaybookForm from "./PlaybookForm";
 import "./playbooksPage.css";
@@ -11,14 +12,22 @@ import {
   CollectionWithId,
   PlaybookForecast,
   CreatePlaybookForecastInput,
+  PlaybookPostSnapshot,
   isPlaybookCollection,
 } from "../../types/library";
 import {
   addPlaybookForecast,
   fetchPlaybookForecasts,
 } from "./playbookForecastHelpers";
+import { buildPlaybookPostSnapshot } from "../../utils/helperFunctions/buildPlaybookPostSnapshot";
 import { selectUser } from "../../Slices/userSlice";
+import {
+  loadUserAccounts,
+  selectUserAccounts,
+  selectUserAccountsLoading,
+} from "../../Slices/userAccountsSlice";
 import { useSelector } from "react-redux";
+import { db } from "../../utils/firebase";
 
 interface PlaybooksPageProps {
   collections: CollectionWithId[];
@@ -40,12 +49,44 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
     useState<CollectionWithId | null>(null);
 
   const user = useSelector(selectUser);
+  const userAccounts = useSelector(selectUserAccounts);
+  const userAccountsLoading = useSelector(selectUserAccountsLoading);
+
+  const filteredAccounts = useMemo(() => {
+    const routeNum = user?.salesRouteNum?.toString().trim();
+
+    if (!routeNum) return userAccounts;
+
+    return userAccounts.filter((account) => {
+      const routes = account.salesRouteNums ?? [];
+      return routes.some((route) => route?.toString().trim() === routeNum);
+    });
+  }, [userAccounts, user?.salesRouteNum]);
 
   const [playbookForecasts, setPlaybookForecasts] = useState<
     PlaybookForecast[]
   >([]);
 
   const [isLoadingForecasts, setIsLoadingForecasts] = useState(false);
+
+  useEffect(() => {
+    if (!user?.companyId || !user?.salesRouteNum) return;
+    if (userAccountsLoading !== "idle") return;
+    if (userAccounts.length > 0) return;
+
+    dispatch(
+      loadUserAccounts({
+        companyId: user.companyId,
+        salesRouteNum: user.salesRouteNum,
+      }),
+    );
+  }, [
+    dispatch,
+    user?.companyId,
+    user?.salesRouteNum,
+    userAccounts.length,
+    userAccountsLoading,
+  ]);
 
   useEffect(() => {
     const loadForecasts = async () => {
@@ -102,8 +143,85 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
     return collections.filter(isPlaybookCollection);
   }, [collections]);
 
+  const selectedPlaybookPosts = useMemo(() => {
+    if (!selectedPlaybook) return [];
+    return posts.filter((post) => selectedPlaybook.postIds?.includes(post.id));
+  }, [posts, selectedPlaybook]);
+
   const handleOpenPlaybook = (playbook: CollectionWithId) => {
     setSelectedPlaybook(playbook);
+  };
+
+  const handleUpdatePlaybookPlay = async (
+    postId: string,
+    input: { playName: string; playDescription?: string },
+  ) => {
+    if (!selectedPlaybook) return;
+
+    const trimmedName = input.playName.trim();
+    const trimmedDescription = input.playDescription?.trim();
+
+    if (!trimmedName) {
+      dispatch(showMessage("Play name is required."));
+      return;
+    }
+
+    const baseSnapshots: PlaybookPostSnapshot[] =
+      selectedPlaybook.playbookPostSnapshots?.length
+        ? selectedPlaybook.playbookPostSnapshots
+        : selectedPlaybookPosts.map((post) => buildPlaybookPostSnapshot(post));
+
+    const nextPlaybookSnapshots = baseSnapshots.map((snapshot) =>
+      snapshot.postId === postId
+        ? {
+            ...snapshot,
+            playName: trimmedName,
+            playDescription: trimmedDescription || undefined,
+          }
+        : snapshot,
+    );
+
+    const featuredIds = new Set(selectedPlaybook.featuredPostIds ?? []);
+    const baseFeaturedSnapshots: PlaybookPostSnapshot[] =
+      selectedPlaybook.featuredPostSnapshots?.length
+        ? selectedPlaybook.featuredPostSnapshots
+        : nextPlaybookSnapshots.filter((snapshot) =>
+            featuredIds.has(snapshot.postId),
+          );
+
+    const nextFeaturedSnapshots = baseFeaturedSnapshots.map((snapshot) =>
+      snapshot.postId === postId
+        ? {
+            ...snapshot,
+            playName: trimmedName,
+            playDescription: trimmedDescription || undefined,
+          }
+        : snapshot,
+    );
+
+    try {
+      await updateDoc(doc(db, "collections", selectedPlaybook.id), {
+        playbookPostSnapshots: nextPlaybookSnapshots,
+        featuredPostSnapshots: nextFeaturedSnapshots,
+        updatedAt: serverTimestamp(),
+      });
+
+      setSelectedPlaybook((prev) =>
+        prev
+          ? {
+              ...prev,
+              playbookPostSnapshots: nextPlaybookSnapshots,
+              featuredPostSnapshots: nextFeaturedSnapshots,
+            }
+          : prev,
+      );
+
+      dispatch(showMessage("Play updated."));
+    } catch (error) {
+      console.error("Error updating play details:", error);
+      dispatch(showMessage("Could not update play details."));
+      throw error;
+    }
   };
 
   const printPlaybook = async () => {
@@ -171,18 +289,17 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
   }
 
   if (selectedPlaybook) {
-    const playbookPosts = posts.filter((post) =>
-      selectedPlaybook.postIds?.includes(post.id),
-    );
-
     return (
       <PlaybookDetailView
         playbook={selectedPlaybook}
-        posts={playbookPosts}
-        accounts={[]}
+        posts={selectedPlaybookPosts}
+        accounts={filteredAccounts}
         forecasts={playbookForecasts}
-        isLoadingForecasts={isLoadingForecasts}
+        isLoadingForecasts={
+          isLoadingForecasts || userAccountsLoading === "pending"
+        }
         onAddForecast={handleAddPlaybookForecast}
+        onUpdatePlay={handleUpdatePlaybookPlay}
         onBack={() => setSelectedPlaybook(null)}
         onShare={() => console.log("Share playbook")}
         onExportPdf={printPlaybook}

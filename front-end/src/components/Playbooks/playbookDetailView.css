@@ -226,6 +226,15 @@
   line-height: 1.5;
 }
 
+.playbook-admin-prompt {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-blue);
+  border-radius: 10px;
+  background: var(--dashboard-background-color);
+}
+
 .playbook-featured-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -307,6 +316,45 @@
   content: "•";
   margin-left: 0.4rem;
   opacity: 0.65;
+}
+
+.playbook-edit-actions {
+  margin-top: 0.75rem;
+}
+
+.playbook-edit-play-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.playbook-edit-play-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.playbook-edit-play-form input,
+.playbook-edit-play-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  background: var(--input-background);
+  color: var(--text-color);
+  font: inherit;
+  font-weight: 400;
+}
+
+.playbook-edit-play-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.playbook-edit-play-actions button {
+  flex: 1;
 }
 
 .playbook-chip-row {
@@ -444,6 +492,10 @@
   font-weight: 400;
 }
 
+.playbook-forecast-form button {
+  width: 100%;
+}
+
 .playbook-forecast-summary {
   padding: 1rem;
   border: 1px solid var(--border-color, #ddd);
@@ -519,7 +571,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1024px) {
   .playbook-forecast-layout {
     grid-template-columns: 1fr;
   }
@@ -566,6 +618,35 @@
   .playbook-featured-section,
   .playbook-supporting-section {
     padding: 0.75rem;
+  }
+
+  .playbook-featured-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .playbook-display-card h3 {
+    font-size: 1.05rem;
+  }
+
+  .playbook-forecast-form input,
+  .playbook-forecast-form textarea,
+  .playbook-forecast-form select,
+  .playbook-edit-play-form input,
+  .playbook-edit-play-form textarea {
+    min-height: 44px;
+  }
+
+  .playbook-edit-play-actions {
+    flex-direction: column;
+  }
+
+  .playbook-user-forecast li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .playbook-user-forecast li span {
+    white-space: normal;
   }
 
   .playbook-footer {

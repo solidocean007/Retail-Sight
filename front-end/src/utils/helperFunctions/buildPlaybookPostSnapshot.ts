@@ -1,10 +1,23 @@
-import { PostWithID, PlaybookPostSnapshot } from "../../utils/types";
+import { PostWithID } from "../types";
+import { PlaybookPostSnapshot } from "../../types/library";
+
+type BuildPlaybookPostSnapshotOptions = {
+  playName?: string;
+  playDescription?: string;
+  isFeatured?: boolean;
+};
 
 export const buildPlaybookPostSnapshot = (
   post: PostWithID,
+  options: BuildPlaybookPostSnapshotOptions = {},
 ): PlaybookPostSnapshot => {
+  const trimmedPlayName = options.playName?.trim();
+  const trimmedPlayDescription = options.playDescription?.trim();
+
   return {
     postId: post.id,
+    playName: trimmedPlayName || undefined,
+    playDescription: trimmedPlayDescription || undefined,
 
     imageUrl: post.imageUrl || "",
     originalImageUrl: post.originalImageUrl || "",
@@ -41,5 +54,6 @@ export const buildPlaybookPostSnapshot = (
         : post.displayDate?.toDate?.()?.toISOString?.() || "",
 
     addedToPlaybookAt: new Date().toISOString(),
+    isFeatured: options.isFeatured ?? false,
   };
 };

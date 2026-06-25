@@ -21,6 +21,10 @@ interface PlaybookDetailViewProps {
   forecasts?: PlaybookForecast[];
   isLoadingForecasts?: boolean;
   onAddForecast?: (forecast: CreatePlaybookForecastInput) => Promise<void>;
+  onUpdatePlay?: (inputPostId: string, input: {
+    playName: string;
+    playDescription?: string;
+  }) => Promise<void>;
 
   onBack?: () => void;
   onExportPdf?: () => void;
@@ -35,6 +39,12 @@ const formatAudience = (audience?: CollectionType["audience"]) => {
   if (audience === "supervisors") return "Supervisors";
   return audience;
 };
+
+const canManagePlaybooksByRole = (role?: string | null) =>
+  role === "admin" ||
+  role === "super-admin" ||
+  role === "supervisor" ||
+  role === "developer";
 
 const buildSnapshotFromPost = (post: PostWithID): PlaybookDisplay => ({
   postId: post.id,
@@ -73,15 +83,36 @@ const buildSnapshotFromPost = (post: PostWithID): PlaybookDisplay => ({
 const getDisplayImage = (display?: PlaybookDisplay | null) =>
   display?.imageUrl || display?.originalImageUrl || "";
 
+const buildDefaultPlayName = (display: PlaybookDisplay) => {
+  const roundedCases =
+    Number.isFinite(Number(display.totalCaseCount)) &&
+    Number(display.totalCaseCount) > 0
+      ? Math.round(Number(display.totalCaseCount))
+      : 0;
+  const productType = display.productType?.[0]?.trim();
+  const brand = display.brands?.[0]?.trim();
+
+  if (roundedCases && productType) {
+    return `${roundedCases} Case ${productType} Display`;
+  }
+  if (roundedCases && brand) {
+    return `${roundedCases} Case ${brand} Display`;
+  }
+  if (productType) {
+    return `${productType} Display`;
+  }
+  if (brand) {
+    return `${brand} Display`;
+  }
+
+  return "Retail Display Play";
+};
+
 const getDisplayTitle = (display: PlaybookDisplay) => {
-  const accountName = display.accountName;
-  const brand = display.brands?.[0];
+  const playName = display.playName?.trim();
+  if (playName) return playName;
 
-  if (brand && accountName) return `${brand} display at ${accountName}`;
-  if (accountName) return `Display at ${accountName}`;
-  if (brand) return `${brand} display`;
-
-  return "Retail display example";
+  return buildDefaultPlayName(display);
 };
 
 const formatAccountLabel = (account: CompanyAccountType) => {
@@ -99,18 +130,24 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   forecasts = [],
   isLoadingForecasts = false,
   onAddForecast,
+  onUpdatePlay,
   onBack,
   onExportPdf,
   onShare,
 }) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
+  const canEditPlays = canManagePlaybooksByRole(user?.role);
 
   const [selectedAccountNumber, setSelectedAccountNumber] = useState("");
   const [estimatedCases, setEstimatedCases] = useState("");
   const [forecastNotes, setForecastNotes] = useState("");
   const [selectedSourcePostId, setSelectedSourcePostId] = useState("");
   const [isSubmittingForecast, setIsSubmittingForecast] = useState(false);
+  const [editingPlayPostId, setEditingPlayPostId] = useState<string | null>(null);
+  const [editingPlayName, setEditingPlayName] = useState("");
+  const [editingPlayDescription, setEditingPlayDescription] = useState("");
+  const [isSavingPlay, setIsSavingPlay] = useState(false);
 
   const allDisplays = useMemo<PlaybookDisplay[]>(() => {
     const snapshots = playbook.playbookPostSnapshots ?? [];
@@ -188,6 +225,48 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
       participatingUserCount: participatingUsers.size,
     };
   }, [playbookForecasts]);
+
+  const startEditingPlay = (display: PlaybookDisplay) => {
+    setEditingPlayPostId(display.postId);
+    setEditingPlayName(display.playName?.trim() || getDisplayTitle(display));
+    setEditingPlayDescription(display.playDescription?.trim() || "");
+  };
+
+  const stopEditingPlay = () => {
+    setEditingPlayPostId(null);
+    setEditingPlayName("");
+    setEditingPlayDescription("");
+  };
+
+  const handleSavePlayDetails = async (display: PlaybookDisplay) => {
+    const trimmedName = editingPlayName.trim();
+    const trimmedDescription = editingPlayDescription.trim();
+
+    if (!trimmedName) {
+      dispatch(showMessage("Play name is required."));
+      return;
+    }
+
+    if (!onUpdatePlay) {
+      dispatch(showMessage("Play editing is not available yet."));
+      return;
+    }
+
+    setIsSavingPlay(true);
+
+    try {
+      await onUpdatePlay(display.postId, {
+        playName: trimmedName,
+        playDescription: trimmedDescription || undefined,
+      });
+      stopEditingPlay();
+    } catch (error) {
+      console.error("Error updating play details:", error);
+      dispatch(showMessage("Could not update this play."));
+    } finally {
+      setIsSavingPlay(false);
+    }
+  };
 
   const handleSubmitForecast = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -380,6 +459,13 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
           </p>
         </div>
 
+        {canEditPlays && allDisplays.length > 0 && (
+          <div className="playbook-admin-prompt no-print">
+            <strong>Name Your Play:</strong> use a repeatable play type (example:
+            5 Case Power Front of Store), not store-specific names.
+          </div>
+        )}
+
         {allDisplays.length === 0 ? (
           <div className="playbook-empty-panel">
             No plays added yet. Add displays from the feed or library to build
@@ -404,7 +490,75 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
                   <p className="playbook-section-label">Play {index + 1}</p>
                   <h3>{getDisplayTitle(display)}</h3>
 
-                  {display.description && <p>{display.description}</p>}
+                  {(display.playDescription || display.description) && (
+                    <p>{display.playDescription || display.description}</p>
+                  )}
+
+                  {canEditPlays && (
+                    <div className="playbook-edit-actions no-print">
+                      {editingPlayPostId === display.postId ? (
+                        <form
+                          className="playbook-edit-play-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            handleSavePlayDetails(display);
+                          }}
+                        >
+                          <label>
+                            Play Name
+                            <input
+                              value={editingPlayName}
+                              onChange={(event) =>
+                                setEditingPlayName(event.target.value)
+                              }
+                              placeholder="Example: 5 Case Power Front of Store"
+                              maxLength={80}
+                              required
+                            />
+                          </label>
+
+                          <label>
+                            Short Play Description
+                            <textarea
+                              value={editingPlayDescription}
+                              onChange={(event) =>
+                                setEditingPlayDescription(event.target.value)
+                              }
+                              rows={2}
+                              maxLength={200}
+                              placeholder="Optional: quick guidance reps can apply in the field."
+                            />
+                          </label>
+
+                          <div className="playbook-edit-play-actions">
+                            <button
+                              type="submit"
+                              className="button-primary"
+                              disabled={isSavingPlay}
+                            >
+                              {isSavingPlay ? "Saving..." : "Save Play"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline"
+                              onClick={stopEditingPlay}
+                              disabled={isSavingPlay}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          onClick={() => startEditingPlay(display)}
+                        >
+                          Edit Play Name
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {display.whyThisPlayWorks && (
                     <div className="playbook-callout">
@@ -598,7 +752,75 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
 
                 <div>
                   <h3>{getDisplayTitle(display)}</h3>
-                  {display.description && <p>{display.description}</p>}
+                  {(display.playDescription || display.description) && (
+                    <p>{display.playDescription || display.description}</p>
+                  )}
+
+                  {canEditPlays && (
+                    <div className="playbook-edit-actions no-print">
+                      {editingPlayPostId === display.postId ? (
+                        <form
+                          className="playbook-edit-play-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            handleSavePlayDetails(display);
+                          }}
+                        >
+                          <label>
+                            Play Name
+                            <input
+                              value={editingPlayName}
+                              onChange={(event) =>
+                                setEditingPlayName(event.target.value)
+                              }
+                              placeholder="Example: 5 Case Power Front of Store"
+                              maxLength={80}
+                              required
+                            />
+                          </label>
+
+                          <label>
+                            Short Play Description
+                            <textarea
+                              value={editingPlayDescription}
+                              onChange={(event) =>
+                                setEditingPlayDescription(event.target.value)
+                              }
+                              rows={2}
+                              maxLength={200}
+                              placeholder="Optional: quick guidance reps can apply in the field."
+                            />
+                          </label>
+
+                          <div className="playbook-edit-play-actions">
+                            <button
+                              type="submit"
+                              className="button-primary"
+                              disabled={isSavingPlay}
+                            >
+                              {isSavingPlay ? "Saving..." : "Save Play"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline"
+                              onClick={stopEditingPlay}
+                              disabled={isSavingPlay}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          onClick={() => startEditingPlay(display)}
+                        >
+                          Edit Play Name
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </article>
             ))}

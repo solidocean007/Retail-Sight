@@ -2,6 +2,8 @@
   padding: 1rem;
   background: var(--surface-color);
   color: var(--text-color);
+  max-height: min(82vh, 760px);
+  overflow-y: auto;
 }
 
 .add-collection-header {
@@ -272,6 +274,42 @@
   color: var(--text-color);
 }
 
+.playbook-play-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0 1rem 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-background);
+}
+
+.playbook-play-details label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.playbook-play-details input,
+.playbook-play-details textarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--btn-border-radius);
+  padding: 0.65rem 0.75rem;
+  background: var(--input-background);
+  color: var(--text-color);
+  font: inherit;
+  font-weight: 400;
+}
+
+.playbook-play-help {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
 .collection-picker-info small {
   display: block;
   margin-top: 0.25rem;
@@ -282,11 +320,32 @@
 @media (max-width: 600px) {
   .add-collection-modal {
     padding: 0.85rem;
+    max-height: 86vh;
   }
 
   .collection-list-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .library-target-tabs {
+    padding: 0 0 1rem;
+  }
+
+  .playbook-add-mode,
+  .playbook-play-details {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .collection-picker-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .collection-status-add,
+  .collection-status-added {
+    align-self: flex-end;
   }
 
   .btn-secondary-small {
