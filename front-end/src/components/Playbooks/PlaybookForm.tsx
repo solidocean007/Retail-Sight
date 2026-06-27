@@ -4,6 +4,14 @@ import { Box, Modal } from "@mui/material";
 import "./playbookForm.css";
 import { CreateCollectionInput, PlaybookAudience } from "../../types/library";
 
+const DEFAULT_HELP_OPTIONS = [
+  "Help building display",
+  "Assistance asking for approval",
+  "Case cards needed",
+  "Display piece needed",
+];
+
+
 interface PlaybookFormProps {
   isOpen: boolean;
   onAddPlaybook: (newPlaybook: CreateCollectionInput) => Promise<void>;
@@ -22,6 +30,8 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
   const [whenToUse, setWhenToUse] = useState("");
   const [coachNotes, setCoachNotes] = useState("");
   const [audience, setAudience] = useState<PlaybookAudience>("sales");
+  const [helpNeededOptions, setHelpNeededOptions] = useState<string[]>([...DEFAULT_HELP_OPTIONS]);
+  const [newHelpOption, setNewHelpOption] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
@@ -32,6 +42,8 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
     setWhenToUse("");
     setCoachNotes("");
     setAudience("sales");
+    setHelpNeededOptions([...DEFAULT_HELP_OPTIONS]);
+    setNewHelpOption("");
   };
 
   const handleClose = () => {
@@ -71,6 +83,7 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
         whenToUse: clean(whenToUse),
         coachNotes: clean(coachNotes),
         audience,
+        helpNeededOptions,
 
         featuredPostIds: [],
         playbookPostSnapshots: [],
@@ -176,6 +189,71 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
                 <option value="all">All Team Members</option>
               </select>
             </label>
+
+            <div className="playbook-help-options-section">
+              <p className="playbook-form-field-label">
+                Help Needed Options
+              </p>
+              <p className="playbook-form-field-hint">
+                Reps will see these checkboxes when forecasting. &ldquo;Other&rdquo; is always included.
+              </p>
+              <ul className="playbook-help-options-list">
+                {helpNeededOptions.map((opt) => (
+                  <li key={opt}>
+                    <span>{opt}</span>
+                    <button
+                      type="button"
+                      className="playbook-help-option-remove"
+                      aria-label={`Remove ${opt}`}
+                      onClick={() =>
+                        setHelpNeededOptions((prev) =>
+                          prev.filter((o) => o !== opt),
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="playbook-help-options-add">
+                <input
+                  type="text"
+                  value={newHelpOption}
+                  onChange={(e) => setNewHelpOption(e.target.value)}
+                  placeholder="Add custom option…"
+                  maxLength={60}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const trimmed = newHelpOption.trim();
+                      if (trimmed && !helpNeededOptions.includes(trimmed)) {
+                        setHelpNeededOptions((prev) => [...prev, trimmed]);
+                        setNewHelpOption("");
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn-secondary-small"
+                  disabled={
+                    !newHelpOption.trim() ||
+                    helpNeededOptions.includes(newHelpOption.trim())
+                  }
+                  onClick={() => {
+                    const trimmed = newHelpOption.trim();
+                    if (trimmed && !helpNeededOptions.includes(trimmed)) {
+                      setHelpNeededOptions((prev) => [...prev, trimmed]);
+                      setNewHelpOption("");
+                    }
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
             <div className="playbook-form-actions">
               <button
                 type="submit"

@@ -143,6 +143,7 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   const [estimatedCases, setEstimatedCases] = useState("");
   const [forecastNotes, setForecastNotes] = useState("");
   const [selectedSourcePostId, setSelectedSourcePostId] = useState("");
+  const [selectedHelpNeeded, setSelectedHelpNeeded] = useState<string[]>([]);
   const [isSubmittingForecast, setIsSubmittingForecast] = useState(false);
   const [editingPlayPostId, setEditingPlayPostId] = useState<string | null>(null);
   const [editingPlayName, setEditingPlayName] = useState("");
@@ -226,6 +227,22 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
     };
   }, [playbookForecasts]);
 
+  const DEFAULT_HELP_OPTIONS = [
+    "Help building display",
+    "Assistance asking for approval",
+    "Case cards needed",
+    "Display piece needed",
+  ];
+
+  const helpOptions =
+    playbook.helpNeededOptions?.length
+      ? playbook.helpNeededOptions
+      : DEFAULT_HELP_OPTIONS;
+
+  const allHelpOptions = helpOptions.includes("Other")
+    ? helpOptions
+    : [...helpOptions, "Other"];
+
   const startEditingPlay = (display: PlaybookDisplay) => {
     setEditingPlayPostId(display.postId);
     setEditingPlayName(display.playName?.trim() || getDisplayTitle(display));
@@ -286,9 +303,19 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
       return;
     }
 
+    if (!selectedSourcePostId) {
+      dispatch(showMessage("Choose a play first."));
+      return;
+    }
+
+    if (!estimatedCases.trim()) {
+      dispatch(showMessage("Enter an estimated case count."));
+      return;
+    }
+
     const casesNumber = Number(estimatedCases);
 
-    if (estimatedCases && (Number.isNaN(casesNumber) || casesNumber < 0)) {
+    if (Number.isNaN(casesNumber) || casesNumber < 0) {
       dispatch(showMessage("Estimated cases must be a valid number."));
       return;
     }
@@ -317,6 +344,7 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
         status: "planned",
 
         notes: forecastNotes.trim() || undefined,
+        helpNeeded: selectedHelpNeeded.length > 0 ? selectedHelpNeeded : undefined,
         sourcePostId: selectedSourcePostId || undefined,
       });
 
@@ -324,6 +352,7 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
       setEstimatedCases("");
       setForecastNotes("");
       setSelectedSourcePostId("");
+      setSelectedHelpNeeded([]);
 
       dispatch(showMessage("Play forecast added."));
     } catch (error) {
@@ -631,10 +660,11 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
               </label>
 
               <label>
-                Example play this account could reflect
+                Which play does this account fit?
                 <select
                   value={selectedSourcePostId}
                   onChange={(e) => setSelectedSourcePostId(e.target.value)}
+                  required
                 >
                   <option value="">No specific play</option>
                   {allDisplays.map((display) => (
@@ -654,23 +684,61 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
                   value={estimatedCases}
                   onChange={(e) => setEstimatedCases(e.target.value)}
                   placeholder="Example: 25"
+                  required
                 />
               </label>
+
+              <details className="playbook-help-needed-details">
+                <summary className="playbook-help-needed-summary">
+                  <span>Help Needed</span>
+                  {selectedHelpNeeded.length > 0 && (
+                    <span className="playbook-help-needed-badge">
+                      {selectedHelpNeeded.length} selected
+                    </span>
+                  )}
+                </summary>
+                <p className="playbook-help-needed-hint">
+                  Check anything you need to make this happen.
+                </p>
+                <div className="playbook-help-needed-options">
+                  {allHelpOptions.map((opt) => (
+                    <label key={opt} className="playbook-help-needed-option">
+                      <input
+                        type="checkbox"
+                        checked={selectedHelpNeeded.includes(opt)}
+                        onChange={() =>
+                          setSelectedHelpNeeded((prev) =>
+                            prev.includes(opt)
+                              ? prev.filter((o) => o !== opt)
+                              : [...prev, opt],
+                          )
+                        }
+                      />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
+              </details>
 
               <label>
                 Notes
                 <textarea
                   value={forecastNotes}
                   onChange={(e) => setForecastNotes(e.target.value)}
-                  placeholder="Optional: why this account is a good fit, space concerns, timing, manager interest..."
-                  rows={3}
+                  placeholder="Why this account is a good fit — space availability, timing, manager interest, current display status…"
+                  rows={5}
                 />
               </label>
 
               <button
                 type="submit"
                 className="button-primary"
-                disabled={isSubmittingForecast || !selectedAccountNumber}
+                disabled={
+                  isSubmittingForecast ||
+                  !selectedAccountNumber ||
+                  !selectedSourcePostId ||
+                  !estimatedCases.trim()
+                }
               >
                 {isSubmittingForecast ? "Adding..." : "Add to Forecast"}
               </button>
@@ -706,12 +774,9 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
               </div>
             </div>
 
-            <div className="playbook-user-forecast">
-              <h4>Your Forecast</h4>
-
-              {userForecasts.length === 0 ? (
-                <p>No accounts added yet.</p>
-              ) : (
+            {userForecasts.length > 0 && (
+              <div className="playbook-user-forecast">
+                <h4>Your Forecast</h4>
                 <ul>
                   {userForecasts.map((forecast) => (
                     <li key={forecast.id}>
@@ -724,8 +789,48 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
+              </div>
+            )}
+
+            {playbookForecasts.length > 0 && (
+              <div className="playbook-team-forecast-list">
+                <h4>All Forecasted Accounts</h4>
+                <ul>
+                  {playbookForecasts.map((forecast) => {
+                    const isOwn = forecast.userId === user?.uid;
+                    return (
+                      <li key={forecast.id} className={isOwn ? "playbook-forecast-own" : ""}>
+                        <div className="playbook-forecast-account-row">
+                          <strong>{forecast.accountName}</strong>
+                          {forecast.estimatedCases ? (
+                            <span>{forecast.estimatedCases} cases</span>
+                          ) : null}
+                        </div>
+                        {(forecast.userFirstName || forecast.userLastName) && (
+                          <span className="playbook-forecast-rep">
+                            {[forecast.userFirstName, forecast.userLastName]
+                              .filter(Boolean)
+                              .join(" ")}
+                            {isOwn ? " (you)" : ""}
+                          </span>
+                        )}
+                        {forecast.helpNeeded && forecast.helpNeeded.length > 0 && (
+                          <span className="playbook-forecast-help">
+                            Needs: {forecast.helpNeeded.join(", ")}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {playbookForecasts.length === 0 && !isLoadingForecasts && (
+              <p className="playbook-forecast-empty">
+                No forecasts yet. Be the first to add accounts.
+              </p>
+            )}
           </aside>
         </div>
       </section>

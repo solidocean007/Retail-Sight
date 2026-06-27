@@ -16,8 +16,12 @@ import {
 export const addPlaybookForecast = async (
   input: CreatePlaybookForecastInput,
 ): Promise<string> => {
+  const sanitizedInput = Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined),
+  );
+
   const ref = await addDoc(collection(db, "playbookForecasts"), {
-    ...input,
+    ...sanitizedInput,
     status: input.status ?? "planned",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

@@ -47,6 +47,12 @@ export interface CollectionType {
   audience?: PlaybookAudience;
 
   /**
+   * Admin-curated list of help options reps can select when forecasting.
+   * "Other" is always available regardless of this list.
+   */
+  helpNeededOptions?: string[];
+
+  /**
    * Optional business context for filtering and organizing playbooks.
    */
   season?: string;
@@ -110,6 +116,8 @@ export type CreateCollectionInput = {
 
   playbookPostSnapshots?: PlaybookPostSnapshot[];
   featuredPostSnapshots?: PlaybookPostSnapshot[];
+
+  helpNeededOptions?: string[];
 };
 
 export interface PlaybookPostSnapshot {
@@ -257,6 +265,12 @@ export interface PlaybookForecast {
   notes?: string;
 
   /**
+   * What kind of help the rep needs to execute this play.
+   * Values come from the playbook's helpNeededOptions, plus "Other" always available.
+   */
+  helpNeeded?: string[];
+
+  /**
    * Optional: if the rep is forecasting based on a specific display/example
    * inside the playbook.
    */
@@ -295,6 +309,7 @@ export type CreatePlaybookForecastInput = {
   status?: PlaybookForecastStatus;
 
   notes?: string;
+  helpNeeded?: string[];
   sourcePostId?: string;
   executionPostId?: string;
 };

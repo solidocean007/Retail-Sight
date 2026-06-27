@@ -122,3 +122,10 @@
     width: 100%;
   }
 }
+
+/* Help options section inside PlaybookForm */
+
+.playbook-help-options-section .playbook-help-options-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
