@@ -73,3 +73,23 @@
   transition: opacity 0.4s ease-out;
 }
 
+.playbook-play-selector {
+  width: 100%;
+}
+
+.playbook-play-option-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  line-height: 1.2;
+}
+
+.playbook-play-option-name {
+  font-weight: 600;
+}
+
+.playbook-play-option-book {
+  font-size: 0.78rem;
+  opacity: 0.8;
+}

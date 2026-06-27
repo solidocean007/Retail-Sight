@@ -449,6 +449,10 @@ export interface PostType {
   companyGoalId?: string | null;
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
+  playbookId?: string;
+  playbookTitle?: string;
+  playSourcePostId?: string;
+  playName?: string;
 
   // gallo goals
   galloGoal?: {
@@ -485,6 +489,10 @@ export type PostInputType = {
   companyGoalId?: string | null;
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
+  playbookId?: string;
+  playbookTitle?: string;
+  playSourcePostId?: string;
+  playName?: string;
 
   galloGoal?: {
     goalId: string;

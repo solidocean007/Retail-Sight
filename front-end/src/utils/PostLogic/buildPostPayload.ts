@@ -92,6 +92,12 @@ export const buildPostPayload = (
       companyGoalId: post.companyGoalId,
       companyGoalTitle: post.companyGoalTitle,
     }),
+    ...(post.playbookId && {
+      playbookId: post.playbookId,
+      playbookTitle: post.playbookTitle ?? "",
+      playSourcePostId: post.playSourcePostId ?? "",
+      playName: post.playName ?? "",
+    }),
 
     // 🍇 Gallo goal (DENORMALIZED + NESTED)
     ...(post.galloGoal && {

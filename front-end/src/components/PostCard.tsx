@@ -465,6 +465,12 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
+          {post.playName && (
+            <div className="playbook-play-banner">
+              Run the Play: {post.playName}
+              {post.playbookTitle ? ` • ${post.playbookTitle}` : ""}
+            </div>
+          )}
           {post.companyGoalId && (
             <div className="company-goal-banner textured-background">
               Company Goal: {post.companyGoalTitle}
