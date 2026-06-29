@@ -1,14 +1,12 @@
 // src/components/Playbooks/PlaybookDetailView.tsx
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { PostWithID, CompanyAccountType } from "../../utils/types";
+import { CompanyGoalWithIdType, PostWithID } from "../../utils/types";
 import { selectUser } from "../../Slices/userSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import {
   CollectionType,
-  CreatePlaybookForecastInput,
-  PlaybookForecast,
   PlaybookPostSnapshot,
 } from "../../types/library";
 import "./playbookDetailView.css";
@@ -16,11 +14,11 @@ import "./playbookDetailView.css";
 interface PlaybookDetailViewProps {
   playbook: CollectionType;
   posts?: PostWithID[];
-
-  accounts?: CompanyAccountType[];
-  forecasts?: PlaybookForecast[];
-  isLoadingForecasts?: boolean;
-  onAddForecast?: (forecast: CreatePlaybookForecastInput) => Promise<void>;
+  usedGoals?: Array<{
+    goal: CompanyGoalWithIdType;
+    assignedAccountsCount: number;
+    completedDisplaysCount: number;
+  }>;
   onUpdatePlay?: (inputPostId: string, input: {
     playName: string;
     playDescription?: string;
@@ -115,21 +113,10 @@ const getDisplayTitle = (display: PlaybookDisplay) => {
   return buildDefaultPlayName(display);
 };
 
-const formatAccountLabel = (account: CompanyAccountType) => {
-  const name = account.accountName ?? "Unknown Account";
-  const number = account.accountNumber ? `#${account.accountNumber}` : "";
-  const address = account.accountAddress ? ` — ${account.accountAddress}` : "";
-
-  return `${name} ${number}${address}`.trim();
-};
-
 const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   playbook,
   posts = [],
-  accounts = [],
-  forecasts = [],
-  isLoadingForecasts = false,
-  onAddForecast,
+  usedGoals = [],
   onUpdatePlay,
   onBack,
   onExportPdf,
@@ -139,12 +126,6 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   const user = useSelector(selectUser);
   const canEditPlays = canManagePlaybooksByRole(user?.role);
 
-  const [selectedAccountNumber, setSelectedAccountNumber] = useState("");
-  const [estimatedCases, setEstimatedCases] = useState("");
-  const [forecastNotes, setForecastNotes] = useState("");
-  const [selectedSourcePostId, setSelectedSourcePostId] = useState("");
-  const [selectedHelpNeeded, setSelectedHelpNeeded] = useState<string[]>([]);
-  const [isSubmittingForecast, setIsSubmittingForecast] = useState(false);
   const [editingPlayPostId, setEditingPlayPostId] = useState<string | null>(null);
   const [editingPlayName, setEditingPlayName] = useState("");
   const [editingPlayDescription, setEditingPlayDescription] = useState("");
@@ -185,63 +166,11 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   const coachNotes =
     playbook.coachNotes ?? (playbook as CollectionType & { managerNotes?: string }).managerNotes;
 
-  const selectedAccount = useMemo(() => {
-    return accounts.find(
-      (account) => account.accountNumber?.toString() === selectedAccountNumber,
+  const sortedUsedGoals = useMemo(() => {
+    return [...usedGoals].sort((a, b) =>
+      a.goal.goalTitle.localeCompare(b.goal.goalTitle),
     );
-  }, [accounts, selectedAccountNumber]);
-
-  const playbookForecasts = useMemo(() => {
-    return forecasts.filter((forecast) => forecast.playbookId === playbook.id);
-  }, [forecasts, playbook.id]);
-
-  const userForecasts = useMemo(() => {
-    if (!user?.uid) return [];
-
-    return playbookForecasts.filter((forecast) => forecast.userId === user.uid);
-  }, [playbookForecasts, user?.uid]);
-
-  const forecastSummary = useMemo(() => {
-    const participatingUsers = new Set(playbookForecasts.map((f) => f.userId));
-    const accountNumbers = new Set(
-      playbookForecasts.map((f) => f.accountNumber),
-    );
-
-    return {
-      totalAccounts: accountNumbers.size,
-      totalEstimatedCases: playbookForecasts.reduce(
-        (sum, f) => sum + (Number(f.estimatedCases) || 0),
-        0,
-      ),
-      plannedCount: playbookForecasts.filter((f) => f.status === "planned")
-        .length,
-      pitchedCount: playbookForecasts.filter((f) => f.status === "pitched")
-        .length,
-      approvedCount: playbookForecasts.filter((f) => f.status === "approved")
-        .length,
-      executedCount: playbookForecasts.filter((f) => f.status === "executed")
-        .length,
-      missedCount: playbookForecasts.filter((f) => f.status === "missed")
-        .length,
-      participatingUserCount: participatingUsers.size,
-    };
-  }, [playbookForecasts]);
-
-  const DEFAULT_HELP_OPTIONS = [
-    "Help building display",
-    "Assistance asking for approval",
-    "Case cards needed",
-    "Display piece needed",
-  ];
-
-  const helpOptions =
-    playbook.helpNeededOptions?.length
-      ? playbook.helpNeededOptions
-      : DEFAULT_HELP_OPTIONS;
-
-  const allHelpOptions = helpOptions.includes("Other")
-    ? helpOptions
-    : [...helpOptions, "Other"];
+  }, [usedGoals]);
 
   const startEditingPlay = (display: PlaybookDisplay) => {
     setEditingPlayPostId(display.postId);
@@ -282,84 +211,6 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
       dispatch(showMessage("Could not update this play."));
     } finally {
       setIsSavingPlay(false);
-    }
-  };
-
-  const handleSubmitForecast = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!user?.uid || !user.companyId) {
-      dispatch(showMessage("You must be signed in to forecast this play."));
-      return;
-    }
-
-    if (!onAddForecast) {
-      dispatch(showMessage("Forecasting is not available yet."));
-      return;
-    }
-
-    if (!selectedAccount) {
-      dispatch(showMessage("Choose an account first."));
-      return;
-    }
-
-    if (!selectedSourcePostId) {
-      dispatch(showMessage("Choose a play first."));
-      return;
-    }
-
-    if (!estimatedCases.trim()) {
-      dispatch(showMessage("Enter an estimated case count."));
-      return;
-    }
-
-    const casesNumber = Number(estimatedCases);
-
-    if (Number.isNaN(casesNumber) || casesNumber < 0) {
-      dispatch(showMessage("Estimated cases must be a valid number."));
-      return;
-    }
-
-    setIsSubmittingForecast(true);
-
-    try {
-      await onAddForecast({
-        playbookId: playbook.id,
-        companyId: user.companyId,
-
-        userId: user.uid,
-        userFirstName: user.firstName,
-        userLastName: user.lastName,
-        userSalesRouteNum: user.salesRouteNum,
-
-        accountNumber: selectedAccount.accountNumber?.toString() || "",
-        accountName: selectedAccount.accountName,
-        accountAddress: selectedAccount.accountAddress,
-        city: selectedAccount.city,
-        state: selectedAccount.state,
-        chain: selectedAccount.chain,
-        chainType: selectedAccount.chainType,
-
-        estimatedCases: estimatedCases ? casesNumber : undefined,
-        status: "planned",
-
-        notes: forecastNotes.trim() || undefined,
-        helpNeeded: selectedHelpNeeded.length > 0 ? selectedHelpNeeded : undefined,
-        sourcePostId: selectedSourcePostId || undefined,
-      });
-
-      setSelectedAccountNumber("");
-      setEstimatedCases("");
-      setForecastNotes("");
-      setSelectedSourcePostId("");
-      setSelectedHelpNeeded([]);
-
-      dispatch(showMessage("Play forecast added."));
-    } catch (error) {
-      console.error("Error adding playbook forecast:", error);
-      dispatch(showMessage("Could not add forecast."));
-    } finally {
-      setIsSubmittingForecast(false);
     }
   };
 
@@ -619,220 +470,63 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
         )}
       </section>
 
-      <section className="playbook-forecast-section no-print">
+      <section className="playbook-goal-usage-section no-print">
         <div className="playbook-section-heading">
-          <p className="playbook-section-label">Run the Play</p>
-          <h2>Forecast where this can execute</h2>
+          <p className="playbook-section-label">Used in Goals</p>
+          <h2>Where this playbook is actively being executed</h2>
           <p>
-            Choose accounts where you think this playbook can work and estimate
-            the case opportunity. This gives the team a forecast before displays
-            are actually built.
+            Playbooks are reusable guides. Active execution and account planning
+            live in goal workspaces.
           </p>
         </div>
 
-        <div className="playbook-forecast-layout">
-          {accounts.length === 0 ? (
-            <div className="playbook-empty-panel">
-              No accounts available yet. Account selection will be wired next.
-            </div>
-          ) : (
-            <form
-              className="playbook-forecast-form"
-              onSubmit={handleSubmitForecast}
-            >
-              <label>
-                Account
-                <select
-                  value={selectedAccountNumber}
-                  onChange={(e) => setSelectedAccountNumber(e.target.value)}
-                  required
-                >
-                  <option value="">Choose an account</option>
-                  {accounts.map((account) => (
-                    <option
-                      key={account.accountNumber?.toString()}
-                      value={account.accountNumber?.toString()}
-                    >
-                      {formatAccountLabel(account)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Which play does this account fit?
-                <select
-                  value={selectedSourcePostId}
-                  onChange={(e) => setSelectedSourcePostId(e.target.value)}
-                  required
-                >
-                  <option value="">No specific play</option>
-                  {allDisplays.map((display) => (
-                    <option key={display.postId} value={display.postId}>
-                      {getDisplayTitle(display)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Estimated Cases
-                <input
-                  type="number"
-                  min="0"
-                  inputMode="numeric"
-                  value={estimatedCases}
-                  onChange={(e) => setEstimatedCases(e.target.value)}
-                  placeholder="Example: 25"
-                  required
-                />
-              </label>
-
-              <details className="playbook-help-needed-details">
-                <summary className="playbook-help-needed-summary">
-                  <span>Help Needed</span>
-                  {selectedHelpNeeded.length > 0 && (
-                    <span className="playbook-help-needed-badge">
-                      {selectedHelpNeeded.length} selected
-                    </span>
-                  )}
+        {sortedUsedGoals.length === 0 ? (
+          <div className="playbook-empty-panel">
+            This playbook is not attached to any active goals yet.
+          </div>
+        ) : (
+          <div className="playbook-goal-usage-list">
+            {sortedUsedGoals.map(({ goal, assignedAccountsCount, completedDisplaysCount }) => (
+              <details key={goal.id} className="playbook-goal-usage-item">
+                <summary>
+                  <span className="playbook-goal-usage-title">
+                    {goal.goalTitle}
+                  </span>
+                  <span className="playbook-goal-usage-metrics">
+                    Assigned: {assignedAccountsCount} • Completed displays:{" "}
+                    {completedDisplaysCount}
+                  </span>
                 </summary>
-                <p className="playbook-help-needed-hint">
-                  Check anything you need to make this happen.
-                </p>
-                <div className="playbook-help-needed-options">
-                  {allHelpOptions.map((opt) => (
-                    <label key={opt} className="playbook-help-needed-option">
-                      <input
-                        type="checkbox"
-                        checked={selectedHelpNeeded.includes(opt)}
-                        onChange={() =>
-                          setSelectedHelpNeeded((prev) =>
-                            prev.includes(opt)
-                              ? prev.filter((o) => o !== opt)
-                              : [...prev, opt],
-                          )
-                        }
-                      />
-                      {opt}
-                    </label>
-                  ))}
+                <div className="playbook-goal-usage-body">
+                  <p>
+                    <strong>Date range:</strong> {goal.goalStartDate} -{" "}
+                    {goal.goalEndDate}
+                  </p>
+                  {goal.goalDescription && (
+                    <p>
+                      <strong>Goal:</strong> {goal.goalDescription}
+                    </p>
+                  )}
+                  {goal.playbookReason && (
+                    <p>
+                      <strong>Why this playbook:</strong> {goal.playbookReason}
+                    </p>
+                  )}
+                  {goal.playbookInstructions && (
+                    <p>
+                      <strong>Goal-specific instructions:</strong>{" "}
+                      {goal.playbookInstructions}
+                    </p>
+                  )}
+                  <p className="playbook-goal-usage-note">
+                    Open the goal workspace to view rep account responses and
+                    blocker breakdowns.
+                  </p>
                 </div>
               </details>
-
-              <label>
-                Notes
-                <textarea
-                  value={forecastNotes}
-                  onChange={(e) => setForecastNotes(e.target.value)}
-                  placeholder="Why this account is a good fit — space availability, timing, manager interest, current display status…"
-                  rows={5}
-                />
-              </label>
-
-              <button
-                type="submit"
-                className="button-primary"
-                disabled={
-                  isSubmittingForecast ||
-                  !selectedAccountNumber ||
-                  !selectedSourcePostId ||
-                  !estimatedCases.trim()
-                }
-              >
-                {isSubmittingForecast ? "Adding..." : "Add to Forecast"}
-              </button>
-            </form>
-          )}
-
-          <aside className="playbook-forecast-summary">
-            <h3>Team Forecast</h3>
-
-            {isLoadingForecasts && (
-              <p className="playbook-forecast-loading">Loading forecast...</p>
-            )}
-
-            <div className="playbook-forecast-stat-grid">
-              <div>
-                <span>Accounts</span>
-                <strong>{forecastSummary.totalAccounts}</strong>
-              </div>
-
-              <div>
-                <span>Estimated Cases</span>
-                <strong>{forecastSummary.totalEstimatedCases}</strong>
-              </div>
-
-              <div>
-                <span>Reps</span>
-                <strong>{forecastSummary.participatingUserCount}</strong>
-              </div>
-
-              <div>
-                <span>Planned</span>
-                <strong>{forecastSummary.plannedCount}</strong>
-              </div>
-            </div>
-
-            {userForecasts.length > 0 && (
-              <div className="playbook-user-forecast">
-                <h4>Your Forecast</h4>
-                <ul>
-                  {userForecasts.map((forecast) => (
-                    <li key={forecast.id}>
-                      <strong>{forecast.accountName}</strong>
-                      <span>
-                        {forecast.estimatedCases
-                          ? `${forecast.estimatedCases} cases`
-                          : "No case estimate"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {playbookForecasts.length > 0 && (
-              <div className="playbook-team-forecast-list">
-                <h4>All Forecasted Accounts</h4>
-                <ul>
-                  {playbookForecasts.map((forecast) => {
-                    const isOwn = forecast.userId === user?.uid;
-                    return (
-                      <li key={forecast.id} className={isOwn ? "playbook-forecast-own" : ""}>
-                        <div className="playbook-forecast-account-row">
-                          <strong>{forecast.accountName}</strong>
-                          {forecast.estimatedCases ? (
-                            <span>{forecast.estimatedCases} cases</span>
-                          ) : null}
-                        </div>
-                        {(forecast.userFirstName || forecast.userLastName) && (
-                          <span className="playbook-forecast-rep">
-                            {[forecast.userFirstName, forecast.userLastName]
-                              .filter(Boolean)
-                              .join(" ")}
-                            {isOwn ? " (you)" : ""}
-                          </span>
-                        )}
-                        {forecast.helpNeeded && forecast.helpNeeded.length > 0 && (
-                          <span className="playbook-forecast-help">
-                            Needs: {forecast.helpNeeded.join(", ")}
-                          </span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-
-            {playbookForecasts.length === 0 && !isLoadingForecasts && (
-              <p className="playbook-forecast-empty">
-                No forecasts yet. Be the first to add accounts.
-              </p>
-            )}
-          </aside>
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {supportingDisplays.length > 0 && (

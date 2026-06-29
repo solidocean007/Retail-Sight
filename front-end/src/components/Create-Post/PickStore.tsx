@@ -14,11 +14,6 @@ import {
   CircularProgress,
   Typography,
   Button,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
 } from "@mui/material";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount";
 import {
@@ -45,9 +40,6 @@ import NoResults from "../NoResults";
 import { GoalPickerModal } from "./GoalPickerModal";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 import DebugValues from "./DebugValues";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../../utils/firebase";
-import type { CollectionWithId, PlaybookPostSnapshot } from "../../types/library";
 
 // Normalize abbreviations and compare address similarity
 const normalizeCache = new Map<string, string>();
@@ -112,27 +104,6 @@ const extractCityState = (address: string) => {
   return { city, state };
 };
 
-type PlaybookPlayOption = {
-  value: string;
-  playbookId: string;
-  playbookTitle: string;
-  sourcePostId: string;
-  playName: string;
-};
-
-const buildPlayName = (snapshot: PlaybookPostSnapshot) => {
-  const playName = snapshot.playName?.trim();
-  if (playName) return playName;
-
-  const description = snapshot.playDescription?.trim();
-  if (description) return description;
-
-  const accountName = snapshot.accountName?.trim();
-  if (accountName) return `${accountName} Display`;
-
-  return "Unnamed Play";
-};
-
 interface PickStoreProps {
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
@@ -166,9 +137,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [openManualAccountForm, setOpenManualAccountForm] = useState(false);
   const salesRouteNum = user?.salesRouteNum;
   const companyId = user?.companyId;
-  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
-  const [manualAccountAdded, setManualAccountAdded] = useState(false);
   const [nearbyStores, setNearbyStores] = useState<
     { name: string; address: string; placeId?: string }[]
   >([]);
@@ -178,10 +148,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     city: string;
     state: string;
   } | null>(null);
-  const [playbookCollections, setPlaybookCollections] = useState<
-    CollectionWithId[]
-  >([]);
-  const [loadingPlaybooks, setLoadingPlaybooks] = useState(false);
 
   const allCompanyAccounts = useSelector(
     (state: RootState) => state.allAccounts.accounts,
@@ -207,93 +173,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
     selectUsersGalloGoals(state, salesRouteNum),
   );
 
-  const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
-    null,
-  );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType>();
   const allGalloGoals = useSelector(selectAllGalloGoals);
   const [openAccountModal, setOpenAccountModal] = useState(true);
   const onlyUsersStores = !isAllStoresShown;
-
-  useEffect(() => {
-    const fetchPlaybooks = async () => {
-      if (!companyId) {
-        setPlaybookCollections([]);
-        return;
-      }
-
-      setLoadingPlaybooks(true);
-
-      try {
-        const snapshot = await getDocs(
-          query(collection(db, "collections"), where("companyId", "==", companyId)),
-        );
-
-        const mapped = snapshot.docs
-          .map((docSnap) => {
-            const data = docSnap.data() as any;
-            return {
-              ...data,
-              id: docSnap.id,
-              title: data.title ?? data.name ?? "Untitled Playbook",
-              collectionType: data.collectionType ?? "collection",
-              playbookPostSnapshots: data.playbookPostSnapshots ?? [],
-              featuredPostSnapshots: data.featuredPostSnapshots ?? [],
-            } as CollectionWithId;
-          })
-          .filter((collectionItem) => collectionItem.collectionType === "playbook");
-
-        setPlaybookCollections(mapped);
-      } catch (error) {
-        console.error("Failed to fetch playbooks for create display:", error);
-      } finally {
-        setLoadingPlaybooks(false);
-      }
-    };
-
-    fetchPlaybooks();
-  }, [companyId]);
-
-  const playbookPlayOptions = useMemo<PlaybookPlayOption[]>(() => {
-    const seen = new Set<string>();
-    const options: PlaybookPlayOption[] = [];
-
-    for (const playbook of playbookCollections) {
-      const snapshots: PlaybookPostSnapshot[] = [
-        ...(playbook.playbookPostSnapshots ?? []),
-        ...(playbook.featuredPostSnapshots ?? []),
-      ];
-
-      for (const snapshot of snapshots) {
-        if (!snapshot.postId) continue;
-
-        const value = `${playbook.id}::${snapshot.postId}`;
-        if (seen.has(value)) continue;
-        seen.add(value);
-
-        options.push({
-          value,
-          playbookId: playbook.id,
-          playbookTitle: playbook.title,
-          sourcePostId: snapshot.postId,
-          playName: buildPlayName(snapshot),
-        });
-      }
-    }
-
-    return options.sort((a, b) => {
-      if (a.playbookTitle === b.playbookTitle) {
-        return a.playName.localeCompare(b.playName);
-      }
-      return a.playbookTitle.localeCompare(b.playbookTitle);
-    });
-  }, [playbookCollections]);
-
-  const selectedPlayOptionValue =
-    post.playbookId && post.playSourcePostId
-      ? `${post.playbookId}::${post.playSourcePostId}`
-      : "";
 
   const usersActiveGalloGoals = galloEnabled
     ? getActiveGalloGoalsForAccount(
@@ -483,11 +367,30 @@ export const PickStore: React.FC<PickStoreProps> = ({
   }, [isAllStoresShown, user?.role, user?.companyId, dispatch]);
 
   const handleCompanyGoalSelection = (goal?: CompanyGoalWithIdType) => {
-    if (!goal) return;
+    if (!goal) {
+      setSelectedCompanyGoal(undefined);
+      handleFieldChange("companyGoalId", null);
+      handleFieldChange("companyGoalDescription", null);
+      handleFieldChange("companyGoalTitle", null);
+      setPost((prev) => ({
+        ...prev,
+        playbookId: null,
+        playbookTitle: null,
+      }));
+      return;
+    }
+
     setSelectedCompanyGoal(goal);
     handleFieldChange("companyGoalId", goal.id);
     handleFieldChange("companyGoalDescription", goal.goalDescription);
     handleFieldChange("companyGoalTitle", goal.goalTitle);
+    setPost((prev) => ({
+      ...prev,
+      playbookId: goal.playbookId ?? null,
+      playbookTitle: goal.playbookTitle ?? null,
+      playSourcePostId: undefined,
+      playName: undefined,
+    }));
   };
 
   const handleGalloGoalSelection = (goal?: FireStoreGalloGoalDocType) => {
@@ -549,46 +452,26 @@ export const PickStore: React.FC<PickStoreProps> = ({
       chain,
       chainType,
     }));
-    setManualAccountAdded(true);
     setSelectedCompanyAccount(account);
   };
 
   const handleClearAccount = () => {
-    setManualAccountAdded(false);
     setPost((p) => ({
       ...p,
       account: null,
       accountNumber: "",
       city: "",
       state: "",
+      companyGoalId: null,
+      companyGoalTitle: null,
+      companyGoalDescription: null,
+      playbookId: null,
+      playbookTitle: null,
+      playSourcePostId: undefined,
+      playName: undefined,
     }));
     setSelectedCompanyAccount(null);
-    setSelectedGalloGoalId(null);
     setSelectedCompanyGoal(undefined);
-  };
-
-  const handlePlaySelection = (value: string) => {
-    if (!value) {
-      setPost((prev) => ({
-        ...prev,
-        playbookId: undefined,
-        playbookTitle: undefined,
-        playSourcePostId: undefined,
-        playName: undefined,
-      }));
-      return;
-    }
-
-    const selectedPlay = playbookPlayOptions.find((option) => option.value === value);
-    if (!selectedPlay) return;
-
-    setPost((prev) => ({
-      ...prev,
-      playbookId: selectedPlay.playbookId,
-      playbookTitle: selectedPlay.playbookTitle,
-      playSourcePostId: selectedPlay.sourcePostId,
-      playName: selectedPlay.playName,
-    }));
   };
 
   if (loadingAccounts) return <CircularProgress />;
@@ -690,42 +573,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
           )}
         </Box>
       )}
-      {post.account && (
-        <Box mt={2} className="playbook-play-selector">
-          <FormControl fullWidth size="small">
-            <InputLabel id="playbook-play-select-label">
-              Playbook Play (Optional)
-            </InputLabel>
-            <Select
-              labelId="playbook-play-select-label"
-              value={selectedPlayOptionValue}
-              label="Playbook Play (Optional)"
-              onChange={(event) => handlePlaySelection(event.target.value)}
-            >
-              <MenuItem value="">
-                <em>No play selected</em>
-              </MenuItem>
-              {playbookPlayOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  <div className="playbook-play-option-content">
-                    <span className="playbook-play-option-name">
-                      {option.playName}
-                    </span>
-                    <span className="playbook-play-option-book">
-                      {option.playbookTitle}
-                    </span>
-                  </div>
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              {loadingPlaybooks
-                ? "Loading playbook plays..."
-                : playbookPlayOptions.length > 0
-                  ? "Tag this display as a play you are running. Forecasting first is recommended but not required."
-                  : "No playbook plays are available for your company yet."}
-            </FormHelperText>
-          </FormControl>
+      {post.account && selectedCompanyGoal?.playbookTitle && (
+        <Box mt={1} className="goal-playbook-hint">
+          <Typography variant="body2">
+            This goal uses the &quot;{selectedCompanyGoal.playbookTitle}&quot;
+            {" "}playbook.
+          </Typography>
         </Box>
       )}
       {!combinedAccounts.length && nearbyStores.length > 0 && (

@@ -1,7 +1,7 @@
 // src/components/Playbooks/PlaybooksPage.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { PostWithID } from "../../utils/types";
+import { CompanyGoalWithIdType, PostWithID } from "../../utils/types";
 import PlaybookForm from "./PlaybookForm";
 import "./playbooksPage.css";
 import PlaybookDetailView from "./PlaybookDetailView";
@@ -10,22 +10,12 @@ import { useAppDispatch } from "../../utils/store";
 import {
   CreateCollectionInput,
   CollectionWithId,
-  PlaybookForecast,
-  CreatePlaybookForecastInput,
   PlaybookPostSnapshot,
   isPlaybookCollection,
 } from "../../types/library";
-import {
-  addPlaybookForecast,
-  fetchPlaybookForecasts,
-} from "./playbookForecastHelpers";
 import { buildPlaybookPostSnapshot } from "../../utils/helperFunctions/buildPlaybookPostSnapshot";
 import { selectUser } from "../../Slices/userSlice";
-import {
-  loadUserAccounts,
-  selectUserAccounts,
-  selectUserAccountsLoading,
-} from "../../Slices/userAccountsSlice";
+import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { useSelector } from "react-redux";
 import { db } from "../../utils/firebase";
 
@@ -49,95 +39,12 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
     useState<CollectionWithId | null>(null);
 
   const user = useSelector(selectUser);
-  const userAccounts = useSelector(selectUserAccounts);
-  const userAccountsLoading = useSelector(selectUserAccountsLoading);
-
-  const filteredAccounts = useMemo(() => {
-    const routeNum = user?.salesRouteNum?.toString().trim();
-
-    if (!routeNum) return userAccounts;
-
-    return userAccounts.filter((account) => {
-      const routes = account.salesRouteNums ?? [];
-      return routes.some((route) => route?.toString().trim() === routeNum);
-    });
-  }, [userAccounts, user?.salesRouteNum]);
-
-  const [playbookForecasts, setPlaybookForecasts] = useState<
-    PlaybookForecast[]
-  >([]);
-
-  const [isLoadingForecasts, setIsLoadingForecasts] = useState(false);
-
-  useEffect(() => {
-    if (!user?.companyId || !user?.salesRouteNum) return;
-    if (userAccountsLoading !== "idle") return;
-    if (userAccounts.length > 0) return;
-
-    dispatch(
-      loadUserAccounts({
-        companyId: user.companyId,
-        salesRouteNum: user.salesRouteNum,
-      }),
-    );
-  }, [
-    dispatch,
-    user?.companyId,
-    user?.salesRouteNum,
-    userAccounts.length,
-    userAccountsLoading,
-  ]);
-
-  useEffect(() => {
-    const loadForecasts = async () => {
-      if (!selectedPlaybook?.id || !user?.companyId) {
-        setPlaybookForecasts([]);
-        return;
-      }
-
-      setIsLoadingForecasts(true);
-
-      try {
-        const forecasts = await fetchPlaybookForecasts(
-          selectedPlaybook.id,
-          user.companyId,
-        );
-
-        setPlaybookForecasts(forecasts);
-      } catch (error) {
-        console.error("Error loading playbook forecasts:", error);
-        dispatch(showMessage("Could not load playbook forecast."));
-      } finally {
-        setIsLoadingForecasts(false);
-      }
-    };
-
-    loadForecasts();
-  }, [selectedPlaybook?.id, user?.companyId, dispatch]);
-
-  const handleAddPlaybookForecast = async (
-    input: CreatePlaybookForecastInput,
-  ) => {
-    try {
-      const forecastId = await addPlaybookForecast(input);
-
-      const newForecast: PlaybookForecast = {
-        id: forecastId,
-        ...input,
-        status: input.status ?? "planned",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setPlaybookForecasts((prev) => [newForecast, ...prev]);
-
-      dispatch(showMessage("Forecast added to playbook."));
-    } catch (error) {
-      console.error("Error adding playbook forecast:", error);
-      dispatch(showMessage("Could not add forecast."));
-      throw error;
-    }
-  };
+  const companyGoals = useSelector(selectAllCompanyGoals);
+  const canManagePlaybooks =
+    user?.role === "admin" ||
+    user?.role === "super-admin" ||
+    user?.role === "supervisor" ||
+    user?.role === "developer";
 
   const playbooks = useMemo(() => {
     return collections.filter(isPlaybookCollection);
@@ -147,6 +54,45 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
     if (!selectedPlaybook) return [];
     return posts.filter((post) => selectedPlaybook.postIds?.includes(post.id));
   }, [posts, selectedPlaybook]);
+
+  const getLinkedGoalsForPlaybook = (playbook: CollectionWithId) => {
+    const explicitGoalIds = new Set(playbook.goalIds ?? []);
+
+    return companyGoals.filter((goal) => {
+      if (!goal || goal.deleted) return false;
+      if (goal.playbookId && goal.playbookId === playbook.id) return true;
+      return explicitGoalIds.has(goal.id);
+    });
+  };
+
+  const linkedGoalsByPlaybookId = useMemo(() => {
+    const map = new Map<string, CompanyGoalWithIdType[]>();
+
+    playbooks.forEach((playbook) => {
+      map.set(playbook.id, getLinkedGoalsForPlaybook(playbook));
+    });
+
+    return map;
+  }, [playbooks, companyGoals]);
+
+  const selectedPlaybookUsedGoals = useMemo(() => {
+    if (!selectedPlaybook) return [];
+
+    const linkedGoals = linkedGoalsByPlaybookId.get(selectedPlaybook.id) ?? [];
+
+    return linkedGoals.map((goal) => {
+      const assignedAccountsCount = goal.accountNumbersForThisGoal?.length ?? 0;
+      const completedDisplaysCount = posts.filter(
+        (post) => post.companyGoalId === goal.id,
+      ).length;
+
+      return {
+        goal,
+        assignedAccountsCount,
+        completedDisplaysCount,
+      };
+    });
+  }, [selectedPlaybook, linkedGoalsByPlaybookId, posts]);
 
   const handleOpenPlaybook = (playbook: CollectionWithId) => {
     setSelectedPlaybook(playbook);
@@ -293,12 +239,7 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
       <PlaybookDetailView
         playbook={selectedPlaybook}
         posts={selectedPlaybookPosts}
-        accounts={filteredAccounts}
-        forecasts={playbookForecasts}
-        isLoadingForecasts={
-          isLoadingForecasts || userAccountsLoading === "pending"
-        }
-        onAddForecast={handleAddPlaybookForecast}
+        usedGoals={selectedPlaybookUsedGoals}
         onUpdatePlay={handleUpdatePlaybookPlay}
         onBack={() => setSelectedPlaybook(null)}
         onShare={() => console.log("Share playbook")}
@@ -322,13 +263,15 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          className="button-primary"
-          onClick={() => setIsFormOpen(true)}
-        >
-          Create Playbook
-        </button>
+        {canManagePlaybooks && (
+          <button
+            type="button"
+            className="button-primary"
+            onClick={() => setIsFormOpen(true)}
+          >
+            Create Playbook
+          </button>
+        )}
       </div>
 
       <div className="playbooks-info-grid">
@@ -372,13 +315,15 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
             execution guide for your team.
           </p>
 
-          <button
-            type="button"
-            className="button-primary"
-            onClick={() => setIsFormOpen(true)}
-          >
-            Create First Playbook
-          </button>
+          {canManagePlaybooks && (
+            <button
+              type="button"
+              className="button-primary"
+              onClick={() => setIsFormOpen(true)}
+            >
+              Create First Playbook
+            </button>
+          )}
         </div>
       ) : (
         <div className="playbooks-grid">
@@ -388,6 +333,8 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
             const displayCount = playbook.postIds?.length ?? 0;
             const status = playbook.playbookStatus ?? "draft";
             const audience = playbook.audience ?? "sales";
+            const linkedGoalsCount =
+              linkedGoalsByPlaybookId.get(playbook.id)?.length ?? 0;
             const coachNotes =
               playbook.coachNotes ??
               (playbook as CollectionWithId & { managerNotes?: string })
@@ -453,6 +400,18 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                         {coachNotes}
                       </p>
                     )}
+
+                    {playbook.season && (
+                      <p>
+                        <strong>Season:</strong> {playbook.season}
+                      </p>
+                    )}
+
+                    {playbook.programName && (
+                      <p>
+                        <strong>Program:</strong> {playbook.programName}
+                      </p>
+                    )}
                   </div>
 
                   <div className="playbook-stats">
@@ -463,6 +422,11 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                     <span>
                       {featuredPostIds.length} featured{" "}
                       {featuredPostIds.length === 1 ? "play" : "plays"}
+                    </span>
+
+                    <span>
+                      Used in {linkedGoalsCount} goal
+                      {linkedGoalsCount === 1 ? "" : "s"}
                     </span>
                   </div>
 

@@ -449,8 +449,8 @@ export interface PostType {
   companyGoalId?: string | null;
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
-  playbookId?: string;
-  playbookTitle?: string;
+  playbookId?: string | null;
+  playbookTitle?: string | null;
   playSourcePostId?: string;
   playName?: string;
 
@@ -489,8 +489,8 @@ export type PostInputType = {
   companyGoalId?: string | null;
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
-  playbookId?: string;
-  playbookTitle?: string;
+  playbookId?: string | null;
+  playbookTitle?: string | null;
   playSourcePostId?: string;
   playName?: string;
 
@@ -744,6 +744,10 @@ export type CompanyGoalType = {
   goalAssignments?: GoalAssignmentType[];
   perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
+  playbookId?: string | null;
+  playbookTitle?: string | null;
+  playbookInstructions?: string;
+  playbookReason?: string;
   // 🔔 NEW — notification intent (policy lives elsewhere)
   notifications?: GoalNotificationConfig;
   acknowledgments?: GoalAcknowledgment[];

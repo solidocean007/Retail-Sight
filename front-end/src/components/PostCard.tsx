@@ -465,15 +465,17 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
-          {post.playName && (
+          {(post.companyGoalTitle || post.playbookTitle || post.playName) && (
             <div className="playbook-play-banner">
-              Run the Play: {post.playName}
-              {post.playbookTitle ? ` • ${post.playbookTitle}` : ""}
-            </div>
-          )}
-          {post.companyGoalId && (
-            <div className="company-goal-banner textured-background">
-              Company Goal: {post.companyGoalTitle}
+              {post.companyGoalTitle && (
+                <div>Built for goal: {post.companyGoalTitle}</div>
+              )}
+              {post.playbookTitle && (
+                <div>Guided by playbook: {post.playbookTitle}</div>
+              )}
+              {!post.playbookTitle && post.playName && (
+                <div>Play context: {post.playName}</div>
+              )}
             </div>
           )}
           {/* {post.galloGoal?.oppId || post.oppId && post.galloGoal && ( */}
