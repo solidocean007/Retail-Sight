@@ -102,6 +102,33 @@
   display: flex;
 }
 
+.attach-playbook-panel {
+  width: 100%;
+  max-width: 600px;
+  border: 1px solid var(--card-outline);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  background: var(--dashboard-card);
+}
+
+.attach-playbook-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.attach-playbook-panel summary span {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.attach-playbook-fields {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 /* Mobile: stack and disable sticky */
 @media (max-width: 768px) {
   .goal-create-layout:has(.goal-summary-panel) {

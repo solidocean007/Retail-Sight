@@ -29,7 +29,10 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
+  query,
   serverTimestamp,
+  where,
 } from "@firebase/firestore";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
@@ -54,6 +57,7 @@ import { useFilteredAccounts } from "../../hooks/useFilteredAccounts";
 import { buildAssignments } from "./utils/buildAssignments";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { normalizeFirestoreData } from "../../utils/normalize";
+import { CollectionWithId } from "../../types/library";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -99,6 +103,11 @@ const CreateCompanyGoalView = () => {
 
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
+  const [playbooks, setPlaybooks] = useState<CollectionWithId[]>([]);
+  const [selectedPlaybookId, setSelectedPlaybookId] = useState("");
+  const [selectedPlaybookTitle, setSelectedPlaybookTitle] = useState("");
+  const [playbookReason, setPlaybookReason] = useState("");
+  const [playbookInstructions, setPlaybookInstructions] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
     "sales",
   );
@@ -327,6 +336,50 @@ const CreateCompanyGoalView = () => {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadCompanyPlaybooks() {
+      if (!companyId) return;
+
+      try {
+        const playbooksQuery = query(
+          collection(db, "collections"),
+          where("companyId", "==", companyId),
+          where("collectionType", "==", "playbook"),
+        );
+        const snap = await getDocs(playbooksQuery);
+
+        if (cancelled) return;
+
+        const normalized = snap.docs
+          .map((docSnap) => {
+            const data = docSnap.data() as Partial<CollectionWithId>;
+            return {
+              id: docSnap.id,
+              title: data.title ?? "Untitled Playbook",
+              companyId: data.companyId ?? companyId,
+              ownerId: data.ownerId ?? "",
+              postIds: data.postIds ?? [],
+              sharedWith: data.sharedWith ?? [],
+              isShareableOutsideCompany: data.isShareableOutsideCompany ?? false,
+              ...data,
+            } as CollectionWithId;
+          })
+          .filter((collectionItem) => collectionItem.playbookStatus !== "archived");
+
+        setPlaybooks(normalized);
+      } catch (error) {
+        console.error("Error loading playbooks for goal form:", error);
+      }
+    }
+
+    loadCompanyPlaybooks();
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId]);
+
+  useEffect(() => {
     if (!companyId) return;
 
     const configRef = doc(db, "companies", companyId);
@@ -388,6 +441,12 @@ const CreateCompanyGoalView = () => {
       goalValueMin: Number(goalValueMin),
       goalStartDate,
       goalEndDate,
+      playbookId: selectedPlaybookId || null,
+      playbookTitle: selectedPlaybookTitle || null,
+      playbookReason: selectedPlaybookId ? playbookReason.trim() : "",
+      playbookInstructions: selectedPlaybookId
+        ? playbookInstructions.trim()
+        : "",
       createdAt: new Date().toISOString(),
       deleted: false,
       goalAssignments: finalAssignments,
@@ -593,6 +652,64 @@ const CreateCompanyGoalView = () => {
                 placeholder="Describe what success looks like for this goal..."
               />
             </div>
+
+            <details
+              className="attach-playbook-panel"
+              open={Boolean(selectedPlaybookId)}
+            >
+              <summary>
+                Attach Playbook <span>(Optional)</span>
+              </summary>
+              <div className="attach-playbook-fields">
+                <TextField
+                  select
+                  label="Playbook"
+                  value={selectedPlaybookId}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    const match = playbooks.find((p) => p.id === nextId);
+                    setSelectedPlaybookId(nextId);
+                    setSelectedPlaybookTitle(match?.title ?? "");
+                    if (!nextId) {
+                      setPlaybookReason("");
+                      setPlaybookInstructions("");
+                    }
+                  }}
+                  size="small"
+                  fullWidth
+                  helperText="Attach one playbook guide to this goal workspace."
+                >
+                  <MenuItem value="">No playbook attached</MenuItem>
+                  {playbooks.map((playbook) => (
+                    <MenuItem key={playbook.id} value={playbook.id}>
+                      {playbook.title}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  label="Playbook Reason"
+                  value={playbookReason}
+                  onChange={(e) => setPlaybookReason(e.target.value)}
+                  size="small"
+                  fullWidth
+                  disabled={!selectedPlaybookId}
+                  placeholder="Why is this playbook the right fit for this goal?"
+                />
+
+                <TextField
+                  label="Playbook Instructions"
+                  value={playbookInstructions}
+                  onChange={(e) => setPlaybookInstructions(e.target.value)}
+                  size="small"
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  disabled={!selectedPlaybookId}
+                  placeholder="Goal-specific coaching for reps using this playbook."
+                />
+              </div>
+            </details>
 
             <Box display="flex" gap={2}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>

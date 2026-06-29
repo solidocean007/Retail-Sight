@@ -25,7 +25,7 @@ import {
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
-import { doc, getDoc } from "@firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "@firebase/firestore";
 import AccountMultiSelector from "./AccountMultiSelector";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
@@ -45,6 +45,7 @@ import {
 import { getAllCompanyAccountsFromIndexedDB } from "../../utils/database/accountStoreUtils";
 import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAccountsFromFirestore";
 import { normalizeFirestoreData } from "../../utils/normalize";
+import { CollectionWithId } from "../../types/library";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -92,6 +93,11 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
   const [_accountsLoading, setAccountsLoading] = useState(true);
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
+  const [playbooks, setPlaybooks] = useState<CollectionWithId[]>([]);
+  const [selectedPlaybookId, setSelectedPlaybookId] = useState("");
+  const [selectedPlaybookTitle, setSelectedPlaybookTitle] = useState("");
+  const [playbookReason, setPlaybookReason] = useState("");
+  const [playbookInstructions, setPlaybookInstructions] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
     "sales",
   );
@@ -150,6 +156,10 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     setPerUserQuota(goal.perUserQuota?.toString() || "1");
     setIsSupplierGoal(!!goal.supplierIdForGoal);
     setSupplierIdForGoal(goal.supplierIdForGoal || null);
+    setSelectedPlaybookId(goal.playbookId || "");
+    setSelectedPlaybookTitle(goal.playbookTitle || "");
+    setPlaybookReason(goal.playbookReason || "");
+    setPlaybookInstructions(goal.playbookInstructions || "");
   }, [goal]);
 
   const connections = useSelector(
@@ -354,6 +364,50 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
   };
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadCompanyPlaybooks() {
+      if (!companyId) return;
+
+      try {
+        const playbooksQuery = query(
+          collection(db, "collections"),
+          where("companyId", "==", companyId),
+          where("collectionType", "==", "playbook"),
+        );
+        const snap = await getDocs(playbooksQuery);
+
+        if (cancelled) return;
+
+        const normalized = snap.docs
+          .map((docSnap) => {
+            const data = docSnap.data() as Partial<CollectionWithId>;
+            return {
+              id: docSnap.id,
+              title: data.title ?? "Untitled Playbook",
+              companyId: data.companyId ?? companyId,
+              ownerId: data.ownerId ?? "",
+              postIds: data.postIds ?? [],
+              sharedWith: data.sharedWith ?? [],
+              isShareableOutsideCompany: data.isShareableOutsideCompany ?? false,
+              ...data,
+            } as CollectionWithId;
+          })
+          .filter((collectionItem) => collectionItem.playbookStatus !== "archived");
+
+        setPlaybooks(normalized);
+      } catch (error) {
+        console.error("Error loading playbooks for goal edit:", error);
+      }
+    }
+
+    loadCompanyPlaybooks();
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId]);
+
+  useEffect(() => {
     if (!companyId) return;
     const configRef = doc(db, "companies", companyId);
     getDoc(configRef)
@@ -505,6 +559,12 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
         perUserQuota: enforcePerUserQuota
           ? Math.max(1, Number(perUserQuota) || 0)
           : undefined,
+        playbookId: selectedPlaybookId || null,
+        playbookTitle: selectedPlaybookTitle || null,
+        playbookReason: selectedPlaybookId ? playbookReason.trim() : "",
+        playbookInstructions: selectedPlaybookId
+          ? playbookInstructions.trim()
+          : "",
         ...(isSupplierGoal
           ? { supplierIdForGoal }
           : { supplierIdForGoal: null }),
@@ -582,6 +642,64 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                 placeholder="Describe what success looks like for this goal..."
               />
             </div>
+
+            <details
+              className="attach-playbook-panel"
+              open={Boolean(selectedPlaybookId)}
+            >
+              <summary>
+                Attach Playbook <span>(Optional)</span>
+              </summary>
+              <div className="attach-playbook-fields">
+                <TextField
+                  select
+                  label="Playbook"
+                  value={selectedPlaybookId}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    const match = playbooks.find((p) => p.id === nextId);
+                    setSelectedPlaybookId(nextId);
+                    setSelectedPlaybookTitle(match?.title ?? "");
+                    if (!nextId) {
+                      setPlaybookReason("");
+                      setPlaybookInstructions("");
+                    }
+                  }}
+                  size="small"
+                  fullWidth
+                  helperText="Attach one playbook guide to this goal workspace."
+                >
+                  <MenuItem value="">No playbook attached</MenuItem>
+                  {playbooks.map((playbook) => (
+                    <MenuItem key={playbook.id} value={playbook.id}>
+                      {playbook.title}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  label="Playbook Reason"
+                  value={playbookReason}
+                  onChange={(e) => setPlaybookReason(e.target.value)}
+                  size="small"
+                  fullWidth
+                  disabled={!selectedPlaybookId}
+                  placeholder="Why is this playbook the right fit for this goal?"
+                />
+
+                <TextField
+                  label="Playbook Instructions"
+                  value={playbookInstructions}
+                  onChange={(e) => setPlaybookInstructions(e.target.value)}
+                  size="small"
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  disabled={!selectedPlaybookId}
+                  placeholder="Goal-specific coaching for reps using this playbook."
+                />
+              </div>
+            </details>
 
             <Box display="flex" gap={2}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
