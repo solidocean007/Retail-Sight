@@ -271,7 +271,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           {goal.targetRole} goal
         </div>
       )}
-
+  {goal.id}
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">
           <h3>Starts: {goal.goalStartDate}</h3>

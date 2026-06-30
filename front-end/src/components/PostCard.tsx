@@ -465,17 +465,9 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
-          {(post.companyGoalTitle || post.playbookTitle || post.playName) && (
-            <div className="playbook-play-banner">
-              {post.companyGoalTitle && (
-                <div>Built for goal: {post.companyGoalTitle}</div>
-              )}
-              {post.playbookTitle && (
-                <div>Guided by playbook: {post.playbookTitle}</div>
-              )}
-              {!post.playbookTitle && post.playName && (
-                <div>Play context: {post.playName}</div>
-              )}
+          {post.companyGoalTitle && (
+            <div className="company-goal-banner">
+              {post.companyGoalTitle}
             </div>
           )}
           {/* {post.galloGoal?.oppId || post.oppId && post.galloGoal && ( */}

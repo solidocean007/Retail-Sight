@@ -106,7 +106,6 @@ const CreateCompanyGoalView = () => {
   const [playbooks, setPlaybooks] = useState<CollectionWithId[]>([]);
   const [selectedPlaybookId, setSelectedPlaybookId] = useState("");
   const [selectedPlaybookTitle, setSelectedPlaybookTitle] = useState("");
-  const [playbookReason, setPlaybookReason] = useState("");
   const [playbookInstructions, setPlaybookInstructions] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
     "sales",
@@ -443,7 +442,7 @@ const CreateCompanyGoalView = () => {
       goalEndDate,
       playbookId: selectedPlaybookId || null,
       playbookTitle: selectedPlaybookTitle || null,
-      playbookReason: selectedPlaybookId ? playbookReason.trim() : "",
+      playbookReason: "",
       playbookInstructions: selectedPlaybookId
         ? playbookInstructions.trim()
         : "",
@@ -671,13 +670,12 @@ const CreateCompanyGoalView = () => {
                     setSelectedPlaybookId(nextId);
                     setSelectedPlaybookTitle(match?.title ?? "");
                     if (!nextId) {
-                      setPlaybookReason("");
                       setPlaybookInstructions("");
                     }
                   }}
                   size="small"
                   fullWidth
-                  helperText="Attach one playbook guide to this goal workspace."
+                  helperText="Attach one playbook guide to this goal."
                 >
                   <MenuItem value="">No playbook attached</MenuItem>
                   {playbooks.map((playbook) => (
@@ -688,17 +686,7 @@ const CreateCompanyGoalView = () => {
                 </TextField>
 
                 <TextField
-                  label="Playbook Reason"
-                  value={playbookReason}
-                  onChange={(e) => setPlaybookReason(e.target.value)}
-                  size="small"
-                  fullWidth
-                  disabled={!selectedPlaybookId}
-                  placeholder="Why is this playbook the right fit for this goal?"
-                />
-
-                <TextField
-                  label="Playbook Instructions"
+                  label="Goal-specific playbook note"
                   value={playbookInstructions}
                   onChange={(e) => setPlaybookInstructions(e.target.value)}
                   size="small"
@@ -706,7 +694,8 @@ const CreateCompanyGoalView = () => {
                   multiline
                   minRows={3}
                   disabled={!selectedPlaybookId}
-                  placeholder="Goal-specific coaching for reps using this playbook."
+                  helperText="Optional note for how this playbook should be used for this goal."
+                  placeholder="Optional note for reps."
                 />
               </div>
             </details>
@@ -952,6 +941,16 @@ const CreateCompanyGoalView = () => {
                     <strong>{perUserQuota}</strong> submission
                     {Number(perUserQuota) > 1 ? "s" : ""} during the goal
                     period.
+                  </Typography>
+                )}
+                {selectedPlaybookTitle && (
+                  <Typography variant="body2" mt={1}>
+                    <strong>Playbook:</strong> {selectedPlaybookTitle}
+                  </Typography>
+                )}
+                {playbookInstructions.trim() && (
+                  <Typography variant="body2" mt={0.5}>
+                    <strong>Playbook note:</strong> {playbookInstructions.trim()}
                   </Typography>
                 )}
                 <FormControlLabel

@@ -122,7 +122,7 @@ const UserCompanyGoalCard: React.FC<Props> = ({
     <div className="info-box-company-goal">
       <div className="goal-content" onClick={() => onToggleExpand(goal.id)}>
         <div className="goal-badge">{goal.targetRole}</div>
-
+    {goal.id}
         <div className="company-goal-card-start-end">
           <h3>Starts: {goal.goalStartDate}</h3>
           <h3>Ends: {goal.goalEndDate}</h3>

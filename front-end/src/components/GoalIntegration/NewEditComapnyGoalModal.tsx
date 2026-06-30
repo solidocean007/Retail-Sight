@@ -96,7 +96,6 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
   const [playbooks, setPlaybooks] = useState<CollectionWithId[]>([]);
   const [selectedPlaybookId, setSelectedPlaybookId] = useState("");
   const [selectedPlaybookTitle, setSelectedPlaybookTitle] = useState("");
-  const [playbookReason, setPlaybookReason] = useState("");
   const [playbookInstructions, setPlaybookInstructions] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
     "sales",
@@ -158,7 +157,6 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     setSupplierIdForGoal(goal.supplierIdForGoal || null);
     setSelectedPlaybookId(goal.playbookId || "");
     setSelectedPlaybookTitle(goal.playbookTitle || "");
-    setPlaybookReason(goal.playbookReason || "");
     setPlaybookInstructions(goal.playbookInstructions || "");
   }, [goal]);
 
@@ -561,7 +559,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
           : undefined,
         playbookId: selectedPlaybookId || null,
         playbookTitle: selectedPlaybookTitle || null,
-        playbookReason: selectedPlaybookId ? playbookReason.trim() : "",
+        playbookReason: "",
         playbookInstructions: selectedPlaybookId
           ? playbookInstructions.trim()
           : "",
@@ -661,13 +659,12 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                     setSelectedPlaybookId(nextId);
                     setSelectedPlaybookTitle(match?.title ?? "");
                     if (!nextId) {
-                      setPlaybookReason("");
                       setPlaybookInstructions("");
                     }
                   }}
                   size="small"
                   fullWidth
-                  helperText="Attach one playbook guide to this goal workspace."
+                  helperText="Attach one playbook guide to this goal."
                 >
                   <MenuItem value="">No playbook attached</MenuItem>
                   {playbooks.map((playbook) => (
@@ -678,17 +675,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                 </TextField>
 
                 <TextField
-                  label="Playbook Reason"
-                  value={playbookReason}
-                  onChange={(e) => setPlaybookReason(e.target.value)}
-                  size="small"
-                  fullWidth
-                  disabled={!selectedPlaybookId}
-                  placeholder="Why is this playbook the right fit for this goal?"
-                />
-
-                <TextField
-                  label="Playbook Instructions"
+                  label="Goal-specific playbook note"
                   value={playbookInstructions}
                   onChange={(e) => setPlaybookInstructions(e.target.value)}
                   size="small"
@@ -696,7 +683,8 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                   multiline
                   minRows={3}
                   disabled={!selectedPlaybookId}
-                  placeholder="Goal-specific coaching for reps using this playbook."
+                  helperText="Optional note for how this playbook should be used for this goal."
+                  placeholder="Optional note for reps."
                 />
               </div>
             </details>

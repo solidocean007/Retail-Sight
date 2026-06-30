@@ -111,6 +111,18 @@ const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
               Per-user quota: {goal.perUserQuota}
             </Typography>
           )}
+
+          {goal.playbookTitle && (
+            <Typography variant="body2" gutterBottom>
+              Playbook: <strong>{goal.playbookTitle}</strong>
+            </Typography>
+          )}
+
+          {goal.playbookInstructions?.trim() && (
+            <Typography variant="body2" gutterBottom>
+              Playbook note: {goal.playbookInstructions.trim()}
+            </Typography>
+          )}
         </div>
 
         {/* 📧 Email intent */}
