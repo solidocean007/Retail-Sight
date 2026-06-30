@@ -138,6 +138,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [nearbyStores, setNearbyStores] = useState<
     { name: string; address: string; placeId?: string }[]
   >([]);
+  // Raw Places API results stored separately so matching can retry after accounts load
+  const [fetchedPlaces, setFetchedPlaces] = useState<
+    { name: string; address: string; placeId?: string }[] | null
+  >(null);
   const [selectedNearbyStore, setSelectedNearbyStore] = useState<{
     name: string;
     address: string;
@@ -265,15 +269,23 @@ export const PickStore: React.FC<PickStoreProps> = ({
             "Content-Type": "application/json",
             "X-Goog-Api-Key": GOOGLE_KEY,
             "X-Goog-FieldMask":
-              "places.displayName,places.formattedAddress,places.id",
+              "places.displayName,places.formattedAddress,places.id,places.types,places.primaryType",
           },
           body: JSON.stringify({
-            includedTypes: ["store"],
+            includedTypes: [
+              "store",
+              "convenience_store",
+              "supermarket",
+              "grocery_store",
+              "liquor_store",
+              "department_store",
+            ],
             maxResultCount: 5,
+            rankPreference: "DISTANCE",
             locationRestriction: {
               circle: {
                 center: { latitude: lat, longitude: lng },
-                radius: 600,
+                radius: 2000,
               },
             },
           }),
@@ -281,71 +293,102 @@ export const PickStore: React.FC<PickStoreProps> = ({
       );
 
       const data = await res.json();
+      if (!res.ok) {
+        console.error("Nearby stores API error:", res.status, data?.error?.message);
+        return [];
+      }
+
       if (data?.places?.length) {
-        const formatted = data.places.map((p: any) => ({
+        return data.places.map((p: any) => ({
           name: p.displayName.text,
           address: p.formattedAddress,
           placeId: p.id,
         }));
-        if (combinedAccounts.length === 0) setNearbyStores(formatted);
-        return formatted; // at end of getNearbyStores()
       } else {
-        console.warn("No nearby stores found:", data);
+        return [];
       }
     } catch (err) {
       console.error("Failed to fetch nearby stores:", err);
+      return [];
     }
   };
 
-  // 🧭 Get user location & fetch stores
+  // 🧭 Effect 1: kick off Places fetch as soon as location is available
   useEffect(() => {
-    if (locationChecked || !navigator.geolocation) return;
+    if (locationChecked || !userLocation) return;
+    if (!GOOGLE_KEY) {
+      dispatch(showMessage("Store locator is missing the Google Maps API key."));
+      return;
+    }
     setLocationChecked(true);
+    getNearbyStores(userLocation.lat, userLocation.lng).then((places) => {
+      setFetchedPlaces(places ?? []);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation, locationChecked]);
 
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        const { latitude, longitude } = coords;
-        const places = await getNearbyStores(latitude, longitude);
-        if (!places?.length) return;
+  // 🎯 Effect 2: run account matching once BOTH places AND accounts are ready
+  // This fixes the race where Places returned before accounts finished loading.
+  useEffect(() => {
+    if (fetchedPlaces === null || loadingAccounts || post.account) return;
 
-        if (combinedAccounts.length) {
-          // try to find a close match by address
-          const bestMatch = places
-            .map((place: any) => {
-              const placeAddr = place.address.split(",")[0];
-              let best = {
-                score: 0,
-                account: null as CompanyAccountType | null,
+    if (!fetchedPlaces.length) {
+      // Places API returned nothing — leave modal open for manual selection
+      setOpenAccountModal(true);
+      return;
+    }
+
+    if (!combinedAccounts.length) {
+      // No company accounts — show raw Google places for manual account creation
+      setNearbyStores(fetchedPlaces);
+      return;
+    }
+
+    const bestMatch = fetchedPlaces
+      .map((place) => {
+        const placeAddr = place.address.split(",")[0];
+
+        let best = {
+          score: 0,
+          account: null as CompanyAccountType | null,
+          matchedAgainst: "",
+        };
+
+        for (const acc of combinedAccounts) {
+          const possibleAccountAddresses = [
+            acc.accountAddress,
+            acc.streetAddress,
+            [acc.streetAddress, acc.city, acc.state].filter(Boolean).join(", "),
+          ].filter(Boolean);
+
+          for (const accountAddr of possibleAccountAddresses) {
+            const score = fuzzyMatch(placeAddr, accountAddr);
+
+            if (score > best.score) {
+              best = {
+                score,
+                account: acc,
+                matchedAgainst: accountAddr,
               };
-              for (const acc of combinedAccounts) {
-                const score = fuzzyMatch(placeAddr, acc.accountAddress);
-                if (score > best.score) best = { score, account: acc };
-              }
-
-              return { place, ...best };
-            })
-            .sort((a: any, b: any) => b.score - a.score)[0];
-
-          if (bestMatch?.score && bestMatch.score > 0.6 && bestMatch.account) {
-            handleAccountSelect(bestMatch.account);
-            dispatch(
-              showMessage(
-                `Auto-detected store: ${bestMatch.account.accountName}`,
-              ),
-            );
-            setOpenAccountModal(false);
-          } else {
-            setOpenAccountModal(true);
+            }
           }
-        } else {
-          // ✅ No accounts available — show nearby places as options
-          setNearbyStores(places);
         }
-      },
-      (err) => console.warn("Location lookup failed:", err),
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  }, [combinedAccounts.length, locationChecked]);
+
+        return { place, ...best };
+      })
+      .sort((a, b) => b.score - a.score)[0];
+
+    if (bestMatch?.score > 0.45 && bestMatch.account) {
+      handleAccountSelect(bestMatch.account);
+      dispatch(
+        showMessage(`Auto-detected store: ${bestMatch.account.accountName}`),
+      );
+      setOpenAccountModal(false);
+    } else {
+      setOpenAccountModal(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchedPlaces, combinedAccounts, loadingAccounts, post.account]);
 
   useEffect(() => {
     const fetchAccounts = async () => {

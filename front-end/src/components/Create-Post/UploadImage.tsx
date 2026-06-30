@@ -112,7 +112,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         // 🤖 AI DETECTION (optional)
         // ---------------------------------
         if (!post.aiEnabled) {
-          console.log("🧠 AI detection disabled — skipping analyze step.");
           setPost((prev) => ({
             ...prev,
             autoDetectedBrands: [],
@@ -126,8 +125,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           const imageRef = ref(storage, path);
           await uploadBytes(imageRef, finalFile);
           const url = await getDownloadURL(imageRef);
-          console.log("✅ Uploaded for detection:", url);
-
           const detectFn = httpsCallable(functions, "detectBrands");
           const res: any = await detectFn({ imageUrl: url });
 
