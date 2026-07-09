@@ -1,5 +1,4 @@
 import {
-  Box,
   Card,
   CardContent,
   CardMedia,
@@ -22,6 +21,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAppDispatch } from "../../utils/store";
 import { CollectionType, PostWithID } from "../../utils/types";
 import "./viewCollection.css";
+import { derivePostImageVariants } from "../../utils/PostLogic/derivePostImageVariants";
 
 const ViewCollection = () => {
   const navigate = useNavigate();
@@ -31,38 +31,60 @@ const ViewCollection = () => {
   const [collectionDetails, setCollectionDetails] =
     useState<CollectionType | null>(null);
   const [posts, setPosts] = useState<PostWithID[]>([]);
-  const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>(
-    {}
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [selectedPosts, setSelectedPosts] = useState<Record<string, boolean>>(
+    {},
   );
   const [loading, setLoading] = useState(true);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     const loadCollection = async () => {
-      if (!collectionId) return navigate("/page-not-found");
+      if (!collectionId) {
+        navigate("/page-not-found");
+        return;
+      }
 
       try {
+        setLoading(true);
+
         const snap = await getDoc(doc(db, "collections", collectionId));
-        if (!snap.exists()) return navigate("/page-not-found");
+
+        if (!snap.exists()) {
+          navigate("/page-not-found");
+          return;
+        }
 
         const data = snap.data();
+
         setCollectionDetails({
-          name: data.name,
-          ownerId: data.ownerId,
-          posts: data.posts,
-          sharedWith: data.sharedWith,
-          isShareableOutsideCompany: data.isShareableOutsideCompany,
-        });
+          companyId: data.companyId ?? "",
+          name: data.name ?? "Untitled Collection",
+          description: data.description ?? "",
+          ownerId: data.ownerId ?? "",
+          posts: Array.isArray(data.posts) ? data.posts : [],
+          sharedWith: Array.isArray(data.sharedWith) ? data.sharedWith : [],
+          isShareableOutsideCompany: data.isShareableOutsideCompany ?? false,
+        } as CollectionType);
+
+        setPreviewImages(
+          Array.isArray(data.previewImages) ? data.previewImages : [],
+        );
 
         const results = await dispatch(
-          fetchPostsByCollectionId(collectionId)
+          fetchPostsByCollectionId(collectionId),
         ).unwrap();
+
         setPosts(results);
+
         setSelectedPosts(
-          results.reduce((acc, post) => ({ ...acc, [post.id]: true }), {})
+          results.reduce<Record<string, boolean>>((acc, post) => {
+            acc[post.id] = true;
+            return acc;
+          }, {}),
         );
       } catch (err) {
-        console.error(err);
+        console.error("ViewCollection failed:", err);
         navigate("/access-denied");
       } finally {
         setLoading(false);
@@ -78,14 +100,20 @@ const ViewCollection = () => {
 
   const handleCopyLink = (postId?: string) => {
     const url = postId
-      ? `${window.location.origin}/view-post/${postId}`
+      ? `${window.location.origin}/p/${postId}`
       : `${window.location.origin}/view-collection/${collectionId}`;
+
     navigator.clipboard.writeText(url);
     setSnackbarOpen(true);
   };
 
-  const formatDisplayDate = (iso: string) => {
+  const formatDisplayDate = (iso?: string) => {
+    if (!iso) return "Date unavailable";
+
     const d = new Date(iso);
+
+    if (Number.isNaN(d.getTime())) return "Date unavailable";
+
     return d.toLocaleDateString(undefined, {
       weekday: "short",
       year: "numeric",
@@ -107,11 +135,13 @@ const ViewCollection = () => {
           mb={3}
         >
           <Typography variant="h4">{collectionDetails?.name}</Typography>
+
           <Tooltip title="Copy collection link">
             <IconButton onClick={() => handleCopyLink()}>
               <ShareIcon />
             </IconButton>
           </Tooltip>
+
           <Button
             variant="outlined"
             onClick={() => navigate("/user-home-page")}
@@ -123,8 +153,8 @@ const ViewCollection = () => {
           <button
             className="back-to-dashboard-btn"
             onClick={() => {
-              navigate("/dashboard"); // ← this causes Dashboard to mount fresh
-              sessionStorage.setItem("dashboardMode", "CollectionsMode"); // optional fallback
+              sessionStorage.setItem("dashboardMode", "CollectionsMode");
+              navigate("/dashboard");
             }}
           >
             ← Back to Collections
@@ -132,56 +162,76 @@ const ViewCollection = () => {
         </Stack>
 
         <div className="posts-grid">
-          {posts.map((post) => (
-            <Card key={post.id} sx={{ position: "relative" }}>
-              <CardMedia
-                component="img"
-                height="400"
-                image={post.imageUrl}
-                alt="Post image"
-                sx={{ objectFit: "cover" }}
-              />
-              <CardContent>
-                <Stack spacing={1}>
-                  <Typography variant="h6">
-                    {post.account?.accountName || "Unknown Store"}
-                  </Typography>
-                  <Typography variant="body2">{post.description}</Typography>
-                  <Typography variant="body2">
-                    📅 {formatDisplayDate(post.displayDate)}
-                  </Typography>
-                  <Typography variant="body2">
-                    📍 {post.account?.accountAddress} {post.state}
-                  </Typography>
-                  <Typography variant="body2">
-                    🧃 Brands: {post.brands?.join(", ") || "N/A"}
-                  </Typography>
-                  <Typography variant="body2">
-                    🔖 Hashtags: {post.hashtags?.join(" ") || "None"}
-                  </Typography>
-                  <Typography variant="body2">
-                    👤 {post.postUser?.firstName} {post.postUser?.lastName}
-                  </Typography>
-                  <Typography variant="body2">
-                    📦 {post.totalCaseCount || "No"} cases
-                  </Typography>
-                </Stack>
-                <Checkbox
-                  checked={!!selectedPosts[post.id]}
-                  onChange={() => handleCheckboxChange(post.id)}
-                  sx={{ position: "absolute", top: 8, right: 8 }}
+          {posts.map((post, index) => {
+            const imageSet = derivePostImageVariants(post);
+            const cardImage =
+              imageSet.feedSrc || post.imageUrl || post.originalImageUrl || "";
+
+            return (
+              <Card key={post.id} sx={{ position: "relative" }}>
+                <CardMedia
+                  component="img"
+                  height="400"
+                  image={cardImage}
+                  alt="Post image"
+                  sx={{ objectFit: "cover" }}
                 />
-                <Tooltip title="Copy link to this post">
-                  <IconButton
-                    onClick={() => handleCopyLink(post.id)}
-                    sx={{ position: "absolute", top: 8, right: 48 }}
-                  >
-                    <ShareIcon />
-                  </IconButton>
-                </Tooltip>
-              </CardContent>
-            </Card>
-          ))}
+
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Typography variant="h6">
+                      {post.account?.accountName || "Unknown Store"}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      {post.description || "No description"}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      📅 {formatDisplayDate(post.displayDate)}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      📍 {post.account?.accountAddress || "Address unavailable"}{" "}
+                      {post.state || ""}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      🧃 Brands: {post.brands?.join(", ") || "N/A"}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      🔖 Hashtags: {post.hashtags?.join(" ") || "None"}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      👤 {post.postUser?.firstName || ""}{" "}
+                      {post.postUser?.lastName || ""}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      📦 {post.totalCaseCount || "No"} cases
+                    </Typography>
+                  </Stack>
+
+                  <Checkbox
+                    checked={!!selectedPosts[post.id]}
+                    onChange={() => handleCheckboxChange(post.id)}
+                    sx={{ position: "absolute", top: 8, right: 8 }}
+                  />
+
+                  <Tooltip title="Copy link to this post">
+                    <IconButton
+                      onClick={() => handleCopyLink(post.id)}
+                      sx={{ position: "absolute", top: 8, right: 48 }}
+                    >
+                      <ShareIcon />
+                    </IconButton>
+                  </Tooltip>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <Snackbar

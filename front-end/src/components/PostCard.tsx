@@ -321,7 +321,6 @@ const PostCard: React.FC<PostCardProps> = ({
   const createdOnBehalf =
     post.postedBy && post.postUser?.uid !== post.postedBy.uid;
 
-  // const safeImageSet: FeedImageSet = imageSet ?? {
   const safeImageSet = imageSet ?? {
     feedSrc: post.imageUrl || post.originalImageUrl || undefined,
     modalChain: [post.originalImageUrl, post.imageUrl].filter(
