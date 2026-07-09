@@ -156,7 +156,9 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
         previewImages?: ReturnType<typeof arrayUnion>;
         updatedAt?: ReturnType<typeof serverTimestamp>;
       } = {
-        posts: arrayUnion(post.id),
+        posts: arrayUnion(post.id), // Type 'FieldValue' is not assignable to type 'string[] & FieldValue'.
+  // Type 'FieldValue' is missing the following properties from type 'string[]': length, pop, push, concat, and 28 more.ts(2322)
+// types.ts(601, 3): The expected type comes from property 'posts' which is declared here on type 'Partial<CollectionType> & { posts: FieldValue; previewImages?: FieldValue | undefined; updatedAt?: FieldValue | undefined; }'
         updatedAt: serverTimestamp(),
       };
 
@@ -164,7 +166,8 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
         postThumbnailUrl &&
         (!existing.previewImages || existing.previewImages.length < 6)
       ) {
-        updates.previewImages = arrayUnion(postThumbnailUrl);
+        updates.previewImages = arrayUnion(postThumbnailUrl); // Type 'FieldValue' is not assignable to type 'string[] & FieldValue'.
+  // Type 'FieldValue' is missing the following properties from type 'string[]': length, pop, push, concat, and 28 more.ts(2322)
       }
 
       await updateDoc(collectionRef, updates);
@@ -261,7 +264,7 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
             <img src={postThumbnailUrl} alt="Post preview" />
             <div>
               <strong>{post.accountName || "Selected post"}</strong>
-              <span>{post.postUserDisplayName || post.postUserName || ""}</span>
+              <span>{post.postUserDisplayName || post.postUserName || ""}</span> // Property 'postUserDisplayName' does not exist on type 'PostWithID'. Did you mean 'postUserLastName'? Property 'postUserName' does not exist on type 'PostWithID'. Did you mean 'postUserLastName'?
             </div>
           </div>
         )}

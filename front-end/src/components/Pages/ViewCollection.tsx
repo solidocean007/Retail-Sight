@@ -17,11 +17,11 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchPostsByCollectionId } from "../../thunks/postsThunks";
 import { db } from "../../utils/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { useAppDispatch } from "../../utils/store";
 import { CollectionType, PostWithID } from "../../utils/types";
 import "./viewCollection.css";
 import { derivePostImageVariants } from "../../utils/PostLogic/derivePostImageVariants";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 const ViewCollection = () => {
   const navigate = useNavigate();
@@ -98,13 +98,33 @@ const ViewCollection = () => {
     setSelectedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const handleCopyLink = (postId?: string) => {
-    const url = postId
-      ? `${window.location.origin}/p/${postId}`
-      : `${window.location.origin}/view-collection/${collectionId}`;
+  const handleCopyLink = async (postId?: string) => {
+    try {
+      const url = postId
+        ? `${window.location.origin}/p/${postId}`
+        : `${window.location.origin}/view-collection/${collectionId}`;
 
-    navigator.clipboard.writeText(url);
-    setSnackbarOpen(true);
+      if (
+        !postId &&
+        collectionId &&
+        !collectionDetails?.isShareableOutsideCompany
+      ) {
+        await updateDoc(doc(db, "collections", collectionId), {
+          isShareableOutsideCompany: true,
+          updatedAt: serverTimestamp(),
+        });
+
+        setCollectionDetails((prev) =>
+          prev ? { ...prev, isShareableOutsideCompany: true } : prev,
+        );
+      }
+
+      await navigator.clipboard.writeText(url);
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error("Error copying share link:", error);
+      setSnackbarOpen(true);
+    }
   };
 
   const formatDisplayDate = (iso?: string) => {

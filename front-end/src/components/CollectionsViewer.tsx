@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { CircularProgress, IconButton } from "@mui/material";
 import { Delete, Share } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
 
 import CollectionForm from "./CollectionForm";
 import CustomConfirmation from "./CustomConfirmation";
@@ -71,11 +73,24 @@ const CollectionsViewer = ({
     }
   };
 
-  const handleCopyLink = (id: string) => {
-    navigator.clipboard.writeText(
-      `${window.location.origin}/view-collection/${id}`,
-    );
-    dispatch(showMessage("Link copied to clipboard"));
+  const handleCopyLink = async (id: string) => {
+    try {
+      await updateDoc(doc(db, "collections", id), {
+        isShareableOutsideCompany: true,
+        updatedAt: serverTimestamp(),
+      });
+
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/view-collection/${id}`,
+      );
+
+      dispatch(
+        showMessage("Share link copied. Anyone with the link can view it."),
+      );
+    } catch (error) {
+      console.error("Error enabling collection sharing:", error);
+      dispatch(showMessage("Could not create share link."));
+    }
   };
 
   return (
