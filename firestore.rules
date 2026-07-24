@@ -1,0 +1,233 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ==========================================================
+    // 🔹 Helper Functions
+    // ==========================================================
+    function role() {
+      return request.auth != null ? request.auth.token.role : null;
+    }
+    function isDeveloper() { return role() == "developer"; }
+    function isSuperAdmin() { return role() == "super-admin"; }
+    function isAdmin() {
+      return role() == "admin" || role() == "super-admin";
+    }
+    function isInCompany(companyId) {
+      return request.auth.token.companyId == companyId;
+    }
+    function isOwnCompany(companyId) {
+      return isAdmin() && isInCompany(companyId);
+    }
+    function isPostOwner() {
+      return request.auth.uid == resource.data.postUserId;
+    }
+    function isInSharedWithCompanies() {
+      return resource.data.migratedVisibility == "network" &&
+             (
+               resource.data.sharedWithCompanies == null ||
+               request.auth.token.companyId in resource.data.sharedWithCompanies
+             );
+    }
+
+    function isInviteReadable(inviteId) {
+  		let doc = get(/databases/$(database)/documents/pendingInvites/$(inviteId));
+  		return doc.data.status == "pending" ||
+         doc.data.status == "email-queued";
+		}
+    // ==========================================================
+    // 🔹 Billing Logs (System-Generated)
+    // ==========================================================
+    match /billingLogs/{logId} {
+      allow read: if request.auth != null && hasDeveloperAccess();
+      allow write: if false; // system-only writes
+      function hasDeveloperAccess() {
+        return isDeveloper() || isSuperAdmin();
+      }
+    }
+    // ==========================================================
+    // 🔹 Developer Data
+    // ==========================================================
+    match /developerData/{docId} {
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "developer" &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == "displaygram.com";
+    }
+    // ==========================================================
+    // 🔹 Pending Users
+    // ==========================================================
+    match /pendingUsers/{id} {
+      allow read, write: if isAdmin(); // Only admins can manage pending users
+    }
+    // ==========================================================
+    // 🔹 Company Invites
+    // ==========================================================
+    match /companies/{companyId}/invites/{inviteId} {
+      allow get: if resource.data.status == "pending";
+    }
+    // ==========================================================
+    // 🔹 Developer/System Notifications (global)
+    // ==========================================================
+    match /notifications/{notifId} {
+      allow get, list: if request.auth != null;
+      allow create, update, delete: if isDeveloper();
+    }
+    // ==========================================================
+    // 🔹 User Notifications
+    // ==========================================================
+    match /users/{userId}/notifications/{notifId} {
+      allow get, list: if request.auth.uid == userId;
+      // only Cloud Functions should create these
+      allow create: if false;
+      // user can mark-as-read
+      allow update: if request.auth.uid == userId &&
+  			request.resource.data.diff(resource.data).changedKeys().hasOnly(["readBy"]);
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // ==========================================================
+    // 🔹 User Notification Settings
+    // ==========================================================
+    match /users/{userId}/notificationSettings/{settingsId} {
+      // READ: Only the owner can read their settings
+      allow get, list: if request.auth.uid == userId;
+      // CREATE/UPDATE: The user can create or update their own settings
+      allow create, update: if request.auth.uid == userId;
+      // DELETE: optional, but allow user to remove settings if needed
+      allow delete: if request.auth.uid == userId;
+    }
+    // ==========================================================
+    // 🔹 FCM Tokens
+    // ==========================================================
+    match /users/{userId}/fcmTokens/{tokenId} {
+      allow read, create, delete: if request.auth.uid == userId;
+      allow update: if false;
+    }
+    // ==========================================================
+    // 🔹 Users
+    // ==========================================================
+    match /users/{userId} {
+      // READ: Only themselves
+      allow read: if request.auth.uid == userId;
+      // UPDATE: User can update self, but not role or companyId
+      allow update: if request.auth.uid == userId &&
+                    !("role" in request.resource.data) &&
+                    !("companyId" in request.resource.data);
+      // UPDATE: Admins can soft-delete users (status only)
+      allow update: if isAdmin() &&
+                    isOwnCompany(get(/databases/$(database)/documents/users/$(userId)).data.companyId) &&
+                    request.resource.data.keys().hasOnly(["status"]) &&
+                    request.resource.data.status == "deleted";
+      // UPDATE: Developer override
+      allow update: if isDeveloper();
+      // DELETE: Developer or super-admin of same company
+      allow delete: if isDeveloper() ||
+                    (isSuperAdmin() &&
+                     isOwnCompany(get(/databases/$(database)/documents/users/$(userId)).data.companyId));
+    }
+    // ==========================================================
+    // 🔹 Posts
+    // ==========================================================
+    match /posts/{postId} {
+      allow read: if resource.data.visibility == "public" ||
+                   resource.data.migratedVisibility in ["network", "companyOnly"] ||
+                   isInCompany(resource.data.companyId) ||
+                   isInSharedWithCompanies();
+      allow create: if isInCompany(request.resource.data.companyId);
+      allow update, delete: if isOwnCompany(resource.data.companyId) || isPostOwner();
+    }
+    // ==========================================================
+    // 🔹 Comments
+    // ==========================================================
+    match /comments/{commentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+                    request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth.uid == resource.data.userId ||
+                    isOwnCompany(resource.data.companyId);
+      allow update: if request.auth != null &&
+                    request.resource.data.diff(resource.data)
+                      .affectedKeys().hasOnly(["likes"]);
+    }
+    // ==========================================================
+    // 🔹 Collections
+    // ==========================================================
+    match /collections/{collectionId} {
+  allow get: if resource.data.isShareableOutsideCompany == true;
+  allow get, list: if request.auth != null;
+  allow create, update, delete: if request.auth != null;
+}
+    // ==========================================================
+    // 🔹 App Config & API Keys
+    // ==========================================================
+    match /appConfig/{docId} {
+      allow read: if true;
+    }
+    match /apiKeys/{companyId} {
+      allow read, write: if false; // Fully blocked to clients
+    }
+    // ==========================================================
+    // 🔹 Companies
+    // ==========================================================
+    match /companies/{companyId} {
+      allow read: if isInCompany(companyId);
+    // --- Protect billing & addons ---
+    allow update: if isOwnCompany(companyId) &&
+      request.resource.data.keys().hasOnly([
+        // Allowed fields the client may modify:
+        "name",
+        "address",
+        "status",
+        "phone",
+        "logoUrl",
+        "updatedAt"
+      ]);
+      // --- Developer or Super Admin override ---
+      allow update: if isDeveloper() || isSuperAdmin();
+      // --- Block new company creation or deletion by clients ---
+      allow create, delete: if false;
+      // --- Backend-only override (Cloud Functions) ---
+      allow write: if request.auth.token.admin == true; // e.g., service account
+    }
+
+    // ==========================================================
+		// 🔹 Pricing Plans (public metadata)
+		// ==========================================================
+		match /plans/{planId} {
+  		// READ: Allow all authenticated users to read plan definitions (safe fields only)
+  			allow get, list: if request.auth != null;
+  		// WRITE: Only developers or service accounts
+  			allow write: if isDeveloper();
+		}
+    // ==========================================================
+		// 🔹 Pending Invites (New Company Invites Flow)
+		// ==========================================================
+		match /pendingInvites/{inviteId} {
+  			allow get: if true;
+  			allow write: if false;
+		}
+
+    match /accessRequests/{id} {
+ 		 allow read: if true;
+		}
+
+    // ==========================================================
+    // 🔹 Activity Events (client writes, CF consumes)
+    // ==========================================================
+    match /activityEvents/{eventId} {
+      // Anyone authenticated can read (harmless)
+      allow read: if request.auth != null;
+      // Only the actor listed in the event may create the event
+      allow create: if request.auth != null &&
+                     request.resource.data.actorUserId == request.auth.uid;
+      // No client-side update or delete
+      allow update, delete: if false;
+    }
+
+    // ==========================================================
+    // TEMPORARY CATCH-ALL (allows all authenticated access)
+    // ==========================================================
+    match /{path=**} {
+      allow read, write: if request.auth != null;
+    }
+    }
+}
