@@ -79,7 +79,6 @@ export async function getLocationsFromIndexedDB(): Promise<{
         const state = location.state;
         if (state && Array.isArray(location.cities)) {
           acc[state] = location.cities;
-        } else {
         }
         return acc;
       }, {});

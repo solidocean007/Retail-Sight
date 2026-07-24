@@ -8,7 +8,7 @@ import {
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { db } from "../firebase";
-import { setDoc, getDoc, doc, collection, serverTimestamp } from "firebase/firestore";
+import { setDoc, getDoc, doc, collection } from "firebase/firestore";
 import { UserType } from "../types";
 
 interface FirebaseError extends Error {
@@ -145,6 +145,22 @@ export const deprecatedHandleLogin = async (
 };
 
 export const handleLogout = async () => {
+  try {
+    // Remove this device's FCM token from the outgoing account BEFORE
+    // signOut (Firestore rules require auth for the delete). Prevents
+    // pushes for account A still arriving after switching to account B.
+    const uid = auth.currentUser?.uid;
+    if (uid) {
+      const { unregisterCurrentDeviceToken } = await import(
+        "../../firebase/messaging"
+      );
+      await unregisterCurrentDeviceToken(uid);
+    }
+  } catch (error) {
+    // Never block logout on push cleanup
+    console.warn("FCM token cleanup on logout failed:", error);
+  }
+
   try {
     await signOut(auth);
   } catch (error) {

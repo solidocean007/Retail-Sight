@@ -86,7 +86,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       if (instanceRef.current) {
         try {
           instanceRef.current.teardown();
-        } catch {}
+        } catch {
+          // ignore teardown errors — instance may already be destroyed
+        }
         instanceRef.current = null;
       }
     }

@@ -128,6 +128,15 @@ export const onUserNotificationCreated = onDocumentCreated(
       android: {
         priority: "high" as const,
       },
+      // Web push delivery hints. NOTE: android.priority does NOT apply to
+      // web push — Urgency is what keeps Chrome/Android from deferring
+      // delivery of data-only messages while the device is dozing.
+      webpush: {
+        headers: {
+          Urgency: "high",
+          TTL: "86400", // give up after 24h instead of queueing stale pushes
+        },
+      },
     };
 
     logger.info("🧾 Sending multicast push (data-only)", {

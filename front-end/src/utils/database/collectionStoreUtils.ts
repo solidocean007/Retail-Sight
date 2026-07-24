@@ -24,7 +24,7 @@ export async function addPostToCollectionInDB(
   const tx = db.transaction("collections", "readwrite");
   const store = tx.objectStore("collections");
 
-  let collection = await new Promise<CollectionWithId | undefined>(
+  const collection = await new Promise<CollectionWithId | undefined>(
     (resolve, reject) => {
       const request = store.get(collectionId);
       request.onsuccess = () => resolve(request.result as CollectionWithId);
@@ -51,7 +51,7 @@ export async function removePostFromCollectionInDB(
   const tx = db.transaction("collections", "readwrite");
   const store = tx.objectStore("collections");
 
-  let collection = await new Promise<CollectionWithId | undefined>(
+  const collection = await new Promise<CollectionWithId | undefined>(
     (resolve, reject) => {
       const request = store.get(collectionId);
       request.onsuccess = () => resolve(request.result as CollectionWithId);

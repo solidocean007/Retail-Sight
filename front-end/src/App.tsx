@@ -11,7 +11,12 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "./App.css";
 
 import { RootState, useAppDispatch } from "./utils/store";
-import { hideMessage, nextMessage } from "./Slices/snackbarSlice";
+import { hideMessage, nextMessage, showMessage } from "./Slices/snackbarSlice";
+import {
+  registerFcmToken,
+  subscribeToForegroundMessages,
+  type PushPayload,
+} from "./firebase/messaging";
 import { setDarkMode } from "./Slices/themeSlice";
 
 import { getTheme } from "./theme";
@@ -108,6 +113,40 @@ function AppContent() {
   useEffect(() => {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
+
+  // Keep this device's FCM token fresh + registered under the
+  // CURRENT account. Runs only when permission was already granted
+  // (never prompts). Fixes: stale tokens after FCM rotation, and
+  // tokens not following the user across account switches.
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    if (typeof Notification === "undefined") return;
+    if (Notification.permission !== "granted") return;
+
+    registerFcmToken().catch((err) =>
+      console.warn("Silent FCM re-register failed:", err),
+    );
+  }, [currentUser?.uid]);
+
+  // Foreground push messages: FCM data-only messages received while
+  // the app is open fire here (the service worker only handles
+  // background pushes). Without this they were silently dropped.
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+
+    const unsubscribe = subscribeToForegroundMessages((payload: PushPayload) => {
+      const d = payload?.data || {};
+      const title = payload?.notification?.title || d.title || "";
+      const body = payload?.notification?.body || d.body || "";
+      const text = [title, body].filter(Boolean).join(" — ");
+
+      if (text) dispatch(showMessage(text));
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [currentUser?.uid, dispatch]);
 
   // Push notification click tracking
   useEffect(() => {

@@ -10,15 +10,20 @@ interface ProductFormProps {
   editMode?: boolean;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({
-  isOpen,
+// Wrapper owns the early return so the inner component's hooks are
+// never called conditionally (react-hooks/rules-of-hooks). Unmounting
+// when closed also preserves the reset-state-on-reopen behavior.
+const ProductForm: React.FC<ProductFormProps> = (props) => {
+  if (!props.isOpen) return null;
+  return <ProductFormContent {...props} />;
+};
+
+const ProductFormContent: React.FC<ProductFormProps> = ({
   initialData,
   onSubmit,
   onCancel,
   editMode,
 }) => {
-  if (!isOpen) return null;
-
   const [formData, setFormData] = useState<ProductType>(
     initialData || {
       companyProductId: "",

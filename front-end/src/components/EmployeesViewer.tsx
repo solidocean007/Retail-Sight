@@ -210,7 +210,7 @@ const EmployeesViewer = () => {
       // Optionally remove from IndexedDB or local state
       const updatedUsers = localUsers.map((u) =>
         u.uid === userToDelete.uid
-          ? { ...u, status: "inactive" as "inactive" }
+          ? { ...u, status: "inactive" as const }
           : u
       );
       dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
