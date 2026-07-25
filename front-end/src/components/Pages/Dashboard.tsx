@@ -9,7 +9,6 @@ import { DashboardHelmet } from "../../utils/helmetConfigurations.tsx";
 import { AppBar, Box, IconButton, Toolbar, useMediaQuery } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import UserProfileViewer from "../UserProfileViewer.tsx";
-import CollectionsViewer from "../CollectionsViewer.tsx";
 import TutorialViewer from "../TutorialViewer.tsx";
 import AccountManager from "../AccountManagement/AccountsManager.tsx";
 import GoalManagerLayout from "../GoalIntegration/GoalManagerLayout.tsx";

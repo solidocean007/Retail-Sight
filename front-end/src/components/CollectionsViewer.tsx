@@ -9,11 +9,8 @@ import { db } from "../utils/firebase";
 
 import CollectionForm from "./CollectionForm";
 import CustomConfirmation from "./CustomConfirmation";
-import {
-  CollectionWithId,
-  CreateCollectionInput,
-  DashboardModeType,
-} from "../utils/types";
+import { DashboardModeType } from "../utils/types";
+import { CollectionWithId, CreateCollectionInput } from "../types/library";
 import { showMessage } from "../Slices/snackbarSlice";
 import "./collectionsViewer.css";
 

@@ -18,7 +18,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { fetchPostsByCollectionId } from "../../thunks/postsThunks";
 import { db } from "../../utils/firebase";
 import { useAppDispatch } from "../../utils/store";
-import { CollectionType, PostWithID } from "../../utils/types";
+import { PostWithID } from "../../utils/types";
+import { CollectionType } from "../../types/library";
 import "./viewCollection.css";
 import { derivePostImageVariants } from "../../utils/PostLogic/derivePostImageVariants";
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
@@ -58,11 +59,17 @@ const ViewCollection = () => {
         const data = snap.data();
 
         setCollectionDetails({
+          id: collectionId,
           companyId: data.companyId ?? "",
-          name: data.name ?? "Untitled Collection",
+          // Older docs stored these as `name` / `posts`
+          title: data.title ?? data.name ?? "Untitled Collection",
           description: data.description ?? "",
           ownerId: data.ownerId ?? "",
-          posts: Array.isArray(data.posts) ? data.posts : [],
+          postIds: Array.isArray(data.postIds)
+            ? data.postIds
+            : Array.isArray(data.posts)
+              ? data.posts
+              : [],
           sharedWith: Array.isArray(data.sharedWith) ? data.sharedWith : [],
           isShareableOutsideCompany: data.isShareableOutsideCompany ?? false,
         } as CollectionType);
@@ -154,7 +161,7 @@ const ViewCollection = () => {
           spacing={2}
           mb={3}
         >
-          <Typography variant="h4">{collectionDetails?.name}</Typography>
+          <Typography variant="h4">{collectionDetails?.title}</Typography>
 
           <Tooltip title="Copy collection link">
             <IconButton onClick={() => handleCopyLink()}>

@@ -1,7 +1,4 @@
-import {
-  CollectionType,
-  CollectionWithId,
-} from "../types";
+import { CollectionType, CollectionWithId } from "../../types/library";
 import { openDB } from "./indexedDBOpen";
 
 export async function addOrUpdateCollection(collection: CollectionType) {
@@ -32,8 +29,8 @@ export async function addPostToCollectionInDB(
     },
   );
 
-  if (collection && !collection.posts.includes(postId)) {
-    collection.posts.push(postId);
+  if (collection && !collection.postIds.includes(postId)) {
+    collection.postIds.push(postId);
     store.put(collection);
   }
 
@@ -60,9 +57,9 @@ export async function removePostFromCollectionInDB(
   );
 
   if (collection) {
-    const index = collection.posts.indexOf(postId);
+    const index = collection.postIds.indexOf(postId);
     if (index > -1) {
-      collection.posts.splice(index, 1);
+      collection.postIds.splice(index, 1);
       store.put(collection);
     }
   }

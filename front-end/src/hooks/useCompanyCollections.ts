@@ -13,11 +13,8 @@ import {
 import { useDispatch } from "react-redux";
 import { db } from "../utils/firebase";
 import { showMessage } from "../Slices/snackbarSlice";
-import {
-  CollectionWithId,
-  CreateCollectionInput,
-  UserType,
-} from "../utils/types";
+import { UserType } from "../utils/types";
+import { CollectionWithId, CreateCollectionInput } from "../types/library";
 import {
   addOrUpdateCollection,
   deleteUserCreatedCollectionFromIndexedDB,
@@ -52,7 +49,8 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
 
         // playbook fields
         playbookStatus: collection.playbookStatus ?? null,
-        managerNotes: collection.managerNotes ?? "",
+        // `managerNotes` is the legacy name for `coachNotes`
+        coachNotes: collection.coachNotes ?? collection.managerNotes ?? "",
         whenToUse: collection.whenToUse ?? "",
         executionGoal: collection.executionGoal ?? "",
         audience: collection.audience ?? "all",
@@ -96,7 +94,8 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
 
           // playbook fields
           playbookStatus: data.playbookStatus ?? null,
-          managerNotes: data.managerNotes ?? "",
+          // `managerNotes` is the legacy name for `coachNotes`
+          coachNotes: data.coachNotes ?? data.managerNotes ?? "",
           whenToUse: data.whenToUse ?? "",
           executionGoal: data.executionGoal ?? "",
           audience: data.audience ?? "all",
@@ -140,7 +139,7 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
 
         collectionType: newCollection.collectionType ?? "collection",
         playbookStatus: newCollection.playbookStatus ?? null,
-        managerNotes: newCollection.managerNotes ?? "",
+        coachNotes: newCollection.coachNotes ?? "",
         whenToUse: newCollection.whenToUse ?? "",
         executionGoal: newCollection.executionGoal ?? "",
         audience: newCollection.audience ?? "all",
