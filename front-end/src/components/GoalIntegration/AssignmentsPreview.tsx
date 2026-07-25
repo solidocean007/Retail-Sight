@@ -35,7 +35,14 @@ interface AssignmentsPreviewProps {
   assigneeType: "sales" | "supervisor"; // ✅ new
 }
 
-const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
+// Wrapper owns the early return so the inner component's hooks are
+// never called conditionally (react-hooks/rules-of-hooks).
+const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = (props) => {
+  if (!props.assignments.length) return null;
+  return <AssignmentsPreviewContent {...props} />;
+};
+
+const AssignmentsPreviewContent: React.FC<AssignmentsPreviewProps> = ({
   assignments,
   accounts,
   users,
@@ -44,7 +51,6 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
   filteredAccounts,
   assigneeType,
 }) => {
-  if (!assignments.length) return null;
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
 

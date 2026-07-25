@@ -30,6 +30,7 @@ import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
 import { markNotificationReadCallable } from "./notifications/markNotificationReadCallable";
+import { trackNotificationClickCallable } from "./notifications/trackNotificationClickCallable";
 import { developerRecomputeCompanyCounts } from "./billing/developerRecomputeCompanyCounts";
 import { adminUpdateCompanyUser } from "./adminUpdateCompanyUser";
 import {
@@ -184,6 +185,7 @@ export {
   getNotificationAnalytics,
   trackEmailClick,
   markNotificationReadCallable,
+  trackNotificationClickCallable,
 
   // products
   uploadCompanyProducts,

@@ -1,5 +1,10 @@
 // front-end/src/firebase/messaging.ts
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import {
+  getMessaging,
+  getToken,
+  deleteToken,
+  type Messaging,
+} from "firebase/messaging";
 import {
   doc,
   setDoc,
@@ -14,8 +19,18 @@ import { app, auth, db } from "../utils/firebase";
 const VAPID_KEY =
   "BJiNiXm0teEtgSz77WuMwg9LtT84oOCqQpKTd1B4375arXLaKh__2vT2Mod2ZSSl3vGQoPrCUBgqSnYg6RbbjGc";
 
-// Messaging instance
-export const messaging = getMessaging(app);
+// Messaging instance — null on browsers that don't support FCM
+// (e.g. iOS Safari not installed as PWA). Guarded so importing this
+// module never crashes the app.
+function initMessaging(): Messaging | null {
+  try {
+    return getMessaging(app);
+  } catch (err) {
+    console.warn("Firebase Messaging unsupported in this browser:", err);
+    return null;
+  }
+}
+export const messaging = initMessaging();
 
 // --------------------------------------------
 // Detect iOS Standalone (iOS Safari PWA)
@@ -25,7 +40,7 @@ export function isIOSPWA(): boolean {
     /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) &&
     (window.matchMedia("(display-mode: standalone)").matches ||
       // iOS < 13 fallback
-      (window.navigator as any).standalone === true)
+      window.navigator.standalone === true)
   );
 }
 
@@ -83,7 +98,7 @@ export function isIOS(): boolean {
 export function isStandalone(): boolean {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as any).standalone === true
+    window.navigator.standalone === true
   ); // iOS < 13
 }
 
@@ -98,7 +113,7 @@ export async function registerFcmToken(): Promise<string | null> {
 
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
+      window.navigator.standalone === true;
 
     // iOS Safari (NOT standalone/PWA) → allow app to load but disable push
     if (iOS && !standalone) {
@@ -117,7 +132,14 @@ export async function registerFcmToken(): Promise<string | null> {
     // ─────────────────────────────────────────────
     // GET FCM TOKEN
     // ─────────────────────────────────────────────
-    const reg = await navigator.serviceWorker.ready;
+    if (!messaging) {
+      console.warn("Messaging unsupported — cannot register FCM token.");
+      return null;
+    }
+
+    // NOTE: use getRegistration(), not .ready — .ready never resolves
+    // if SW registration failed/was skipped, which would hang forever.
+    const reg = await navigator.serviceWorker.getRegistration();
 
     if (!reg) {
       console.error("Expected service-worker.js not registered");
@@ -146,6 +168,38 @@ export async function registerFcmToken(): Promise<string | null> {
   } catch (err) {
     console.error("registerFcmToken failed:", err);
     return null;
+  }
+}
+
+// --------------------------------------------
+// Unregister this device's token (call BEFORE signOut,
+// while Firestore rules still allow the delete)
+// --------------------------------------------
+export async function unregisterCurrentDeviceToken(uid: string) {
+  try {
+    if (!uid || !messaging) return;
+    if (!("serviceWorker" in navigator)) return;
+    if (typeof Notification === "undefined") return;
+    if (Notification.permission !== "granted") return;
+
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) return;
+
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: reg,
+    });
+
+    if (token) {
+      // Remove Firestore doc for the signed-out account…
+      await deleteFcmToken(uid, token);
+      // …and invalidate the browser-side token so the next login
+      // mints a fresh one instead of resurrecting this one.
+      await deleteToken(messaging).catch(() => {});
+    }
+  } catch (err) {
+    // Never block logout on push cleanup
+    console.warn("unregisterCurrentDeviceToken failed:", err);
   }
 }
 
@@ -181,8 +235,28 @@ export async function hasTokenForThisDevice(uid: string): Promise<boolean> {
 // --------------------------------------------
 // On-Message Listener (foreground notifications)
 // --------------------------------------------
-export function subscribeToForegroundMessages(cb: (payload: any) => void) {
-  return onMessage(messaging, cb);
+// Shape of the raw FCM payload the service worker forwards to the page
+export type PushPayload = {
+  data?: Record<string, string>;
+  notification?: { title?: string; body?: string };
+};
+
+// The service worker forwards pushes to visible windows as
+// FOREGROUND_PUSH messages (we no longer use the Firebase SDK inside
+// the SW, so firebase/messaging onMessage would never fire).
+export function subscribeToForegroundMessages(
+  cb: (payload: PushPayload) => void,
+) {
+  if (!("serviceWorker" in navigator)) return () => {};
+
+  const handler = (event: MessageEvent) => {
+    if (event.data?.type === "FOREGROUND_PUSH") {
+      cb(event.data.payload);
+    }
+  };
+
+  navigator.serviceWorker.addEventListener("message", handler);
+  return () => navigator.serviceWorker.removeEventListener("message", handler);
 }
 
 // --------------------------------------------
@@ -196,7 +270,9 @@ export function handleTokenRefresh(uid: string) {
     console.log("Service worker updated — refreshing token…");
 
     try {
-      const reg = await navigator.serviceWorker.ready;
+      if (!messaging) return;
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return;
       const newToken = await getToken(messaging, {
         vapidKey: VAPID_KEY,
         serviceWorkerRegistration: reg,
@@ -211,12 +287,8 @@ export function handleTokenRefresh(uid: string) {
   });
 }
 
-// Expose for console testing
-// @ts-ignore
+// Expose for console testing (typed in src/global.d.ts)
 window.registerFcmToken = registerFcmToken;
-// @ts-ignore
 window.requestNotificationPermission = requestNotificationPermission;
-// @ts-ignore
 window.subscribeToForegroundMessages = subscribeToForegroundMessages;
-// @ts-ignore
 window.deleteFcmToken = deleteFcmToken;

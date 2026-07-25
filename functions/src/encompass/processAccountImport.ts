@@ -258,6 +258,9 @@ export const processAccountImport = onRequest(
 
       await db.collection("accountImports").add({
         companyId,
+        provider,
+        source: "sendgrid-inbound-email",
+        sourceDomain: domain,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         status: "pending",
         totalChanges: diffs.length,
@@ -265,6 +268,8 @@ export const processAccountImport = onRequest(
         changes: diffs,
         autoApplyAfter: Date.now() + 1000 * 60 * 60 * autoApplyDelayHours,
       });
+
+      // TODO: Notify company admins when account import changes are found.
 
       console.log("Account changes found:", diffs.length);
 

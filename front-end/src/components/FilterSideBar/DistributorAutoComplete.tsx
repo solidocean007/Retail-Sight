@@ -14,7 +14,7 @@ interface DistributorAutocompleteProps {
   onDistributorChange: (v: DistributorOption | null) => void;
 }
 
-const normalize = (str: string) => str.toLowerCase().replace(/[\s\-]+/g, "");
+const normalize = (str: string) => str.toLowerCase().replace(/[\s-]+/g, "");
 
 const DistributorAutoComplete: React.FC<DistributorAutocompleteProps> = ({
   options,

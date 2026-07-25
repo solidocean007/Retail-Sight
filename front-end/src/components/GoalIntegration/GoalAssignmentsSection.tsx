@@ -23,7 +23,14 @@ interface Props {
   assigneeType: "sales" | "supervisor";
 }
 
-const GoalAssignmentsSection: React.FC<Props> = ({
+// Wrapper owns the early return so the inner component's hooks are
+// never called conditionally (react-hooks/rules-of-hooks).
+const GoalAssignmentsSection: React.FC<Props> = (props) => {
+  if (props.readyForCreation == false) return null;
+  return <GoalAssignmentsSectionContent {...props} />;
+};
+
+const GoalAssignmentsSectionContent: React.FC<Props> = ({
   readyForCreation,
   accountScope,
   goalAssignments,
@@ -33,7 +40,6 @@ const GoalAssignmentsSection: React.FC<Props> = ({
   companyUsers,
   assigneeType,
 }) => {
-  if (readyForCreation == false) return;
   const uniqueAccountsCount = new Set(
     goalAssignments.map((g) => g.accountNumber)
   ).size;

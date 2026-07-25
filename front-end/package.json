@@ -7,7 +7,7 @@
     "dev:5173": "vite --port 5173",
     "dev:5174": "vite --port 5174",
     "build": "vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -8,6 +8,10 @@ const OFFLINE_FALLBACK_PAGE = "/offline.html";
 // 1. INSTALL — cache offline fallback
 // -------------------------------------------------------
 self.addEventListener("install", (event) => {
+  // Activate immediately instead of waiting for all tabs/PWA instances
+  // to close — critical for push fixes to reach devices on next refresh.
+  self.skipWaiting();
+
   event.waitUntil(
     caches.open(OFFLINE_CACHE_NAME).then((cache) => cache.addAll([
       OFFLINE_FALLBACK_PAGE
@@ -102,81 +106,96 @@ self.addEventListener("activate", (event) => {
 
 
 // -------------------------------------------------------
-// 4. FIREBASE MESSAGING SETUP
+// 4. PUSH HANDLER (raw Web Push — no Firebase SDK needed)
 // -------------------------------------------------------
-try {
-  importScripts(
-    "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
+// FCM data-only messages arrive here as a JSON payload:
+//   { data: { title, body, link, notificationId, ... }, from, ... }
+// We handle the push event directly instead of importing
+// firebase-messaging-compat from a CDN. This removes the CDN /
+// version-mismatch failure mode that produced Chrome's blank
+// fallback notification ("site updated in background") with no
+// click data.
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (err) {
+    console.error("SW push: could not parse payload", err);
+  }
+
+  const d = payload.data || {};
+  const n = payload.notification || {};
+
+  const title = n.title || d.title || "Displaygram";
+  const body = n.body || d.body || "";
+  const link = d.link || "/notifications";
+
+  event.waitUntil(
+    (async () => {
+      // If the app is open and visible, hand the message to the page
+      // (in-app toast) instead of a system notification. Skipping
+      // showNotification is allowed when a visible client exists —
+      // Chrome only shows its blank fallback when nothing is shown
+      // AND no window is visible.
+      const clientsArr = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      const visibleClient = clientsArr.find(
+        (c) =>
+          c.visibilityState === "visible" &&
+          c.url.includes(self.location.origin)
+      );
+
+      if (visibleClient) {
+        visibleClient.postMessage({ type: "FOREGROUND_PUSH", payload });
+        return;
+      }
+
+      // Otherwise ALWAYS show a notification: the push subscription is
+      // userVisibleOnly, so skipping showNotification triggers the
+      // browser's generic blank fallback.
+      return self.registration.showNotification(title, {
+        body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        // tag dedupes if FCM redelivers the same notification
+        tag: d.notificationId || undefined,
+        data: {
+          link,
+          notificationId: d.notificationId || "",
+          type: d.type || "",
+          postId: d.postId || "",
+          goalId: d.goalId || "",
+        },
+      });
+    })()
   );
-  importScripts(
-    "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"
-  );
-} catch (err) {
-  console.error("SW importScripts error:", err);
-}
-
-// Initialize Firebase in SW
-if (self.firebase?.initializeApp) {
-  self.firebase.initializeApp({
-    apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
-    authDomain: "retail-sight.firebaseapp.com",
-    projectId: "retail-sight",
-    messagingSenderId: "484872165965",
-    appId: "1:484872165965:web:feb232cfe100a4b9105a04",
-  });
-
-  const messaging = self.firebase.messaging();
-
-  // -------------------------------------------------------
-  // 5. BACKGROUND MESSAGE HANDLER
-  // -------------------------------------------------------
- messaging.onBackgroundMessage((payload) => {
-  const title =
-    payload.notification?.title ||
-    payload.data?.title ||
-    "New Notification";
-
-  const body =
-    payload.notification?.body ||
-    payload.data?.body ||
-    "";
-
-  const link = payload.data?.link || "/notifications";
-
-  self.registration.showNotification(title, {
-    body,
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
-    data: { link },
-  });
 });
 
+// -------------------------------------------------------
+// 5. NOTIFICATION CLICK HANDLING
+// -------------------------------------------------------
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
 
-  // -------------------------------------------------------
-  // 6. NOTIFICATION CLICK HANDLING
-  // -------------------------------------------------------
-  self.addEventListener("notificationclick", (event) => {
-    event.notification.close();
+  const target = event.notification.data?.link || "/notifications";
 
-    const target = event.notification.data?.link || "/notifications";
-
-    event.waitUntil(
-      self.clients
-        .matchAll({ type: "window", includeUncontrolled: true })
-        .then((clientsArr) => {
-          for (const client of clientsArr) {
-            if (client.url.includes(self.location.origin)) {
-              client.postMessage({
-                type: "NOTIFICATION_CLICK",
-                data: event.notification.data,
-              });
-              return client.focus();
-            }
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientsArr) => {
+        for (const client of clientsArr) {
+          if (client.url.includes(self.location.origin)) {
+            client.postMessage({
+              type: "NOTIFICATION_CLICK",
+              data: event.notification.data,
+            });
+            return client.focus();
           }
-          return self.clients.openWindow(target);
-        })
-    );
-  });
-} else {
-  console.warn("Firebase Messaging could not initialize in SW.");
-}
+        }
+        return self.clients.openWindow(target);
+      })
+  );
+});

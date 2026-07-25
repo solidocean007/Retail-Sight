@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { CircularProgress, IconButton } from "@mui/material";
 import { Delete, Share } from "@mui/icons-material";
 import { useDispatch } from "react-redux";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
 
 import CollectionForm from "./CollectionForm";
 import CustomConfirmation from "./CustomConfirmation";
@@ -84,13 +86,21 @@ const CollectionsViewer: React.FC<CollectionsViewerProps> = ({
 
   const handleCopyLink = async (id: string) => {
     try {
+      await updateDoc(doc(db, "collections", id), {
+        isShareableOutsideCompany: true,
+        updatedAt: serverTimestamp(),
+      });
+
       await navigator.clipboard.writeText(
         `${window.location.origin}/view-collection/${id}`,
       );
-      dispatch(showMessage("Link copied to clipboard"));
+
+      dispatch(
+        showMessage("Share link copied. Anyone with the link can view it."),
+      );
     } catch (error) {
-      console.error("Error copying collection link:", error);
-      dispatch(showMessage("Could not copy link."));
+      console.error("Error enabling collection sharing:", error);
+      dispatch(showMessage("Could not create share link."));
     }
   };
 

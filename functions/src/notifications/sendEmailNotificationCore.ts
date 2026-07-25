@@ -54,15 +54,23 @@ function escapeHtml(value: string) {
  */
 export async function sendEmailNotificationCore(
   input: SendEmailNotificationInput
-) {
+): Promise<string[]> {
   const { title, message, link, notificationId, recipientUserIds } = input;
 
   const writes: Promise<any>[] = [];
+
+  // Users we actually queued mail for — returned so callers can record
+  // delivery. Email OPENS are not trackable (Apple Mail Privacy Protection
+  // pre-fetches images, so pixel tracking reports false reads), but
+  // delivery is, and that's worth surfacing honestly in the dashboard.
+  const emailedUserIds: string[] = [];
 
   for (const uid of recipientUserIds) {
     const userSnap = await db.doc(`users/${uid}`).get();
     const user = userSnap.data();
     if (!user?.email) continue;
+
+    emailedUserIds.push(uid);
 
     // Trackable redirect link
     const trackingUrl =
@@ -72,14 +80,15 @@ export async function sendEmailNotificationCore(
       "&uid=" +
       encodeURIComponent(uid);
 
+    // ALWAYS include the tracked link — without it, email click
+    // analytics are impossible. trackEmailClick redirects to the
+    // notification's link, falling back to /notifications.
     const html = `
   <h2>${escapeHtml(title)}</h2>
   <p>${escapeHtml(message)}</p>
-  ${
-    link
-      ? `<p><a href="${trackingUrl}" target="_blank">View Display</a></p>`
-      : ""
-  }
+  <p><a href="${trackingUrl}" target="_blank">${
+    link ? "View Display" : "View in Displaygram"
+  }</a></p>
 `;
 
     writes.push(
@@ -102,6 +111,8 @@ export async function sendEmailNotificationCore(
     await write;
     await new Promise((r) => setTimeout(r, 300)); // 300ms delay
   }
+
+  return emailedUserIds;
 }
 
 /**
@@ -160,10 +171,13 @@ export const trackEmailClick = onRequest(async (req, res) => {
 
     const alreadyClicked = Boolean(data?.analytics?.emailClickedAt);
 
-    // Write analytics on user notification
+    // Write analytics on user notification.
+    // Don't clobber clickedFrom if they already clicked in-app.
     await notifRef.update({
       "analytics.emailClickedAt": admin.firestore.FieldValue.serverTimestamp(),
-      "analytics.clickedFrom": "email",
+      ...(data?.analytics?.clickedFrom
+        ? {}
+        : { "analytics.clickedFrom": "email" }),
     });
 
     // Increment global stats ONLY if first click

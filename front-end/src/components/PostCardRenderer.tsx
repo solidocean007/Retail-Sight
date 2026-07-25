@@ -40,8 +40,6 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   postIdToScroll,
   onPostVisible,
 }) => {
-  if (!imageSet) return null;
-
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -60,6 +58,9 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
     observer.observe(cardRef.current);
     return () => observer.disconnect();
   }, [postIdToScroll, post.id, onPostVisible]);
+
+  // Early return AFTER hooks (react-hooks/rules-of-hooks)
+  if (!imageSet) return null;
 
   return (
     <div className="memoized-post-card" ref={cardRef}>

@@ -131,8 +131,15 @@ export const getNotificationAnalytics = onCall(
         read += 1;
       }
 
-      const clickedAt = data.analytics?.clickedAt ?? null;
-      const source = data.analytics?.clickedFrom as ClickSource | undefined;
+      // Email clicks are recorded as emailClickedAt (not clickedAt),
+      // so both must count as engagement
+      const inAppClickedAt = data.analytics?.clickedAt ?? null;
+      const emailClickedAt = data.analytics?.emailClickedAt ?? null;
+      const clickedAt = inAppClickedAt ?? emailClickedAt;
+
+      const source =
+        (data.analytics?.clickedFrom as ClickSource | undefined) ??
+        (emailClickedAt ? "email" : undefined);
 
       if (clickedAt) {
         clicked += 1;
@@ -149,6 +156,8 @@ export const getNotificationAnalytics = onCall(
         createdAt: data.createdAt ?? null,
         readAt: data.readAt ?? null,
         clickedAt,
+        emailClickedAt,
+        emailedAt: data.deliveredVia?.email ?? null,
         clickedFrom: source ?? null,
       };
     });

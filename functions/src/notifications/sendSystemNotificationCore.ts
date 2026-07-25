@@ -85,11 +85,28 @@ export async function sendSystemNotificationCore(
   // Resolve recipients
   // -------------------------------
   const users = new Map<string, any>();
-  const recipientCount = users.size;
 
   recipientUserIds.forEach((uid) => users.set(uid, null));
 
-  if (recipientCompanyIds.length > 0) {
+  const targetAllCompanies = recipientCompanyIds.includes("all");
+  const roleMatches = (u: any) =>
+    recipientRoles.length === 0 || recipientRoles.includes(u.role);
+
+  if (
+    targetAllCompanies ||
+    (recipientCompanyIds.length === 0 && recipientRoles.length > 0)
+  ) {
+    // "All companies" — or roles-only with no company scope:
+    // resolve against the entire user base (role-filtered if roles given).
+    const snap = await db.collection("users").get();
+
+    snap.docs.forEach((doc) => {
+      const u = doc.data();
+      if (roleMatches(u)) {
+        users.set(doc.id, u);
+      }
+    });
+  } else if (recipientCompanyIds.length > 0) {
     const snap = await db
       .collection("users")
       .where("companyId", "in", recipientCompanyIds)
@@ -97,7 +114,7 @@ export async function sendSystemNotificationCore(
 
     snap.docs.forEach((doc) => {
       const u = doc.data();
-      if (recipientRoles.length === 0 || recipientRoles.includes(u.role)) {
+      if (roleMatches(u)) {
         users.set(doc.id, u);
       }
     });
@@ -116,36 +133,44 @@ export async function sendSystemNotificationCore(
 
   // -------------------------------
   // Fan out user notifications
+  // (chunked — Firestore batches max out at 500 writes,
+  //  and "all companies" sends can exceed that)
   // -------------------------------
-  const batch = db.batch();
   const now = admin.firestore.FieldValue.serverTimestamp();
 
   // Generate a base ID once
   const baseId = systemNotificationId ?? db.collection("_").doc().id;
 
-  users.forEach((_u, uid) => {
-    const notificationId = `${baseId}_${uid}`;
+  const uids = Array.from(users.keys());
+  const CHUNK = 450;
 
-    const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
+  for (let i = 0; i < uids.length; i += CHUNK) {
+    const batch = db.batch();
 
-    batch.set(ref, {
-      id: notificationId,
-      systemNotificationId: baseId,
-      userId: uid,
-      title,
-      message,
-      type: "system",
-      intent,
-      priority,
-      link: link ?? null,
-      createdAt: now,
-      deliveredVia: {
-        inApp: now,
-      },
+    uids.slice(i, i + CHUNK).forEach((uid) => {
+      const notificationId = `${baseId}_${uid}`;
+
+      const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
+
+      batch.set(ref, {
+        id: notificationId,
+        systemNotificationId: baseId,
+        userId: uid,
+        title,
+        message,
+        type: "system",
+        intent,
+        priority,
+        link: link ?? null,
+        createdAt: now,
+        deliveredVia: {
+          inApp: now,
+        },
+      });
     });
-  });
 
-  await batch.commit();
+    await batch.commit();
+  }
 
   await db
     .collection("developerNotifications")
@@ -153,20 +178,41 @@ export async function sendSystemNotificationCore(
     .set(
       {
         stats: {
-          sent: admin.firestore.FieldValue.increment(recipientCount),
+          // NOTE: must be computed AFTER recipient resolution
+          sent: admin.firestore.FieldValue.increment(users.size),
         },
       },
       { merge: true }
     );
 
   if (sendEmail) {
-    await sendEmailNotificationCore({
+    const emailedUserIds = await sendEmailNotificationCore({
       title,
       message,
       link,
       notificationId: baseId, // ✅ now always valid
       recipientUserIds: Array.from(users.keys()),
     });
+
+    // Record delivery so the dashboard can distinguish "we emailed them"
+    // from "they engaged". Chunked for the same 500-write batch limit.
+    for (let i = 0; i < emailedUserIds.length; i += CHUNK) {
+      const emailBatch = db.batch();
+
+      emailedUserIds.slice(i, i + CHUNK).forEach((uid) => {
+        emailBatch.set(
+          db.doc(`users/${uid}/notifications/${baseId}_${uid}`),
+          {
+            deliveredVia: {
+              email: admin.firestore.FieldValue.serverTimestamp(),
+            },
+          },
+          { merge: true }
+        );
+      });
+
+      await emailBatch.commit();
+    }
   }
 
   return {

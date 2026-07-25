@@ -54,6 +54,16 @@ export const supervisorDisplayAlert = onDocumentCreated(
     // Supervisor must have this toggle turned ON
     if (!settings?.supervisorDisplayAlerts) return;
 
+    // Build display context: store name + truncated brand list
+    const brands: string[] = (post.brands || []).filter(Boolean);
+    const brandsLabel = brands.length
+      ? brands.slice(0, 2).join(", ") +
+        (brands.length > 2 ? ` +${brands.length - 2} more` : "")
+      : "";
+
+    const contextParts = [post.accountName, brandsLabel].filter(Boolean);
+    const context = contextParts.length ? ` — ${contextParts.join(" · ")}` : "";
+
     // Build the notification entry
     const notifRef = db
       .collection(`users/${supervisorUid}/notifications`)
@@ -63,7 +73,7 @@ export const supervisorDisplayAlert = onDocumentCreated(
       id: notifRef.id,
       type: "supervisor-display-alert",
       title: "New Display From Your Team",
-      message: `${postUser.firstName} ${postUser.lastName} created a new display.`,
+      message: `${postUser.firstName} ${postUser.lastName} created a new display${context}.`,
       postId: event.params.postId,
       companyId: supervisor.companyId,
       sentBy: {

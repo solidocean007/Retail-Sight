@@ -66,6 +66,27 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
   const [selectedGalloGoal, setSelectedGalloGoal] =
     useState<FireStoreGalloGoalDocType | null>(null);
   const navigate = useNavigate();
+
+  // Start location lookup immediately so it's ready when the user reaches Pick Store
+  useEffect(() => {
+    if (userLocation || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setUserLocation({ lat: coords.latitude, lng: coords.longitude });
+      },
+      (err) => {
+        console.warn("CreatePost location lookup failed:", err);
+        dispatch(
+          showMessage(
+            "Location lookup failed. You can still select a store manually.",
+          ),
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
+    );
+  }, [userLocation, dispatch]);
+
   useEffect(() => {
     setPost((prevPost) => ({
       ...prevPost,

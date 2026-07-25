@@ -39,23 +39,21 @@ export const isCacheFresh = (
   return Date.now() - new Date(fetchedAt).getTime() < maxAgeMs;
 };
 
-const runStoreRequest = <T>(
+const runStoreRequest = async <T>(
   storeName: string,
   mode: IDBTransactionMode,
   action: (store: IDBObjectStore) => IDBRequest<T>
 ): Promise<T> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const db = await openDB();
-      const tx = db.transaction(storeName, mode);
-      const store = tx.objectStore(storeName);
-      const request = action(store);
+  // async work happens before the Promise executor — an async executor
+  // swallows rejections thrown after the first await
+  const db = await openDB();
+  const tx = db.transaction(storeName, mode);
+  const store = tx.objectStore(storeName);
+  const request = action(store);
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    } catch (err) {
-      reject(err);
-    }
+  return new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 };
 

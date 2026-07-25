@@ -36,14 +36,20 @@ const customerTypes = [
   "Other",
 ];
 
-const AccountForm: React.FC<AccountFormProps> = ({
-  isOpen,
+// Wrapper owns the early return so the inner component's hooks are
+// never called conditionally (react-hooks/rules-of-hooks). Unmounting
+// when closed also preserves the reset-state-on-reopen behavior.
+const AccountForm: React.FC<AccountFormProps> = (props) => {
+  if (!props.isOpen) return null;
+  return <AccountFormContent {...props} />;
+};
+
+const AccountFormContent: React.FC<AccountFormProps> = ({
   initialData,
   onSubmit,
   onCancel,
   editMode,
 }) => {
-  if (!isOpen) return null;
   const [formData, setFormData] = useState<CompanyAccountType>(
     initialData || {
       accountNumber: "",

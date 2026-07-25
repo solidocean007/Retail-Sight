@@ -9,7 +9,7 @@ interface BrandAutocompleteProps {
   onBrandChange: (v: string | null) => void;
 }
 
-const normalize = (str: string) => str.toLowerCase().replace(/[\s\-]+/g, "");
+const normalize = (str: string) => str.toLowerCase().replace(/[\s-]+/g, "");
 
 const BrandAutoComplete: React.FC<BrandAutocompleteProps> = ({
   options,

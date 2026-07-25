@@ -68,29 +68,35 @@ export const createDeveloperNotification = onCall(
       };
     }
 
-    // 4️⃣ Deliver immediately
-    await sendSystemNotificationCore({
-      systemNotificationId: developerNotificationId,
-      title: normalizedInput.title,
-      message: normalizedInput.message,
-      intent: normalizedInput.intent,
-      priority: normalizedInput.priority,
-      link: normalizedInput.link ?? null,
-      recipientUserIds: normalizedInput.recipientUserIds ?? [],
-      recipientCompanyIds: normalizedInput.recipientCompanyIds?.includes("all")
-        ? []
-        : (normalizedInput.recipientCompanyIds ?? []),
-      recipientRoles: normalizedInput.recipientRoles ?? [],
-      sendEmail: normalizedInput.sendEmail,
+    // 4️⃣ Claim BEFORE delivering so the every-minute scheduled
+    // processor can't pick this doc up mid-send (double emails).
+    const notifRef = db
+      .collection("developerNotifications")
+      .doc(developerNotificationId);
+
+    await notifRef.update({
+      sentAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // ✅ MARK AS SENT
-    await db
-      .collection("developerNotifications")
-      .doc(developerNotificationId)
-      .update({
-        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+    try {
+      await sendSystemNotificationCore({
+        systemNotificationId: developerNotificationId,
+        title: normalizedInput.title,
+        message: normalizedInput.message,
+        intent: normalizedInput.intent,
+        priority: normalizedInput.priority,
+        link: normalizedInput.link ?? null,
+        recipientUserIds: normalizedInput.recipientUserIds ?? [],
+        // "all" passes through — sendSystemNotificationCore resolves it
+        recipientCompanyIds: normalizedInput.recipientCompanyIds ?? [],
+        recipientRoles: normalizedInput.recipientRoles ?? [],
+        sendEmail: normalizedInput.sendEmail,
       });
+    } catch (err) {
+      // Delivery failed — release the claim so it can be retried
+      await notifRef.update({ sentAt: null });
+      throw err;
+    }
 
     return {
       success: true,

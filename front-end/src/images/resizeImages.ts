@@ -12,7 +12,7 @@ export const resizeImage = (
       URL.revokeObjectURL(image.src);
       let width = image.width;
       let height = image.height;
-      let resizeNeeded = width > maxWidth || height > maxHeight;
+      const resizeNeeded = width > maxWidth || height > maxHeight;
 
       // Calculate the new dimensions while maintaining the aspect ratio
       if (resizeNeeded) {

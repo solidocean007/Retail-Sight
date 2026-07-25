@@ -8,7 +8,7 @@ import { normalizeFirestoreData } from "../utils/normalize";
 interface ProductsState {
   allProducts: ProductType[];
   loading: boolean;
-  error: string | {} | null;
+  error: string | object | null;
 }
 
 const initialState: ProductsState = {

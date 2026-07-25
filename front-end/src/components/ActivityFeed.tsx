@@ -80,13 +80,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [showLoader, setShowLoader] = useState(false);
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
-    (state: RootState) => state.posts.filteredPosts
+    (state: RootState) => state.posts.filteredPosts,
   );
   const displayPosts = useMemo(() => {
     return activeCompanyPostSet === "filteredPosts" ? filteredPosts : rawPosts;
   }, [activeCompanyPostSet, filteredPosts, rawPosts]);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const companyId = useSelector(selectUser)?.companyId;
+  const companyId = useSelector(selectUser)?.companyId ?? null;
   const currentUserCompanyId = currentUser?.companyId;
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -132,7 +132,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       setPostIdToScroll(null);
       hasAutoScrolled.current = true;
     },
-    [postIdToScroll, displayPosts]
+    [postIdToScroll, displayPosts],
   );
 
   useEffect(() => {
@@ -147,20 +147,20 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     if (idx === -1 && appliedFilters) {
       console.warn("Post not found. Refetching...");
-      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters, companyId })).then( // Type 'string | undefined' is not assignable to type 'string | null'
-        (action) => {
-          if (fetchFilteredPostsBatch.fulfilled.match(action)) {
-            const newPosts = action.payload.posts;
-            const newIdx = newPosts.findIndex((p) => p.id === postIdToScroll);
-            if (newIdx !== -1 && virtuosoRef.current) {
-              virtuosoRef.current.scrollToIndex({
-                index: newIdx,
-                align: "start",
-              });
-            }
+      dispatch(
+        fetchFilteredPostsBatch({ filters: appliedFilters, companyId }),
+      ).then((action) => {
+        if (fetchFilteredPostsBatch.fulfilled.match(action)) {
+          const newPosts = action.payload.posts;
+          const newIdx = newPosts.findIndex((p) => p.id === postIdToScroll);
+          if (newIdx !== -1 && virtuosoRef.current) {
+            virtuosoRef.current.scrollToIndex({
+              index: newIdx,
+              align: "start",
+            });
           }
         }
-      );
+      });
     }
 
     return () => clearTimeout(timeout);
@@ -168,7 +168,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const getImageSet = useCallback(
     (post: PostWithID) => derivePostImageVariants(post),
-    []
+    [],
   );
 
   useEffect(() => {
@@ -243,7 +243,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                         lastVisible,
                         limit: POSTS_BATCH_SIZE,
                         currentUser,
-                      })
+                      }),
                     )
                       .then((action) => {
                         if (fetchMorePostsBatch.fulfilled.match(action)) {
@@ -255,7 +255,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                             addPostsToIndexedDB(posts);
                             // dispatch(appendPosts(posts));
                             dispatch(
-                              mergeAndSetPosts(posts.map(normalizePost))
+                              mergeAndSetPosts(posts.map(normalizePost)),
                             );
                             setHasMore(true);
                           } else {

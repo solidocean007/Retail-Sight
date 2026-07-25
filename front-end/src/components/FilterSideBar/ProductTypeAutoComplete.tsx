@@ -9,7 +9,7 @@ interface ProductTypeAutocompleteProps {
   onTypeChange: (v: string | null) => void;
 }
 
-const normalize = (str: string) => str.toLowerCase().replace(/[\s\-]+/g, "");
+const normalize = (str: string) => str.toLowerCase().replace(/[\s-]+/g, "");
 
 const ProductTypeAutocomplete: React.FC<ProductTypeAutocompleteProps> = ({
   inputValue,

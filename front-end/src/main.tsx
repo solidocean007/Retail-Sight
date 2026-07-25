@@ -23,7 +23,7 @@ if ("serviceWorker" in navigator) {
     const isIOS = /iphone|ipad|ipod/.test(ua);
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone === true;
+      navigator.standalone === true;
 
     // ❌ Safari iOS not installed → do NOT register
     if (isIOS && !isStandalone) {

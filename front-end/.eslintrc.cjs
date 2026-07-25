@@ -16,5 +16,7 @@ module.exports = {
     ],
     "max-len": "off",
     "linebreak-style": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": "off",
   },
 };

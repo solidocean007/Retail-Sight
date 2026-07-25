@@ -43,41 +43,45 @@ const NotificationsPage: React.FC = () => {
   }
 
   const handleMarkAllRead = async () => {
-    for (const notif of notifications) {
-      if (!notif.readAt) {
-        await markReadCallable({
-          notificationId: notif.id,
-        });
-      }
-    }
+    // Parallel, and one failure doesn't abort the rest
+    await Promise.allSettled(
+      notifications
+        .filter((notif) => !notif.readAt)
+        .map((notif) => markReadCallable({ notificationId: notif.id })),
+    );
   };
 
-  const handleOpen = async (notif: UserNotificationType) => {
+  const handleOpen = (notif: UserNotificationType) => {
     const targetPostId = getNotificationPostId(notif);
 
-    if (!notif.readAt) {
-      await markReadCallable({
-        notificationId: notif.id,
-      });
-    }
-
+    // Open the target FIRST — mark-read and click-tracking are
+    // fire-and-forget so a failing/slow callable can never block
+    // navigation (this bug previously made clicks do nothing).
     if (targetPostId) {
-      await trackNotificationClick({
-        notificationId: notif.id,
-        source: "modal",
-      });
-
       setPostViewerOptions({
         postId: targetPostId,
         focusCommentId: notif.commentId ?? null,
         openComments: isCommentNotification(notif),
         source: "notification",
       });
-
-      return;
+    } else {
+      setSelectedNotif(notif);
     }
 
-    setSelectedNotif(notif);
+    if (!notif.readAt) {
+      markReadCallable({ notificationId: notif.id }).catch((err) =>
+        console.error("markNotificationRead failed:", err),
+      );
+    }
+
+    if (targetPostId) {
+      trackNotificationClick({
+        notificationId: notif.id,
+        source: "modal",
+      }).catch((err) =>
+        console.error("trackNotificationClick failed:", err),
+      );
+    }
   };
 
   return (
