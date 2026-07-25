@@ -418,7 +418,7 @@ const AddPostToLibraryModal: React.FC<AddPostToLibraryModalProps> = ({
                   "Selected display"}
               </strong>
 
-              {post.brands?.length > 0 && (
+              {post.brands && post.brands.length > 0 && (
                 <span>{post.brands.slice(0, 3).join(", ")}</span>
               )}
             </div>

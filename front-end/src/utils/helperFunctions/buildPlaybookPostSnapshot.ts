@@ -48,10 +48,14 @@ export const buildPlaybookPostSnapshot = (
     postUserCompanyName:
       post.postUserCompanyName || post.postUser?.company || "",
 
+    // The type says string, but Firestore Timestamps can still arrive here
+    // from cached/un-normalized data — keep the runtime guard.
     displayDate:
       typeof post.displayDate === "string"
         ? post.displayDate
-        : post.displayDate?.toDate?.()?.toISOString?.() || "",
+        : ((post.displayDate as unknown as { toDate?: () => Date } | null)
+            ?.toDate?.()
+            ?.toISOString() ?? ""),
 
     addedToPlaybookAt: new Date().toISOString(),
     isFeatured: options.isFeatured ?? false,
