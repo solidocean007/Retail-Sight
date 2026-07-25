@@ -49,21 +49,22 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   if (!currentUser) return null;
 
-  const handleOpen = async (notif: UserNotificationType) => {
+  const handleOpen = (notif: UserNotificationType) => {
     const targetPostId = getNotificationPostId(notif);
 
-    try {
-      if (!notif.readAt) {
-        await markReadCallable({ notificationId: notif.id });
-      }
-
-      await trackNotificationClick({
-        notificationId: notif.id,
-        source: "dropdown",
-      });
-    } catch (err) {
-      console.error("Failed to process notification click:", err);
+    // Fire-and-forget: never block opening on analytics/mark-read
+    if (!notif.readAt) {
+      markReadCallable({ notificationId: notif.id }).catch((err) =>
+        console.error("markNotificationRead failed:", err),
+      );
     }
+
+    trackNotificationClick({
+      notificationId: notif.id,
+      source: "dropdown",
+    }).catch((err) =>
+      console.error("trackNotificationClick failed:", err),
+    );
 
     if (targetPostId && openPostViewer) {
       openPostViewer({

@@ -10,6 +10,7 @@ type CreateDeveloperNotificationInput = {
   intent?: "activity" | "message" | "system" | "silent";
   recipientCompanyIds?: string[] | ["all"];
   recipientUserIds?: string[];
+  recipientRoles?: string[];
 
   sendEmail?: boolean;
   scheduledAt?: FirebaseFirestore.Timestamp | null;
@@ -61,16 +62,18 @@ export async function createDeveloperNotificationCore(
     intent = "system",
     recipientCompanyIds,
     recipientUserIds,
+    recipientRoles,
     sendEmail = false,
     dryRun = false,
   } = input;
 
   if (
     (!recipientCompanyIds || recipientCompanyIds.length === 0) &&
-    (!recipientUserIds || recipientUserIds.length === 0)
+    (!recipientUserIds || recipientUserIds.length === 0) &&
+    (!recipientRoles || recipientRoles.length === 0)
   ) {
     throw new Error(
-      "Developer notification must target at least one company or user"
+      "Developer notification must target at least one company, role, or user"
     );
   }
 
@@ -93,6 +96,7 @@ export async function createDeveloperNotificationCore(
     intent,
     recipientCompanyIds: recipientCompanyIds ?? [],
     recipientUserIds: recipientUserIds ?? [],
+    recipientRoles: recipientRoles ?? [],
 
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     scheduledAt: input.scheduledAt ?? null, // ✅ REAL TIMESTAMP

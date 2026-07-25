@@ -33,12 +33,19 @@ import Footer from "./components/Footer/Footer";
 
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./utils/firebase";
+import { handleLogout } from "./utils/validation/authenticate";
 import { stopViewAsCompany } from "./Slices/impersonationSlice";
 
 function AppContent() {
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const { currentUser, initializing } = useFirebaseAuth();
+  const {
+    currentUser,
+    initializing,
+    profileError,
+    profileErrorDetail,
+    retryProfileLoad,
+  } = useFirebaseAuth();
   const user = useSelector((state: RootState) => state.user.currentUser);
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
   const snackbar = useSelector((s: RootState) => s.snackbar);
@@ -189,7 +196,20 @@ function AppContent() {
   // IMPORTANT:
   // Do NOT mount routes/feed/UI while bootstrapping.
   if (showAppLoader) {
-    return <AppLoadingScreen show message={loadingMessage ?? "Loading…"} />;
+    return (
+      <AppLoadingScreen
+        show
+        message={
+          profileError
+            ? "We couldn't load your profile."
+            : (loadingMessage ?? "Loading…")
+        }
+        errored={profileError}
+        errorDetail={profileErrorDetail}
+        onRetry={retryProfileLoad}
+        onSignOut={handleLogout}
+      />
+    );
   }
 
   return (

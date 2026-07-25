@@ -50,22 +50,37 @@ export const processScheduledDeveloperNotifications = onSchedule(
     for (const doc of eligibleDocs) {
       const notif = doc.data();
 
-      await sendSystemNotificationCore({
-        title: notif.title,
-        intent: notif.intent,
-        priority: notif.priority,
-        link: notif.link,
-        sendEmail: notif.channels?.email ?? false,
-        message: notif.message,
-        recipientUserIds: notif.recipientUserIds ?? [],
-        recipientCompanyIds: notif.recipientCompanyIds ?? [],
-        recipientRoles: notif.recipientRoles ?? [],
-        systemNotificationId: doc.id,
+      // Claim atomically BEFORE sending — prevents double-delivery if
+      // an immediate send or overlapping scheduler run touches this doc.
+      const claimed = await db.runTransaction(async (tx) => {
+        const fresh = await tx.get(doc.ref);
+        if (fresh.data()?.sentAt) return false; // someone else sent it
+        tx.update(doc.ref, {
+          sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return true;
       });
 
-      await doc.ref.update({
-        sentAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      if (!claimed) continue;
+
+      try {
+        await sendSystemNotificationCore({
+          title: notif.title,
+          intent: notif.intent,
+          priority: notif.priority,
+          link: notif.link,
+          sendEmail: notif.channels?.email ?? false,
+          message: notif.message,
+          recipientUserIds: notif.recipientUserIds ?? [],
+          recipientCompanyIds: notif.recipientCompanyIds ?? [],
+          recipientRoles: notif.recipientRoles ?? [],
+          systemNotificationId: doc.id,
+        });
+      } catch (err) {
+        // Release the claim so the next run retries
+        await doc.ref.update({ sentAt: null });
+        console.error(`Failed to send scheduled notification ${doc.id}:`, err);
+      }
     }
 
     console.log(`✅ Processed ${eligibleDocs.length} scheduled notifications`);

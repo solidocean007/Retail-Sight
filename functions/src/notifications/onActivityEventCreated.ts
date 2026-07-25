@@ -46,6 +46,41 @@ async function getUsersWithEmailSettingEnabled(
   return enabledUserIds;
 }
 
+/**
+ * Store name + truncated brand list for a post, e.g.
+ * "Circle K #204 · Modelo, Corona +2 more" — used to give
+ * notifications context about which display they refer to.
+ */
+async function getPostContext(postId?: string): Promise<string | null> {
+  if (!postId) return null;
+
+  try {
+    const snap = await db.doc(`posts/${postId}`).get();
+    if (!snap.exists) return null;
+
+    const post = snap.data() as {
+      accountName?: string;
+      brands?: string[];
+    };
+
+    const parts: string[] = [];
+    if (post.accountName) parts.push(post.accountName);
+
+    const brands = (post.brands || []).filter(Boolean);
+    if (brands.length) {
+      parts.push(
+        brands.slice(0, 2).join(", ") +
+          (brands.length > 2 ? ` +${brands.length - 2} more` : "")
+      );
+    }
+
+    return parts.length ? parts.join(" · ") : null;
+  } catch (err) {
+    console.warn("getPostContext failed:", err);
+    return null;
+  }
+}
+
 export const onActivityEventCreated = onDocumentCreated(
   "activityEvents/{eventId}",
   async (event) => {
@@ -125,6 +160,15 @@ export const onActivityEventCreated = onDocumentCreated(
       default:
         console.warn("Unhandled activity type:", type, data);
         return;
+    }
+
+    // Add display context (store · brands) to post-related notifications
+    const postContext = await getPostContext(postId);
+    if (postContext) {
+      const isPlaceholder =
+        message === "Tap to view the post." ||
+        message === "Tap to view the comment.";
+      message = isPlaceholder ? postContext : `${message} — ${postContext}`;
     }
 
     const link = postId

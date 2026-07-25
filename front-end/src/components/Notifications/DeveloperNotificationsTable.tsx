@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import {
@@ -21,7 +21,7 @@ import {
   DeveloperNotificationType,
 } from "../../utils/types";
 import ViewDeveloperNotification from "./ViewDeveloperNotification";
-import { fetchDeveloperNotifications } from "../../thunks/developerNotificationsThunks";
+import { useDeveloperNotificationsListener } from "../../hooks/useDeveloperNotificationsListener";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getNotificationStatus } from "./utils/getNotificationStatus";
 import {
@@ -49,23 +49,19 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
     "deleteSystemNotification",
   );
 
-  const { items, loading, error } = useSelector(
+  const { items } = useSelector(
     (state: RootState) => state.developerNotifications,
   );
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
 
+  // Live: new sends appear instantly and stats counters update themselves.
+  const { loading, error } = useDeveloperNotificationsListener(
+    currentUser?.role === "developer",
+  );
+
   const [searchTerm, setSearchTerm] = useState("");
   const [analyticsId, setAnalyticsId] = useState<string | null>(null);
-
-  // ---------------------------------------
-  // Initial Load
-  // ---------------------------------------
-  useEffect(() => {
-    if (currentUser?.role === "developer") {
-      dispatch(fetchDeveloperNotifications());
-    }
-  }, [dispatch, currentUser?.role]);
 
   // ---------------------------------------
   // Memoized Filter
@@ -129,7 +125,9 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
   // ---------------------------------------
   // Loading / Error
   // ---------------------------------------
-  if (loading) {
+  // Only take over the view on the FIRST load — a background refresh
+  // (e.g. after sending) shouldn't blank out the table.
+  if (loading && items.length === 0) {
     return (
       <div className="spinner-container">
         <CircularProgress />

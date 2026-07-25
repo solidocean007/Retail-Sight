@@ -57,6 +57,8 @@ const DeveloperNotificationForm = ({
   >([]);
   const [audienceUsers, setAudienceUsers] = useState<UserType[]>([]);
   const [audienceRoles, setAudienceRoles] = useState<string[]>([]);
+  const [allCompanies, setAllCompanies] = useState(false);
+  const [sending, setSending] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
 
@@ -77,6 +79,7 @@ const DeveloperNotificationForm = ({
     setAudienceCompanies([]);
     setAudienceUsers([]);
     setAudienceRoles([]);
+    setAllCompanies(false);
     setIsScheduled(false);
     setScheduledAt(null);
   };
@@ -88,7 +91,9 @@ const DeveloperNotificationForm = ({
     message,
     priority,
     intent,
-    recipientCompanyIds: audienceCompanies.map((c) => c.id),
+    recipientCompanyIds: allCompanies
+      ? ["all"]
+      : audienceCompanies.map((c) => c.id),
     recipientUserIds: audienceUsers.map((u) => u.uid),
     recipientRoles: audienceRoles,
     sendEmail,
@@ -103,6 +108,7 @@ const DeveloperNotificationForm = ({
       return;
 
     if (
+      !allCompanies &&
       audienceCompanies.length === 0 &&
       audienceUsers.length === 0 &&
       audienceRoles.length === 0
@@ -120,27 +126,45 @@ const DeveloperNotificationForm = ({
       setPreviewOpen(true);
       return;
     }
-    await createDeveloperNotification({
-      ...payload,
-      dryRun: false,
-    });
 
-    clearFormState();
+    await sendNow();
+  };
+
+  const sendNow = async () => {
+    setSending(true);
+    try {
+      await createDeveloperNotification({
+        ...payload,
+        dryRun: false,
+      });
+
+      dispatch(
+        showMessage({
+          text: isScheduled ? "Message scheduled." : "Message sent.",
+          severity: "success",
+        }),
+      );
+
+      // No manual refetch needed — the table's onSnapshot listener
+      // picks up the new message on its own.
+      clearFormState();
+    } catch (err: unknown) {
+      console.error("createDeveloperNotification failed:", err);
+      dispatch(
+        showMessage({
+          text: `Send failed: ${err instanceof Error ? err.message : "unknown error"}`,
+          severity: "error",
+        }),
+      );
+      // Keep form state so the message isn't lost
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleConfirmSend = async () => {
     setPreviewOpen(false);
-
-    await createDeveloperNotification({
-      ...payload,
-      dryRun: false,
-    });
-
-    // optional reset after confirmed send
-    setTitle("");
-    setMessage("");
-    setTutorialUrl("");
-    setDryRun(false);
+    await sendNow();
   };
 
   return (
@@ -166,7 +190,7 @@ const DeveloperNotificationForm = ({
         >
           <MenuItem value="low">Low</MenuItem>
           <MenuItem value="normal">Normal</MenuItem>
-          <MenuItem value="high">High (Push)</MenuItem>
+          <MenuItem value="high">High</MenuItem>
         </Select>
       </FormControl>
       <FormControl size="small" fullWidth sx={{ mb: 1 }}>
@@ -239,6 +263,8 @@ const DeveloperNotificationForm = ({
         onUserChange={setAudienceUsers}
         selectedRoles={audienceRoles}
         onRoleChange={setAudienceRoles}
+        allCompanies={allCompanies}
+        onAllCompaniesChange={setAllCompanies}
       />
 
       {/* Delivery options */}
@@ -306,14 +332,16 @@ const DeveloperNotificationForm = ({
       <Button
         variant="contained"
         color="primary"
-        disabled={!title || !message}
+        disabled={!title || !message || sending}
         onClick={handleSubmit}
       >
-        {dryRun
-          ? "Preview Message"
-          : isScheduled
-            ? "Schedule Message"
-            : "Send Message"}
+        {sending
+          ? "Sending…"
+          : dryRun
+            ? "Preview Message"
+            : isScheduled
+              ? "Schedule Message"
+              : "Send Message"}
       </Button>
       <DeveloperNotificationPreviewModal
         open={previewOpen}
@@ -323,9 +351,9 @@ const DeveloperNotificationForm = ({
         message={message}
         priority={priority}
         scheduledAt={scheduledAt}
-        recipientCompanyIds={audienceCompanies.map((c) => c.id)}
-        recipientUserIds={audienceUsers.map((u) => u.uid)}
-        recipientRoles={audienceRoles}
+        recipientCompanyIds={payload.recipientCompanyIds}
+        recipientUserIds={payload.recipientUserIds}
+        recipientRoles={payload.recipientRoles}
         sendEmail={sendEmail}
         allCompaniesAndUsers={allCompaniesAndUsers}
       />
