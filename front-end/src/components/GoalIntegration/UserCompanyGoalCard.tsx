@@ -33,12 +33,9 @@ const UserCompanyGoalCard: React.FC<Props> = ({
   const userSalesRoute = user?.salesRouteNum;
   const userUid = user?.uid;
   
-  // Fetched once per goal, only while expanded — a rep with many accounts
-  // must not trigger a read per row.
-  const { reports, refresh: refreshReports } = useGoalAccountReports(
-    goal.id,
-    expanded,
-  );
+  // Live for this goal, only while expanded — one listener per open card,
+  // never one per account row.
+  const { reports } = useGoalAccountReports(goal.id, expanded);
 
   // --- Determine which accounts apply to this goal ---
   const accountNumbersForThisGoal = useMemo(() => {
@@ -212,7 +209,6 @@ console.log("allAccounts:", allAccounts.length, "assigned:", accountNumbersForTh
           onViewPostModal={onViewPostModal}
           enableReporting
           reports={reports}
-          onReportSaved={refreshReports}
         />
       </Collapse>
     </div>

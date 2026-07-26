@@ -1,15 +1,38 @@
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { Typography, Collapse, Box, Button, Tooltip } from "@mui/material";
+import {
+  Typography,
+  Collapse,
+  Button,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Timestamp } from "firebase/firestore";
 import { CompanyAccountType, CompanyGoalWithIdType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
 import "./companyGoalCard.css";
+import "./companyGoalCardLayout.css";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
 import NewEditCompanyGoalModal from "./NewEditComapnyGoalModal";
+import { useGoalAccountReports } from "../../hooks/useGoalAccountReports";
+import GoalReportsReviewModal, {
+  AccountGroup,
+} from "../GoalReports/GoalReportsReviewModal";
+import {
+  removeAccountsFromCompanyGoal,
+  isAssignmentActive,
+} from "../../utils/goalReports/goalAccountRemoval";
+import {
+  notifyReportDecision,
+  resolveGoalAccountReports,
+} from "../../utils/goalReports/goalAccountReportHelpers";
+import { GoalAccountReport, getReasonLabel } from "../../types/goalReports";
 
 interface CompanyGoalCardProps {
   goal: CompanyGoalWithIdType;
@@ -41,6 +64,144 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const activeCompanyUsers = companyUsers.filter((u) => u.status === "active");
   const goalIsForSupervisor = goal.targetRole === "supervisor";
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+
+  // Always live: the unresolved-feedback strip has to render on a COLLAPSED
+  // card, so gating this on `expanded` would hide the very thing it exists to
+  // surface. One listener per visible goal card, each scoped to a single
+  // goalId — cheap at this scale. If a company ever renders hundreds of goals
+  // at once, lift this to the parent as a single companyId + unresolved query.
+  const { reports } = useGoalAccountReports(goal.id);
+
+  // Summary of what's waiting, so the card answers "is there anything here?"
+  // without the admin having to open the review.
+  const feedbackSummary = useMemo(() => {
+    const open = reports.filter((r) => !r.resolvedAt);
+    if (!open.length) return null;
+
+    const accounts = new Set(
+      open.map((r) => r.accountNumber ?? r.oppId ?? r.id),
+    );
+    const helpCount = open.filter((r) => r.helpKeys?.length).length;
+
+    const reasonCounts: Record<string, number> = {};
+    open.forEach((r) =>
+      r.reasonKeys?.forEach((k) => {
+        reasonCounts[k] = (reasonCounts[k] ?? 0) + 1;
+      }),
+    );
+
+    const topReasons = Object.entries(reasonCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    return {
+      accountCount: accounts.size,
+      helpCount,
+      topReasons,
+    };
+  }, [reports]);
+
+  // uid → supervisor name, so an admin choosing follow-up can see who it
+  // actually reaches before committing.
+  const supervisorByUid = useMemo(() => {
+    const byUid = new Map(companyUsers.map((u) => [u.uid, u]));
+    const map: Record<string, string> = {};
+
+    companyUsers.forEach((u) => {
+      const sup = u.reportsTo ? byUid.get(u.reportsTo) : undefined;
+      if (sup) {
+        map[u.uid] = `${sup.firstName ?? ""} ${sup.lastName ?? ""}`.trim();
+      }
+    });
+
+    return map;
+  }, [companyUsers]);
+
+  // Account keys already removed, so the review can render them as such.
+  const removedAccountKeys = useMemo(
+    () =>
+      (goal.goalAssignments ?? [])
+        .filter((a) => !isAssignmentActive(a))
+        .map((a) => a.accountNumber.toString()),
+    [goal.goalAssignments],
+  );
+
+  const actorName =
+    `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "An admin";
+
+  /**
+   * One notification per rep, listing their own accounts — a shared message
+   * would name accounts most recipients never touched.
+   */
+  const notifyByRep = async (
+    affected: GoalAccountReport[],
+    resolution: "accepted" | "follow_up",
+    note?: string,
+  ) => {
+    if (!user?.uid) return;
+
+    const byRep = new Map<string, string[]>();
+    affected.forEach((r) => {
+      const names = byRep.get(r.userId) ?? [];
+      names.push(r.accountName || r.accountNumber || "an account");
+      byRep.set(r.userId, names);
+    });
+
+    await Promise.all(
+      [...byRep.entries()].map(([targetUserId, accountNames]) =>
+        notifyReportDecision({
+          actorUserId: user.uid,
+          actorName,
+          targetUserId,
+          goalId: goal.id,
+          goalTitle: goal.goalTitle,
+          resolution,
+          accountNames,
+          resolutionNote: note,
+        }),
+      ),
+    );
+  };
+
+  /** Not accepted — account stays on the goal, supervisor reviews with the rep. */
+  const handleRequestFollowUp = async (reportIds: string[], note: string) => {
+    if (!user?.uid || !reportIds.length) return;
+
+    await resolveGoalAccountReports(reportIds, "follow_up", user.uid, note);
+
+    const affected = reports.filter((r) => reportIds.includes(r.id));
+    await notifyByRep(affected, "follow_up", note);
+  };
+
+  /** Reason stands — account comes off the goal. */
+  const handleAccept = async (groups: AccountGroup[]) => {
+    if (!user?.uid || !groups.length) return;
+
+    // One write to the goal doc for the whole batch, then mark the reports.
+    const targets = groups.flatMap((g) =>
+      g.reports
+        .filter((r) => r.accountNumber)
+        .map((r) => ({
+          goalId: goal.id,
+          uid: r.userId,
+          accountNumber: r.accountNumber as string,
+        })),
+    );
+
+    await removeAccountsFromCompanyGoal(goal.id, targets, user.uid);
+
+    const reportIds = groups.flatMap((g) =>
+      g.reports.filter((r) => !r.resolvedAt).map((r) => r.id),
+    );
+
+    await resolveGoalAccountReports(reportIds, "accepted", user.uid);
+
+    const affected = groups.flatMap((g) =>
+      g.reports.filter((r) => !r.resolvedAt),
+    );
+    await notifyByRep(affected, "accepted");
+  };
 
   // --- Unified account list for this goal (new or old) ---
   const accountNumbersForThisGoal = useMemo(() => {
@@ -252,6 +413,13 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     return Math.round(avgRatio * 100);
   }, [goal.perUserQuota, userRows]);
 
+  // One number drives the bar and the label — quota-based when a quota exists,
+  // otherwise share of assigned accounts.
+  const displayPercentage =
+    goal.perUserQuota && !isNaN(percentageOfGoal)
+      ? percentageOfGoal
+      : percentage;
+
   const handleGoalUpdate = (updatedFields: Partial<CompanyGoalWithIdType>) => {
     if (onEdit) onEdit(goal.id, updatedFields);
   };
@@ -262,125 +430,188 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         goalIsForSupervisor ? "supervisor-goal" : ""
       }`}
     >
-      {goal.targetRole && (
-        <div
-          className={`goal-badge ${
-            goalIsForSupervisor ? `badge--supervisor` : ""
-          }`}
-        >
-          {goal.targetRole} goal
+      {/* ── Header: identity and admin actions ───────────────── */}
+      <div className="cg-head">
+        <div className="cg-head-left">
+          {goal.targetRole && (
+            <span
+              className={`cg-badge ${
+                goalIsForSupervisor ? "cg-badge--supervisor" : ""
+              }`}
+            >
+              {goal.targetRole}
+            </span>
+          )}
+          <span className="cg-dates">
+            {goal.goalStartDate} &ndash; {goal.goalEndDate}
+          </span>
         </div>
-      )}
 
-      <div className="company-goal-card-header">
-        <div className="company-goal-card-start-end">
-          <h3>Starts: {goal.goalStartDate}</h3>
-          <h3>Ends: {goal.goalEndDate}</h3>
-        </div>
-        <div className="info-title-row">
-          <div className="info-title">{goal.goalTitle}</div>
-          {/* <div className="info-title">{goal.id}</div>
-          
-          */}
-          {onDelete &&
-            (user?.role === "admin" || user?.role === "super-admin") && (
-              <Box display="flex" gap={1}>
-                <Button
-                  variant="outlined"
+        {onDelete &&
+          (user?.role === "admin" || user?.role === "super-admin") && (
+            <div className="cg-head-actions">
+              <Tooltip title="Edit goal">
+                <IconButton
                   size="small"
-                  className="delete-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditModalOpen(true);
+                  }}
+                >
+                  <EditOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete goal">
+                <IconButton
+                  size="small"
+                  className="cg-delete"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete?.(goal.id);
                   }}
                 >
-                  Delete
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => setIsEditModalOpen(true)}
-                >
-                  Edit
-                </Button>
-              </Box>
-            )}
-        </div>
-      </div>
-
-      <div className="info-layout-row">
-        <div className="info-layout">
-          <div className="info-description">
-            {goal.goalDescription}
-            {goal.perUserQuota && (
-              <div className="info-quota">
-                Requirement: Each user must submit at least {goal.perUserQuota}{" "}
-                submission{goal.perUserQuota > 1 ? "s" : ""}.
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="goal-progress-section">
-          <Typography variant="caption">Goal Progress</Typography>
-          <div className="goal-progress-numbers">
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span>{submitted} Total Submissions</span>
-              <Tooltip title={`${submitted} of ${total} submitted`}>
-                <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             </div>
+          )}
+      </div>
 
-            {!goal.perUserQuota && (
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span className={getCompletionClass(percentage)}>
-                  {percentage}% Complete
-                </span>
-                <Tooltip
-                  title={`${percentage}% of ${total} accounts submitted`}
-                >
-                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
-                </Tooltip>
-              </div>
-            )}
+      <h3 className="cg-title">{goal.goalTitle}</h3>
 
-            {goal.perUserQuota && !isNaN(percentageOfGoal) && (
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span className={getCompletionClass(percentageOfGoal)}>
-                  {percentageOfGoal}% Complete
-                </span>
-                <Tooltip
-                  title={`${percentageOfGoal}% of required submissions completed`}
-                >
-                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
-                </Tooltip>
-              </div>
+      {goal.goalDescription && (
+        <p className="cg-description">{goal.goalDescription}</p>
+      )}
+
+      {/* ── Progress ─────────────────────────────────────────── */}
+      <div className="cg-progress">
+        <div className="cg-progress-head">
+          <div className="cg-metrics">
+            <span className="cg-metric-value">{submitted}</span>
+            <span className="cg-metric-label">
+              submission{submitted === 1 ? "" : "s"}
+            </span>
+            {total > 0 && (
+              <span className="cg-metric-sub">of {total} accounts</span>
             )}
           </div>
+
+          <div className="cg-pct-wrap">
+            <span
+              className={`cg-pct ${getCompletionClass(displayPercentage)}`}
+            >
+              {displayPercentage}%
+            </span>
+            <Tooltip
+              title={
+                goal.perUserQuota
+                  ? `${displayPercentage}% of required submissions completed`
+                  : `${displayPercentage}% of ${total} accounts submitted`
+              }
+            >
+              <InfoIcon fontSize="inherit" className="cg-info" />
+            </Tooltip>
+          </div>
         </div>
-        <div className="info-layout-row-bottom">
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand(goal.id);
-            }}
-          >
-            {expanded ? "Hide submissions" : "Show submissions"}
-          </Button>
+
+        <div className="cg-bar">
+          <div
+            className={`cg-bar-fill ${getCompletionClass(displayPercentage)}`}
+            style={{ width: `${Math.min(100, displayPercentage)}%` }}
+          />
         </div>
+
+        {goal.perUserQuota ? (
+          <span className="cg-quota">
+            Each user needs {goal.perUserQuota} submission
+            {goal.perUserQuota > 1 ? "s" : ""}
+          </span>
+        ) : null}
+      </div>
+
+      {/* ── Unresolved feedback ──────────────────────────────── */}
+      {feedbackSummary && (
+        <button
+          type="button"
+          className={`cg-feedback-strip ${
+            feedbackSummary.helpCount > 0 ? "needs-help" : ""
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setReviewOpen(true);
+          }}
+        >
+          <WarningAmberIcon className="cg-feedback-icon" fontSize="small" />
+
+          <div className="cg-feedback-body">
+            <span className="cg-feedback-title">
+              {feedbackSummary.helpCount > 0
+                ? `${feedbackSummary.helpCount} rep${
+                    feedbackSummary.helpCount === 1 ? "" : "s"
+                  } waiting on help`
+                : "Feedback needs review"}
+            </span>
+
+            <span className="cg-feedback-detail">
+              {feedbackSummary.accountCount} account
+              {feedbackSummary.accountCount === 1 ? "" : "s"}
+              {feedbackSummary.topReasons.length > 0 && " · "}
+              {feedbackSummary.topReasons
+                .map(([key, n]) => `${n} ${getReasonLabel(key).toLowerCase()}`)
+                .join(" · ")}
+            </span>
+          </div>
+
+          <span className="cg-feedback-cta">Review</span>
+        </button>
+      )}
+
+      {/* ── Actions ──────────────────────────────────────────── */}
+      <div className="cg-actions">
+        <Button
+          variant="text"
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand(goal.id);
+          }}
+        >
+          {expanded ? "Hide submissions" : "Show submissions"}
+        </Button>
+
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            setReviewOpen(true);
+          }}
+        >
+          Feedback
+        </Button>
       </div>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          User Progress
-        </Typography>
+        <Typography className="cg-section-label">User Progress</Typography>
         <UserTableForGoals
           users={userRows}
           goal={goal}
           onViewPostModal={(postId, ref) => onViewPostModal(postId, ref)}
+          reports={reports}
+          reviewReports
         />
       </Collapse>
+
+      <GoalReportsReviewModal
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        goalTitle={goal.goalTitle}
+        reports={reports}
+        removedKeys={removedAccountKeys}
+        supervisorByUid={supervisorByUid}
+        onAccept={handleAccept}
+        onRequestFollowUp={handleRequestFollowUp}
+      />
 
       {isEditModalOpen && (
         <NewEditCompanyGoalModal
