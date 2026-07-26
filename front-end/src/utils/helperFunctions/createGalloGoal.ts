@@ -22,6 +22,13 @@ export const createGalloGoal = async (
   selectedAccounts: EnrichedGalloAccountType[],
 
   companyId: string,
+
+  /**
+   * The admin doing the import. Recorded as the goal's owner so report
+   * notifications have somewhere to go — Gallo goals aren't in `companyGoals`,
+   * so without this they resolve to nobody and only surface in the 5pm digest.
+   */
+  createdBy?: { uid: string; firstName?: string; lastName?: string },
 ): Promise<FireStoreGalloGoalDocType> => {
   if (!selectedGoal || !selectedProgram) {
     throw new Error("Selected goal or program is missing.");
@@ -91,6 +98,21 @@ export const createGalloGoal = async (
     },
     accounts: mergedAccounts,
   };
+
+  // First importer owns the goal. A later re-import (adding accounts to an
+  // existing program) doesn't reassign ownership — otherwise the person who
+  // gets the feedback notifications would silently change hands.
+  const existingCreator = snapshot.exists()
+    ? (snapshot.data() as FireStoreGalloGoalDocType).createdByUserId
+    : undefined;
+
+  if (existingCreator) {
+    savedGoal.createdByUserId = existingCreator;
+  } else if (createdBy?.uid) {
+    savedGoal.createdByUserId = createdBy.uid;
+    savedGoal.createdByFirstName = createdBy.firstName ?? "";
+    savedGoal.createdByLastName = createdBy.lastName ?? "";
+  }
 
   console.log("📝 Prepared goal to save:", savedGoal);
 

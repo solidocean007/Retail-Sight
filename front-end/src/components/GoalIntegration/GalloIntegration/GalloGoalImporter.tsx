@@ -215,7 +215,14 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
         selectedProgram,
         allEnrichedAccounts,
         normalizedAccounts, // ✅ use normalized
-        companyId
+        companyId,
+        user?.uid
+          ? {
+              uid: user.uid,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            }
+          : undefined
       );
 
       const goalWithId = {

@@ -402,7 +402,7 @@ export default function AdminUsersConsole() {
         .some((field) => field!.toLowerCase().includes(query)),
     );
   }, [localUsers, statusFilter, debouncedSearch]);
-
+  console.log(filteredUsers);
   // Hard delete with optimistic removal ✅
   const handleDeleteUser = async (uid: string) => {
     if (uid === me?.uid) {

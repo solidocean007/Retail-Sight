@@ -59,6 +59,9 @@ interface Props {
    */
   supervisorByUid?: Record<string, string>;
 
+  /** uid → display name, for attributing a supervisor's confirmation. */
+  nameByUid?: Record<string, string>;
+
   /** Reason stands — account comes off the goal. */
   onAccept: (groups: AccountGroup[]) => Promise<void>;
   /** Not accepted — account stays, routed to the supervisor. */
@@ -72,6 +75,7 @@ const GoalReportsReviewModal: React.FC<Props> = ({
   reports,
   removedKeys = [],
   supervisorByUid = {},
+  nameByUid = {},
   onAccept,
   onRequestFollowUp,
 }) => {
@@ -114,9 +118,13 @@ const GoalReportsReviewModal: React.FC<Props> = ({
     });
   }, [reports]);
 
-  const visibleGroups = showHandled
-    ? groups
-    : groups.filter((g) => g.hasOpen);
+  const hasAnyOpen = groups.some((g) => g.hasOpen);
+
+  // Once everything's been decided, showing nothing looks like the reports
+  // vanished. Fall back to the handled list so the admin sees the record of
+  // what they chose rather than an empty panel.
+  const visibleGroups =
+    showHandled || !hasAnyOpen ? groups : groups.filter((g) => g.hasOpen);
 
   const counts = useMemo(() => {
     const reason: Record<string, number> = {};
@@ -234,8 +242,13 @@ const GoalReportsReviewModal: React.FC<Props> = ({
               <Button
                 size="small"
                 onClick={() => setShowHandled((s) => !s)}
+                disabled={!hasAnyOpen}
               >
-                {showHandled ? "Hide handled" : "Show handled"}
+                {!hasAnyOpen
+                  ? "All handled"
+                  : showHandled
+                    ? "Hide handled"
+                    : "Show handled"}
               </Button>
 
               <Button
@@ -280,6 +293,11 @@ const GoalReportsReviewModal: React.FC<Props> = ({
                         {g.hasOpenHelp && (
                           <span className="goal-reports-help-tag">
                             Needs help
+                          </span>
+                        )}
+                        {!g.hasOpen && !removed && (
+                          <span className="goal-reports-handled-tag">
+                            Handled
                           </span>
                         )}
                       </div>
@@ -331,6 +349,52 @@ const GoalReportsReviewModal: React.FC<Props> = ({
 
                         {r.note && (
                           <p className="goal-reports-note">{r.note}</p>
+                        )}
+
+                        {/* A supervisor who actually went to the store and
+                            backed the rep up. Strongest evidence on the
+                            record, so it reads louder than either note. */}
+                        {r.supervisorConfirmedAt && (
+                          <div className="goal-reports-confirmed">
+                            <span className="goal-reports-confirmed-label">
+                              Confirmed by{" "}
+                              {nameByUid[r.supervisorConfirmedBy ?? ""] ||
+                                "supervisor"}
+                            </span>
+                            {r.supervisorNote && (
+                              <span className="goal-reports-confirmed-note">
+                                {r.supervisorNote}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* What was decided, and what the supervisor was
+                            actually told — without this the modal shows a
+                            handled item with no record of the call made. */}
+                        {r.resolvedAt && (
+                          <div
+                            className={`goal-reports-resolved ${
+                              r.resolution === "follow_up" ? "follow-up" : ""
+                            }`}
+                          >
+                            {r.resolution === "accepted" ? (
+                              <>Accepted &middot; removed from goal</>
+                            ) : (
+                              <>
+                                Follow-up sent
+                                {supervisorByUid[r.userId]
+                                  ? ` to ${supervisorByUid[r.userId]}`
+                                  : ""}
+                              </>
+                            )}
+
+                            {r.resolutionNote && (
+                              <span className="goal-reports-resolution-note">
+                                &ldquo;{r.resolutionNote}&rdquo;
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}

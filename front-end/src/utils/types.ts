@@ -842,6 +842,14 @@ export interface FireStoreGalloGoalDocType {
     marketId: string;
     submittedPostId?: string;
   }>;
+
+  // The admin who imported the program and assigned the accounts. Named to
+  // match `CompanyGoalType` so notification code can resolve a goal's owner
+  // the same way for both kinds. Optional because goals imported before this
+  // existed have no creator recorded — those fall back to the digest only.
+  createdByUserId?: string;
+  createdByFirstName?: string;
+  createdByLastName?: string;
 }
 
 export type CompanyAccountType = {
@@ -888,6 +896,7 @@ export type DashboardModeType =
   | "ProfileMode"
   | "IntegrationsMode"
   | "GoalManagerMode"
+  | "SupervisorFeedbackMode"
   | "ApiMode"
   | "CollectionsMode"
   | "TutorialMode"

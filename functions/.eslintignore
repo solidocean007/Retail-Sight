@@ -1,0 +1,8 @@
+lib/
+
+# One-off maintenance scripts, run by hand and never deployed. They're plain
+# CommonJS and aren't in tsconfig's `include`, so the typescript-eslint parser
+# refuses them outright ("TSConfig does not include this file"). Ignored here
+# rather than via ignorePatterns because the config's leading-slash globs don't
+# match reliably against Windows backslash paths.
+scripts/

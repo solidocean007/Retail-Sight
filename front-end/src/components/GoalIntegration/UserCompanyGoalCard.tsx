@@ -142,6 +142,7 @@ const UserCompanyGoalCard: React.FC<Props> = ({
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
+          <div className="info-title">{goal.id}</div>
         </div>
 
         <div className="info-layout-row">

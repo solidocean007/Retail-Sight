@@ -196,9 +196,311 @@
   color: var(--text-primary);
 }
 
+/* A follow-up is an outstanding commitment, so it reads louder than an
+   accepted item, which is closed. */
+.goal-reports-resolved.follow-up {
+  color: var(--secondary-main, #7b1fa2);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* Supervisor confirmation — someone went to the store and backed the rep up.
+   Deliberately the loudest thing on the card: it's the strongest evidence an
+   admin has when deciding whether to drop an account. */
+.goal-reports-confirmed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid #2e7d32;
+  border-radius: 8px;
+  background: rgba(46, 125, 50, 0.09);
+}
+
+.goal-reports-confirmed-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #2e7d32;
+}
+
+.goal-reports-confirmed-note {
+  font-size: 0.83rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.goal-reports-handled-tag {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(46, 125, 50, 0.14);
+  color: #2e7d32;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* Decision context strip above the action buttons */
 .goal-reports-decision {
   padding: 0.85rem 1.5rem 0;
+}
+
+/* ---------- Supervisor feedback review (dashboard tab) ---------- */
+
+.sfr-wrap {
+  padding: 1rem 1.25rem 2rem;
+  max-width: 780px;
+}
+
+.sfr-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+.sfr-subtitle {
+  margin: 0.35rem 0 1.25rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary, #6b7280);
+  max-width: 62ch;
+}
+
+.sfr-empty {
+  color: var(--text-secondary, #9ca3af);
+  font-size: 0.9rem;
+}
+
+.sfr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sfr-count {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* ---- Rep groups: the unit of work is a conversation, not an account ---- */
+
+.sfr-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.sfr-group {
+  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.22));
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sfr-group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  background: var(--background-light, #f6f7f9);
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sfr-group-head:hover {
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.sfr-chevron {
+  transition: transform 0.18s ease;
+  color: var(--text-secondary, #6b7280);
+  flex-shrink: 0;
+}
+
+.sfr-chevron.open {
+  transform: rotate(180deg);
+}
+
+.sfr-group-name {
+  font-weight: 650;
+  font-size: 0.92rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.sfr-group-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* How long this has been sitting. Does more to prompt action than styling. */
+.sfr-waiting {
+  margin-left: 0.5rem;
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.15);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.sfr-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.75rem;
+}
+
+/* One phone call resolves a rep's whole batch, so one action should too. */
+.sfr-bulk {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--border-color, rgba(128, 128, 128, 0.3));
+}
+
+.sfr-bulk-label {
+  flex: 1;
+  min-width: 12ch;
+  font-size: 0.78rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+@media (max-width: 600px) {
+  .sfr-group-meta {
+    font-size: 0.7rem;
+  }
+
+  .sfr-bulk {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sfr-bulk .MuiButton-root {
+    width: 100%;
+  }
+}
+
+.sfr-card {
+  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.22));
+  border-left: 3px solid var(--secondary-main, #9c27b0);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.sfr-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sfr-account {
+  font-weight: 650;
+  font-size: 0.95rem;
+}
+
+.sfr-goal {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.sfr-rep {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* A second ask on something the supervisor already answered. Marked so it
+   doesn't read as a duplicate — or worse, as nobody having listened. */
+.sfr-card.revisit {
+  border-left-color: #ef6c00;
+}
+
+.sfr-revisit-tag {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #ef6c00;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
+.sfr-prior {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border-left: 3px solid #2e7d32;
+  border-radius: 8px;
+  background: rgba(46, 125, 50, 0.08);
+}
+
+.sfr-prior-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #2e7d32;
+}
+
+.sfr-prior-note {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.sfr-admin-note {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(156, 39, 176, 0.08);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.sfr-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-color, rgba(128, 128, 128, 0.14));
+}
+
+/* Per-card hints moved into the confirmation dialog once the list got long —
+   twenty cards each carrying two lines of explanation is its own wall of
+   text. The dialog states the consequence at the moment it matters. */
+
+@media (max-width: 600px) {
+  .sfr-wrap {
+    padding: 0.85rem 1rem 2rem;
+  }
+
+  .sfr-actions {
+    gap: 1rem;
+  }
 }
 
 /* ---------- Inline caution icon on an account row ---------- */

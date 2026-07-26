@@ -19,6 +19,7 @@ import StoreIcon from "@mui/icons-material/Store";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import FlagIcon from "@mui/icons-material/OutlinedFlag";
 import { Handshake, Inventory2, NotificationAdd } from "@mui/icons-material";
 
 import { useNavigate } from "react-router-dom";
@@ -75,6 +76,13 @@ const DashMenu = ({
   // );
 
   const canAccessBilling = role === "admin" || role === "super-admin";
+
+  // Anyone who can have direct reports may receive routed feedback.
+  const isSupervisorOrAbove =
+    role === "supervisor" ||
+    role === "admin" ||
+    role === "super-admin" ||
+    role === "developer";
 
   const canAccessIntegrations =
     role === "admin" || role === "super-admin" || role === "developer";
@@ -156,6 +164,19 @@ const DashMenu = ({
           <NotificationAdd sx={{ mr: 1 }} />
           <ListItemText primary="Notifications" />
         </ListItemButton>
+
+        {/* Supervisors have no goal manager access, so this is their only
+            route to feedback an admin routed to them. Admins see it too —
+            they can also have direct reports. */}
+        {isSupervisorOrAbove && (
+          <ListItemButton
+            selected={selectedMode === "SupervisorFeedbackMode"}
+            onClick={() => onMenuClick("SupervisorFeedbackMode")}
+          >
+            <FlagIcon sx={{ mr: 1 }} />
+            <ListItemText primary="Team Feedback" />
+          </ListItemButton>
+        )}
 
         <ListItemButton
           selected={selectedMode === "TutorialMode"}

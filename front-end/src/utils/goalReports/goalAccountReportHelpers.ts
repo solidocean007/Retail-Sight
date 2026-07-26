@@ -237,6 +237,82 @@ export const getFollowUpReports = (
 ): GoalAccountReport[] =>
   reports.filter((r) => r.resolution === "follow_up");
 
+/**
+ * Supervisor backs the rep up after working the account.
+ *
+ * Reopens the report for the admin by clearing `resolvedAt` — deliberately
+ * reusing "open" rather than adding a state, so the feedback strip, the review
+ * modal, and the digest all pick it up with no changes. `adminDigestAt` is
+ * cleared too: a supervisor confirmation is new information and deserves to
+ * appear in the next digest.
+ *
+ * Does NOT touch the goal. Only an admin can remove an account.
+ */
+export const confirmReportAsSupervisor = async (
+  reportId: string,
+  supervisorUid: string,
+  supervisorNote?: string,
+): Promise<void> => {
+  await updateDoc(doc(db, COLLECTION, reportId), {
+    supervisorConfirmedAt: new Date().toISOString(),
+    supervisorConfirmedBy: supervisorUid,
+    supervisorNote: supervisorNote?.trim() || null,
+
+    // Back into the admin's queue.
+    resolvedAt: null,
+    resolution: null,
+    adminDigestAt: null,
+
+    serverUpdatedAt: serverTimestamp(),
+  });
+};
+
+/**
+ * Supervisor investigated and decided the rep should keep pursuing it. Closes
+ * the report without involving the admin. Account stays on the goal.
+ */
+export const keepWorkingReport = async (
+  reportId: string,
+  supervisorUid: string,
+  supervisorNote?: string,
+): Promise<void> => {
+  await updateDoc(doc(db, COLLECTION, reportId), {
+    resolvedAt: new Date().toISOString(),
+    resolvedBy: supervisorUid,
+    resolution: "keep_working",
+    supervisorNote: supervisorNote?.trim() || null,
+    serverUpdatedAt: serverTimestamp(),
+  });
+};
+
+/** Follow-ups routed to a given supervisor's direct reports. */
+export const fetchFollowUpsForSupervisor = async (
+  companyId: string,
+  repUids: string[],
+): Promise<GoalAccountReport[]> => {
+  if (!companyId || !repUids.length) return [];
+
+  const CHUNK = 30;
+  const results: GoalAccountReport[] = [];
+
+  for (let i = 0; i < repUids.length; i += CHUNK) {
+    const snap = await getDocs(
+      query(
+        collection(db, COLLECTION),
+        where("companyId", "==", companyId),
+        where("userId", "in", repUids.slice(i, i + CHUNK)),
+        where("resolution", "==", "follow_up"),
+      ),
+    );
+
+    snap.docs.forEach((d) =>
+      results.push({ ...(d.data() as GoalAccountReport), id: d.id }),
+    );
+  }
+
+  return results;
+};
+
 /** Undo triage — puts reports back in the open queue. */
 export const reopenGoalAccountReports = async (
   reportIds: string[],

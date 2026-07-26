@@ -19,7 +19,9 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   plugins: ["@typescript-eslint", "import", "prettier"],
-  ignorePatterns: [".eslintrc.js", "/lib/**/*"],
+  // See also .eslintignore, which is what actually keeps scripts/ out — these
+  // leading-slash globs don't match Windows backslash paths reliably.
+  ignorePatterns: [".eslintrc.js", "/lib/**/*", "**/scripts/**"],
   rules: {
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-non-null-assertion": "off",

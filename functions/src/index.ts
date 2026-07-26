@@ -31,6 +31,9 @@ import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
 import { markNotificationReadCallable } from "./notifications/markNotificationReadCallable";
 import { trackNotificationClickCallable } from "./notifications/trackNotificationClickCallable";
+import { dailyGoalReportDigest } from "./notifications/dailyGoalReportDigest";
+import { resolveReportsOnSubmission } from "./notifications/resolveReportsOnSubmission";
+import { onGoalReportWritten } from "./notifications/onGoalReportWritten";
 import { developerRecomputeCompanyCounts } from "./billing/developerRecomputeCompanyCounts";
 import { adminUpdateCompanyUser } from "./adminUpdateCompanyUser";
 import {
@@ -186,6 +189,9 @@ export {
   trackEmailClick,
   markNotificationReadCallable,
   trackNotificationClickCallable,
+  dailyGoalReportDigest,
+  resolveReportsOnSubmission,
+  onGoalReportWritten,
 
   // products
   uploadCompanyProducts,

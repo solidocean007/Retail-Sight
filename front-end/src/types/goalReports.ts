@@ -90,7 +90,13 @@ export const getReasonLabel = (key: string): string =>
  *              rep's supervisor to review with them. Not a rejection aimed at
  *              the rep; a note that someone will talk it through.
  */
-export type GoalReportResolution = "accepted" | "follow_up";
+export type GoalReportResolution =
+  | "accepted"
+  | "follow_up"
+  /** Supervisor investigated and closed it — account stays on the goal. */
+  | "keep_working"
+  /** A display was submitted for this account, so the report is moot. */
+  | "executed";
 
 export interface GoalAccountReport {
   id: string;
@@ -130,6 +136,21 @@ export interface GoalAccountReport {
   resolution?: GoalReportResolution | null;
   /** Admin's direction, shown to the supervisor handling the follow-up. */
   resolutionNote?: string | null;
+
+  /**
+   * Supervisor's verdict after actually working the account.
+   *
+   * Confirming reopens the report for the admin (clears `resolvedAt`) rather
+   * than introducing a new state — every existing "open" filter, the feedback
+   * strip, and the review modal then keep working untouched, and the admin
+   * sees it again carrying much stronger evidence than the original report.
+   *
+   * Supervisors can never remove an account; only admins can. That's the
+   * safety property that makes these buttons impossible to misread.
+   */
+  supervisorConfirmedAt?: string | null;
+  supervisorConfirmedBy?: string | null;
+  supervisorNote?: string | null;
 
   createdAt: string;
   updatedAt: string;
@@ -207,3 +228,11 @@ export const isHelpRequest = (
 export const needsFollowUp = (
   report: Pick<GoalAccountReport, "resolution">,
 ): boolean => report.resolution === "follow_up";
+
+/**
+ * A supervisor went out, saw the account, and backed the rep up. Carries more
+ * weight than the original report — worth surfacing distinctly to the admin.
+ */
+export const isSupervisorConfirmed = (
+  report: Pick<GoalAccountReport, "supervisorConfirmedAt">,
+): boolean => Boolean(report.supervisorConfirmedAt);

@@ -119,6 +119,15 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     return map;
   }, [companyUsers]);
 
+  // uid → display name, so a supervisor's confirmation can be attributed.
+  const nameByUid = useMemo(() => {
+    const map: Record<string, string> = {};
+    companyUsers.forEach((u) => {
+      map[u.uid] = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+    });
+    return map;
+  }, [companyUsers]);
+
   // Account keys already removed, so the review can render them as such.
   const removedAccountKeys = useMemo(
     () =>
@@ -647,6 +656,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         reports={reports}
         removedKeys={removedAccountKeys}
         supervisorByUid={supervisorByUid}
+        nameByUid={nameByUid}
         onAccept={handleAccept}
         onRequestFollowUp={handleRequestFollowUp}
       />

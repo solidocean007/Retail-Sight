@@ -27,6 +27,7 @@ import PastDueBanner from "./Billing/PastDueBanner.tsx";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice.ts";
 import { selectEffectiveCompanyId } from "../../Slices/impersonationSlice.ts";
 import DeveloperViewAsPanel from "../DeveloperDashboard/DeveloperViewAsPanel.tsx";
+import SupervisorFeedbackReview from "../GoalReports/SupervisorFeedbackReview.tsx";
 
 const ADMIN_MODES: DashboardModeType[] = [
   "ConnectionsMode",
@@ -221,6 +222,12 @@ export const Dashboard = () => {
         {dashboardMode === "GoalManagerMode" &&
           canAccessAdmin &&
           !isSupplier && <GoalManagerLayout companyId={companyId} />}
+
+        {/* Supervisors don't get the goal manager, so this is their only
+            surface for feedback an admin routed to them. */}
+        {dashboardMode === "SupervisorFeedbackMode" && !isSupplier && (
+          <SupervisorFeedbackReview />
+        )}
 
         {dashboardMode === "CollectionsMode" && (
           <CollectionsViewer setDashboardMode={setDashboardMode} />

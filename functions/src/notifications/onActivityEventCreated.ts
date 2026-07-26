@@ -158,37 +158,139 @@ export const onActivityEventCreated = onDocumentCreated(
         message = `${safeActorName} assigned you a goal: ${data.goalTitle}`;
         break;
 
-      case "goal.reportResolved": {
-        // A rep hears back about feedback they filed. Tone matters here —
-        // "accepted" is a win (the account came off their goal), and
-        // "follow_up" must read as support, not as being overruled.
-        const accounts = Array.isArray(data.accountNames)
-          ? (data.accountNames as string[])
-          : [];
-        const count = Number(data.accountCount ?? accounts.length) || 0;
-
-        const accountLabel =
-          accounts.length === 1
-            ? accounts[0]
-            : `${count} account${count === 1 ? "" : "s"}`;
-
-        if (data.resolution === "accepted") {
-          title = "Your feedback was accepted";
-          message = `${accountLabel} removed from ${data.goalTitle || "the goal"}.`;
-        } else {
-          title = "Follow-up on your feedback";
-          message = data.resolutionNote
-            ? `${safeActorName} asked your supervisor to follow up on ${accountLabel}: ${String(
-                data.resolutionNote
-              ).slice(0, 140)}`
-            : `${safeActorName} asked your supervisor to follow up on ${accountLabel}.`;
-        }
+      case "goal.reportResolved":
+        // Handled by the coalescing block below, which builds its own title
+        // and message per recipient. This case exists only so the type
+        // doesn't fall through to `default` and bail out.
         break;
-      }
 
       default:
         console.warn("Unhandled activity type:", type, data);
         return;
+    }
+
+    // ------------------------------------------------------------------
+    // Goal report decisions get COALESCED, not fanned out per event.
+    //
+    // An admin working through fifteen accounts one at a time would
+    // otherwise fire fifteen notifications at one rep. Instead, the
+    // notification id is deterministic per recipient + goal + day, so
+    // repeat activity updates a single notification and its count grows.
+    // The detail lives in the app; the notification's job is only to say
+    // that something happened.
+    // ------------------------------------------------------------------
+    if (type === "goal.reportResolved") {
+      const goalId = String(data.goalId ?? "");
+      const goalTitleText = String(data.goalTitle ?? "the goal");
+      const isFollowUp = data.resolution === "follow_up";
+      const newCount =
+        Number(data.accountCount) ||
+        (Array.isArray(data.accountNames) ? data.accountNames.length : 1);
+
+      // Bucket by Eastern date, matching the 5pm digest. A UTC date would
+      // roll over at 8pm ET and split one evening's work across two
+      // notifications.
+      const day = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/New_York",
+      }).format(new Date());
+      const nowTs = admin.firestore.FieldValue.serverTimestamp();
+
+      // The rep always hears the outcome. The supervisor hears about it too,
+      // but only when work is actually being routed to them — they're the
+      // party expected to act, and were previously the least informed party
+      // in the whole loop.
+      //
+      // Keyed by uid so a supervisor who is also a target of the same event
+      // gets one notification, not two writes racing on the same document.
+      // Supervisor wins the tie: it's the more actionable framing.
+      const recipients = new Map<string, "rep" | "supervisor">();
+      for (const uid of cleanedTargetUserIds) recipients.set(uid, "rep");
+
+      if (isFollowUp) {
+        for (const repUid of cleanedTargetUserIds) {
+          try {
+            const repSnap = await db.doc(`users/${repUid}`).get();
+            const supUid = String(repSnap.data()?.reportsTo ?? "").trim();
+            if (supUid && supUid !== actorUserId) {
+              recipients.set(supUid, "supervisor");
+            }
+          } catch (err) {
+            console.warn(`Could not resolve supervisor for ${repUid}`, err);
+          }
+        }
+      }
+
+      const onlyAccountName =
+        Array.isArray(data.accountNames) && data.accountNames.length === 1
+          ? String(data.accountNames[0])
+          : null;
+
+      await Promise.all(
+        Array.from(recipients.entries()).map(async ([uid, role]) => {
+          const notificationId = `goalreport_${goalId}_${uid}_${day}`;
+          const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
+
+          // Transaction, not a plain read-then-write: an admin clicking
+          // through accounts quickly fires overlapping invocations, and a
+          // lost update here would undercount the accounts in the message.
+          await db.runTransaction(async (tx) => {
+            const existing = await tx.get(ref);
+            const prior = Number(existing.data()?.accountCount ?? 0);
+            const total = prior + newCount;
+
+            const subject =
+              total === 1 && onlyAccountName
+                ? onlyAccountName
+                : `${total} accounts`;
+
+            const nextTitle =
+              role === "supervisor"
+                ? "Accounts need your follow-up"
+                : isFollowUp
+                  ? "Follow-up on your feedback"
+                  : "Your feedback was accepted";
+
+            const nextMessage =
+              role === "supervisor"
+                ? `${safeActorName} asked you to follow up on ${subject} for ${goalTitleText}.`
+                : isFollowUp
+                  ? `${safeActorName} asked your supervisor to follow up on ${subject}.`
+                  : `${subject} removed from ${goalTitleText}.`;
+
+            tx.set(
+              ref,
+              {
+                id: notificationId,
+                userId: uid,
+                title: nextTitle,
+                message: nextMessage,
+                type,
+                intent: "activity",
+                priority: "normal",
+                link: `${APP_ORIGIN}/notifications`,
+                actorUserId: actorUserId || null,
+                actorName: safeActorName,
+                goalId,
+                accountCount: total,
+                // Re-open it: later activity on the same day shouldn't hide
+                // under an already-read notification. createdAt is bumped so
+                // the refreshed item resurfaces at the top of the list rather
+                // than staying buried where the first one landed.
+                readAt: null,
+                createdAt: nowTs,
+                firstSeenAt: existing.exists
+                  ? (existing.data()?.firstSeenAt ?? nowTs)
+                  : nowTs,
+                updatedAt: nowTs,
+                deliveredVia: { inApp: nowTs },
+              },
+              { merge: true }
+            );
+          });
+        })
+      );
+
+      return;
     }
 
     // Add display context (store · brands) to post-related notifications
