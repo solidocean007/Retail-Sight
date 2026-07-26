@@ -102,6 +102,68 @@ export const adminUpdateCompanyUser = onCall(async (request) => {
     tx.update(userRef, update);
   });
 
+  // ------------------------------------------------------------------
+  // Release this user's direct reports if they can no longer supervise.
+  //
+  // Without this, demoting or deactivating a supervisor silently orphans
+  // everyone pointing at them: the reports keep a `reportsTo` aimed at
+  // someone who isn't a supervisor anymore. Those users then vanish from
+  // team views while still carrying a stale pointer, and anything that
+  // walks `reportsTo` — notification routing, follow-ups — sends to a
+  // person who no longer holds the role.
+  //
+  // Reports are CLEARED, not re-parented. Nothing here knows who should
+  // cover that team, and guessing wrong silently is worse than surfacing
+  // them as Unassigned for a human to place.
+  // ------------------------------------------------------------------
+  const SUPERVISOR_CAPABLE = ["supervisor", "admin", "super-admin"];
+
+  const prevRole = String(target.role ?? "");
+  const nextRole = String(patch.role ?? prevRole);
+
+  const couldSupervise =
+    SUPERVISOR_CAPABLE.includes(prevRole) && prevStatus === "active";
+  const canStillSupervise =
+    SUPERVISOR_CAPABLE.includes(nextRole) && nextStatus === "active";
+
+  if (couldSupervise && !canStillSupervise) {
+    try {
+      const reportsSnap = await db
+        .collection("users")
+        .where("companyId", "==", target.companyId)
+        .where("reportsTo", "==", uid)
+        .get();
+
+      if (!reportsSnap.empty) {
+        const batch = db.batch();
+
+        reportsSnap.docs.forEach((d) => {
+          batch.update(d.ref, {
+            reportsTo: "",
+            lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        });
+
+        await batch.commit();
+
+        await db.collection(`companies/${target.companyId}/auditLogs`).add({
+          type: "reportsTo_released",
+          reason: canStillSupervise ? "role_change" : `${prevRole}→${nextRole}`,
+          actorUid: callerUid,
+          formerSupervisorUid: uid,
+          releasedUserUids: reportsSnap.docs.map((d) => d.id),
+          releasedCount: reportsSnap.size,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (err) {
+      // The user update already committed — a cleanup failure must not
+      // surface as "the role change failed", or an admin will retry and
+      // get confusing results.
+      console.error("Failed to release direct reports for", uid, err);
+    }
+  }
+
   await recomputeCompanyCountsInternal(target.companyId);
 
   return { success: true };
