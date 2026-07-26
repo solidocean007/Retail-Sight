@@ -20,5 +20,13 @@ export default function useUserAccountsSync(shouldStartSync = true) {
         })
       );
     }
-  }, [user?.companyId, user?.salesRouteNum, canSync, dispatch]);
+    // shouldStartSync must be a dependency — it starts false (appReady is not
+    // yet true), so omitting it means the effect bails once and never re-runs.
+  }, [
+    user?.companyId,
+    user?.salesRouteNum,
+    canSync,
+    dispatch,
+    shouldStartSync,
+  ]);
 }

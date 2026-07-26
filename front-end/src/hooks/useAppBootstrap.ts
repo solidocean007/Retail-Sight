@@ -109,10 +109,13 @@ export function useAppBootstrap({
   useCustomAccountsSync(shouldStartSync);
   useGalloGoalsListener(companyId, galloEnabled, shouldStartSync);
 
+  // NOTE: must be the Redux user, not `currentUser`. `currentUser` is the
+  // Firebase auth user (uid/email only) and has no `role`, so this check was
+  // always false and allAccounts never loaded for anyone.
   useAllCompanyAccountsSync(
-    currentUser?.role === "admin" ||
-      currentUser?.role === "super-admin" ||
-      currentUser?.role === "supervisor",
+    user?.role === "admin" ||
+      user?.role === "super-admin" ||
+      user?.role === "supervisor",
     shouldStartSync,
   );
 

@@ -12,14 +12,16 @@ import { db } from "../utils/firebase";
 import { ProductType } from "../utils/types";
 import { setAllProducts } from "../Slices/productsSlice";
 import { saveAllCompanyProductsToIndexedDB } from "../utils/database/indexedDBUtils";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 export const fetchCompanyProducts = createAsyncThunk(
   "products/fetchCompanyProducts",
   async (companyId: string, { dispatch }) => {
     const snapshot = await getDocs(collection(db, "products", companyId, "items"));
-    const products = snapshot.docs.map((doc) => ({
-      ...doc.data(),
-    })) as ProductType[];
+    // Normalize before Redux — raw Firestore Timestamps are non-serializable.
+    const products = snapshot.docs.map((doc) =>
+      normalizeFirestoreData({ ...doc.data() }),
+    ) as ProductType[];
 
     // 🔁 Update Redux immediately
     dispatch(setAllProducts(products));

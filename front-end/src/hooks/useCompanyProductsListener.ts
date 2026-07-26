@@ -8,14 +8,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAppDispatch } from "../utils/store";
-import {
-  addProduct,
-  updateProduct,
-  deleteProduct,
-  setAllProducts,
-} from "../Slices/productsSlice";
+import { setAllProducts } from "../Slices/productsSlice";
 import { ProductType } from "../utils/types";
 import { saveAllCompanyProductsToIndexedDB } from "../utils/database/indexedDBUtils";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 /**
  * useCompanyProductsListener
@@ -34,7 +30,12 @@ export function useCompanyProductsListener(companyId: string | null, shouldStart
     const unsubscribe = onSnapshot(productsRef, async (snapshot: QuerySnapshot<DocumentData>) => {
       const allProducts: ProductType[] = [];
       snapshot.forEach((docSnap) => {
-        allProducts.push(docSnap.data() as ProductType);
+        // Firestore Timestamps aren't serializable and must not reach Redux —
+        // they break time-travel debugging and cause subtle equality bugs.
+        // normalizeFirestoreData converts them to ISO strings.
+        allProducts.push(
+          normalizeFirestoreData(docSnap.data()) as ProductType,
+        );
       });
 
       // 💾 Update IndexedDB cache
@@ -49,5 +50,7 @@ export function useCompanyProductsListener(companyId: string | null, shouldStart
     });
 
     return () => unsubscribe();
-  }, [companyId, dispatch]);
+    // shouldStartSync starts false (appReady not yet true) — without it here,
+    // the listener is never attached for the rest of the session.
+  }, [companyId, dispatch, shouldStartSync]);
 }
