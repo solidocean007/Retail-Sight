@@ -1,4 +1,6 @@
 import "./../userTableForGoals.css";
+import { GoalAccountReport, GoalKind } from "../../types/goalReports";
+import AccountReportAction from "../GoalReports/AccountReportAction";
 
 interface Submission {
   postId: string;
@@ -10,6 +12,14 @@ interface UnsubmittedAccount {
   accountName: string;
   accountAddress: string;
   accountNumber: string;
+  /** Gallo opportunity id — the identity a Gallo report is keyed on. */
+  oppId?: string;
+}
+
+interface ReportingContext {
+  goalKind: GoalKind;
+  goalId: string;
+  goalTitle?: string;
 }
 
 interface Props {
@@ -18,6 +28,11 @@ interface Props {
   submissions: Submission[];
   unsubmittedAccounts: UnsubmittedAccount[];
   onViewPost: (postId: string, ref: HTMLElement) => void;
+
+  /** Opt-in rep capture — omitted in any admin-facing usage. */
+  reporting?: ReportingContext;
+  reports?: GoalAccountReport[];
+  onReportSaved?: () => void;
 }
 
 const GoalProgressRow: React.FC<Props> = ({
@@ -26,6 +41,9 @@ const GoalProgressRow: React.FC<Props> = ({
   submissions,
   unsubmittedAccounts,
   onViewPost,
+  reporting,
+  reports = [],
+  onReportSaved,
 }) => {
   return (
     <div className="user-table-wrapper">
@@ -84,9 +102,31 @@ const GoalProgressRow: React.FC<Props> = ({
                   </summary>
                   <ul className="unsubmitted-list">
                     {unsubmittedAccounts.map((acc) => (
-                      <li key={acc.accountNumber}>
-                        <strong>{acc.accountName}</strong> —{" "}
-                        {acc.accountAddress || "No address"}
+                      <li key={acc.oppId ?? acc.accountNumber}>
+                        <div className="unsubmitted-account-name">
+                          {acc.accountName}
+                        </div>
+                        <div className="unsubmitted-account-address">
+                          {acc.accountAddress || "No address"}
+                        </div>
+                        {reporting && (
+                          <AccountReportAction
+                            goalKind={reporting.goalKind}
+                            goalId={reporting.goalId}
+                            goalTitle={reporting.goalTitle}
+                            oppId={acc.oppId}
+                            accountNumber={
+                              acc.oppId ? undefined : acc.accountNumber
+                            }
+                            accountName={acc.accountName}
+                            existingReport={reports.find((r) =>
+                              acc.oppId
+                                ? r.oppId === acc.oppId
+                                : r.accountNumber === acc.accountNumber,
+                            )}
+                            onSaved={onReportSaved}
+                          />
+                        )}
                       </li>
                     ))}
                   </ul>

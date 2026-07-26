@@ -148,6 +148,30 @@
   .user-table-count {
     font-size: 0.75rem;
   }
+
+  /* Reclaim horizontal space on phones — the bullet indent plus table
+     padding was squeezing account rows into three-line wraps. */
+  .unsubmitted-list {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .unsubmitted-details {
+    padding-left: 6px;
+  }
+
+  .unsubmitted-list li .unsubmitted-account-name {
+    font-size: 0.82rem;
+  }
+
+  .unsubmitted-list li .unsubmitted-account-address {
+    font-size: 0.75rem;
+  }
+
+  .assigned-indicator {
+    font-size: 0.7rem;
+  }
 }
 
 .unsubmitted-details {
@@ -173,6 +197,26 @@
 .unsubmitted-list li {
   margin-bottom: 4px;
 }
+
+/* Account rows: name, address, and actions each on their own line so a
+   long store address can't shove the buttons into an awkward wrap. */
+.unsubmitted-list li .unsubmitted-account-name {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.unsubmitted-list li .unsubmitted-account-address {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #777);
+  line-height: 1.35;
+}
+
+.unsubmitted-list li + li {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color, rgba(128, 128, 128, 0.18));
+}
+
 .assigned-indicator {
   color: var(--accent-color);
   font-size: 0.85rem;

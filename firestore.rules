@@ -224,6 +224,30 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // 🔹 Goal Account Reports (rep feedback on goal execution)
+    // ==========================================================
+    // Contains candid commentary about accounts and possibly named buyers,
+    // so it must NOT fall through to the catch-all below — that would expose
+    // every company's reports to any authenticated user.
+    match /goalAccountReports/{reportId} {
+      // READ: same company only
+      allow read: if isInCompany(resource.data.companyId);
+
+      // CREATE: only as yourself, only into your own company
+      allow create: if request.auth != null &&
+                    request.resource.data.userId == request.auth.uid &&
+                    isInCompany(request.resource.data.companyId);
+
+      // UPDATE: the author (editing their own report) or a company admin
+      // (resolving it)
+      allow update: if resource.data.userId == request.auth.uid ||
+                    isOwnCompany(resource.data.companyId);
+
+      // DELETE: admins only
+      allow delete: if isOwnCompany(resource.data.companyId);
+    }
+
+    // ==========================================================
     // TEMPORARY CATCH-ALL (allows all authenticated access)
     // ==========================================================
     match /{path=**} {

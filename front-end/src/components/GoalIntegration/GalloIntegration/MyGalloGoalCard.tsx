@@ -7,6 +7,7 @@ import { getGoalTimingState } from "../utils/getGoalTimingState";
 import { daysFromNow, toMillisSafe } from "../utils/goalTimingUtils";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../../Slices/userSlice";
+import { useGoalAccountReports } from "../../../hooks/useGoalAccountReports";
 
 export function formatGoalDate(v?: any) {
   if (!v) return "—";
@@ -54,6 +55,13 @@ const MyGalloGoalCard: React.FC<Props> = ({
 }) => {
   const user = useSelector(selectUser);
   const userRoute = user?.salesRouteNum;
+
+  // Fetched once per goal, only while the card is open — a rep with many
+  // accounts must not trigger a read per row.
+  const { reports, refresh: refreshReports } = useGoalAccountReports(
+    goal.goalDetails.goalId,
+    expanded,
+  );
 
   const userActiveAccounts = useMemo(() => {
     if (!userRoute) return [];
@@ -178,8 +186,18 @@ const MyGalloGoalCard: React.FC<Props> = ({
                 accountName: a.accountName,
                 accountAddress: a.accountAddress || "",
                 accountNumber: a.distributorAcctId,
+                // Reports on Gallo goals are keyed on oppId, so it has to
+                // survive this mapping.
+                oppId: a.oppId,
               }))}
             onViewPost={onViewPostModal}
+            reporting={{
+              goalKind: "gallo",
+              goalId: goal.goalDetails.goalId,
+              goalTitle: goal.programDetails?.programTitle,
+            }}
+            reports={reports}
+            onReportSaved={refreshReports}
           />
         </div>
       </Collapse>

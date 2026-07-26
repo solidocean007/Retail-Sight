@@ -1,0 +1,172 @@
+/* Rep capture controls on an unsubmitted account row.
+   Small, low-ceremony, comfortable to hit on a phone.
+
+   NOTE on specificity: userTableForGoals.css has `.user-table button`
+   (0,1,1) setting a solid blue fill. Every rule here is written with two
+   classes (0,2,0) so it wins on class count without needing !important. */
+
+.account-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.account-report-actions .account-report-chip {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.5));
+  background-color: transparent;
+  color: var(--text-secondary, #666);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.account-report-actions .account-report-chip:hover {
+  background-color: transparent;
+  border-color: var(--primary-blue, #1976d2);
+  color: var(--primary-blue, #1976d2);
+}
+
+/* Help — visually distinct because it means someone must act, unlike a
+   reason report which is informational. */
+.account-report-actions .account-report-chip.help:hover {
+  border-color: var(--secondary-main, #9c27b0);
+  color: var(--secondary-main, #9c27b0);
+}
+
+/* Already reported — reads as recorded effort, not an error state. */
+.account-report-actions .account-report-chip.reported {
+  background-color: var(--primary-blue, #1976d2);
+  border-color: var(--primary-blue, #1976d2);
+  color: #fff;
+  white-space: normal;
+  text-align: left;
+}
+
+.account-report-actions .account-report-chip.reported:hover {
+  background-color: var(--primary-blue, #1565c0);
+  color: #fff;
+}
+
+/* An outstanding ask, not just a note. */
+.account-report-actions .account-report-chip.reported.help {
+  background-color: var(--secondary-main, #9c27b0);
+  border-color: var(--secondary-main, #9c27b0);
+}
+
+.account-report-actions .account-report-chip.reported.help:hover {
+  background-color: var(--secondary-main, #7b1fa2);
+  color: #fff;
+}
+
+/* ----------------------------------------------------
+   Mobile — the primary surface for this feature
+   ---------------------------------------------------- */
+@media (max-width: 600px) {
+  .account-report-actions {
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+  }
+
+  .account-report-actions .account-report-chip {
+    /* Roomier tap target without taking more visual space */
+    padding: 0.3rem 0.65rem;
+    font-size: 0.72rem;
+  }
+}
+
+/* Touch devices of any width get the larger target. */
+@media (pointer: coarse) {
+  .account-report-actions .account-report-chip {
+    min-height: 30px;
+  }
+}
+
+/* ====================================================
+   Dialog
+   ==================================================== */
+
+.account-report-paper {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+/* Colored banner so the two flows are instantly distinguishable —
+   blue for reporting an issue, purple for asking for help. */
+.account-report-header {
+  padding: 1rem 1.5rem 0.75rem;
+  background: linear-gradient(
+    135deg,
+    var(--primary-blue, #1976d2),
+    #1565c0
+  );
+  color: #fff;
+}
+
+.account-report-header.help {
+  background: linear-gradient(
+    135deg,
+    var(--secondary-main, #9c27b0),
+    #6a1b9a
+  );
+}
+
+.account-report-eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.account-report-header .account-report-title {
+  padding: 0.15rem 0 0 !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  color: #fff;
+}
+
+.account-report-content {
+  padding-top: 1.25rem !important;
+}
+
+.account-report-prompt {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.85rem !important;
+}
+
+/* The app sets global input styles (background + padding) that fight MUI's
+   outlined fields and push the floating label out of alignment. Reset them
+   inside the dialog so the label sits where MUI expects. */
+.account-report-field input,
+.account-report-field textarea {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.account-report-field .MuiOutlinedInput-root {
+  border-radius: 10px;
+  background: var(--background-light, #fafafa);
+  padding: 0.5rem 0.75rem;
+}
+
+.account-report-field .MuiOutlinedInput-input {
+  padding: 0 !important;
+}
+
+.account-report-field .MuiInputLabel-root {
+  font-size: 0.85rem;
+}

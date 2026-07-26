@@ -9,6 +9,7 @@ import { selectUser } from "../../Slices/userSlice";
 import "./companyGoalCard.css";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
 import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
+import { useGoalAccountReports } from "../../hooks/useGoalAccountReports";
 
 interface Props {
   goal: CompanyGoalWithIdType;
@@ -31,6 +32,13 @@ const UserCompanyGoalCard: React.FC<Props> = ({
   const allAccounts = useSelector(selectAllCompanyAccounts);
   const userSalesRoute = user?.salesRouteNum;
   const userUid = user?.uid;
+  
+  // Fetched once per goal, only while expanded — a rep with many accounts
+  // must not trigger a read per row.
+  const { reports, refresh: refreshReports } = useGoalAccountReports(
+    goal.id,
+    expanded,
+  );
 
   // --- Determine which accounts apply to this goal ---
   const accountNumbersForThisGoal = useMemo(() => {
@@ -41,6 +49,9 @@ const UserCompanyGoalCard: React.FC<Props> = ({
     }
     return goal.accountNumbersForThisGoal || [];
   }, [goal.goalAssignments, goal.accountNumbersForThisGoal, userUid]);
+
+  // in UserCompanyGoalCard, next to your other logs
+console.log("allAccounts:", allAccounts.length, "assigned:", accountNumbersForThisGoal);
 
   const userAccounts = useMemo(() => {
     const scoped = allAccounts.filter((acc) =>
@@ -122,12 +133,10 @@ const UserCompanyGoalCard: React.FC<Props> = ({
     <div className="info-box-company-goal">
       <div className="goal-content" onClick={() => onToggleExpand(goal.id)}>
         <div className="goal-badge">{goal.targetRole}</div>
-
         <div className="company-goal-card-start-end">
           <h3>Starts: {goal.goalStartDate}</h3>
           <h3>Ends: {goal.goalEndDate}</h3>
         </div>
-        {/* {goal.id} */}
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
         </div>
@@ -201,6 +210,9 @@ const UserCompanyGoalCard: React.FC<Props> = ({
           users={[userRow]}
           goal={goal}
           onViewPostModal={onViewPostModal}
+          enableReporting
+          reports={reports}
+          onReportSaved={refreshReports}
         />
       </Collapse>
     </div>

@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./userTableForGoals.css";
 import { CompanyGoalWithIdType, GoalAssignmentType } from "../utils/types";
+import { GoalAccountReport } from "../types/goalReports";
+import AccountReportAction from "./GoalReports/AccountReportAction";
 
 export interface UserRowType {
   uid: string;
@@ -28,18 +30,30 @@ interface Props {
   users: UserRowType[];
   goal: CompanyGoalWithIdType;
   onViewPostModal: (postId: string, target?: HTMLElement) => void;
+
+  /**
+   * Opt-in rep capture. Only passed from a rep's own goal view — this table is
+   * also used by CompanyGoalCard and AdminGoalViewerCard, where an admin must
+   * not see "report" controls on other people's accounts.
+   */
+  enableReporting?: boolean;
+  reports?: GoalAccountReport[];
+  onReportSaved?: () => void;
 }
 
 const UserTableForGoals: React.FC<Props> = ({
   users,
   goal,
   onViewPostModal,
+  enableReporting = true,
+  reports = [],
+  onReportSaved,
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
-
+  
   // 🧩 Build a quick lookup for assignments per user (if new model)
   const assignmentsByUser = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -171,17 +185,35 @@ const UserTableForGoals: React.FC<Props> = ({
                         <ul className="unsubmitted-list">
                           {user.unsubmittedAccounts.map((acc) => (
                             <li key={acc.accountNumber}>
-                              <strong>{acc.accountName}</strong> —{" "}
-                              {acc.accountAddress || "No address"}
-                              {assignedAccounts.length > 0 &&
-                                assignedAccounts.includes(
-                                  acc.accountNumber
-                                ) && (
-                                  <span className="assigned-indicator">
-                                    {" "}
-                                    (Assigned)
-                                  </span>
-                                )}
+                              <div className="unsubmitted-account-name">
+                                {acc.accountName}
+                                {assignedAccounts.length > 0 &&
+                                  assignedAccounts.includes(
+                                    acc.accountNumber
+                                  ) && (
+                                    <span className="assigned-indicator">
+                                      (Assigned)
+                                    </span>
+                                  )}
+                              </div>
+                              <div className="unsubmitted-account-address">
+                                {acc.accountAddress || "No address"}
+                              </div>
+                              {enableReporting && (
+                                <AccountReportAction
+                                  goalKind="company"
+                                  goalId={goal.id}
+                                  goalTitle={goal.goalTitle}
+                                  accountNumber={acc.accountNumber}
+                                  accountName={acc.accountName}
+                                  existingReport={reports.find(
+                                    (r) =>
+                                      r.accountNumber === acc.accountNumber &&
+                                      r.userId === user.uid,
+                                  )}
+                                  onSaved={onReportSaved}
+                                />
+                              )}
                             </li>
                           ))}
                         </ul>
