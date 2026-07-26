@@ -176,22 +176,43 @@ const TeamsViewer = () => {
     [supervisors]
   );
 
-  const employees = useMemo(
-    () => activeUsers.filter((u) => u.role === "employee"),
-    [activeUsers]
-  );
+  /**
+   * Everyone who can be placed under a supervisor.
+   *
+   * Previously this was `role === "employee"`, which made elevated users
+   * unmanageable here: a super-admin with a stale `reportsTo` was neither
+   * draggable nor listed as unassigned, so there was no way to correct it
+   * from this screen. Elevated users legitimately report to supervisors, so
+   * the only real exclusion is a person from their own subtree (see
+   * `wouldCreateCycle`).
+   */
+  const assignableUsers = activeUsers;
 
   const unassignedUsers = useMemo(
     () =>
-      employees.filter(
-        (u) => !u.reportsTo || !supervisorUids.has(String(u.reportsTo))
-      ),
-    [employees, supervisorUids]
+      assignableUsers.filter((u) => {
+        const rt = String(u.reportsTo ?? "").trim();
+
+        // Stale pointer at someone who is no longer a supervisor. Always a
+        // bug regardless of role — this is exactly what demoting or
+        // deactivating a supervisor leaves behind, and it's how an elevated
+        // user ends up unreachable from this screen.
+        if (rt && !supervisorUids.has(rt)) return true;
+
+        // No supervisor at all is expected at the top of the org chart, so
+        // only surface employees here — they should always report to someone.
+        if (!rt) return u.role === "employee";
+
+        return false;
+      }),
+    [assignableUsers, supervisorUids]
   );
 
   const grouped = useMemo(() => {
     const g: Record<string, UserType[]> = {};
-    employees.forEach((u) => {
+    // Was scoped to employees, which hid elevated users from the team they
+    // actually belong to. A supervisor can report to another supervisor.
+    assignableUsers.forEach((u) => {
       const r = String(u.reportsTo ?? "").trim();
       if (!r) return;
       if (!g[r]) g[r] = [];
@@ -206,7 +227,35 @@ const TeamsViewer = () => {
       )
     );
     return g;
-  }, [employees]);
+  }, [assignableUsers]);
+
+  /**
+   * Would placing `user` under `newSupervisorUid` create a loop?
+   *
+   * Now that anyone can report to anyone, A→B→A becomes possible, and a cycle
+   * would hang any traversal that walks `reportsTo` — including the follow-up
+   * routing in goal reports.
+   */
+  const wouldCreateCycle = useMemo(
+    () => (userUid: string, newSupervisorUid: string): boolean => {
+      if (!newSupervisorUid) return false;
+      if (userUid === newSupervisorUid) return true;
+
+      const byUid = new Map(activeUsers.map((u) => [u.uid, u]));
+      const seen = new Set<string>();
+
+      let cursor: string | undefined = newSupervisorUid;
+      while (cursor) {
+        if (cursor === userUid) return true;
+        if (seen.has(cursor)) break; // pre-existing loop; don't spin
+        seen.add(cursor);
+        cursor = String(byUid.get(cursor)?.reportsTo ?? "").trim() || undefined;
+      }
+
+      return false;
+    },
+    [activeUsers]
+  );
 
   // DnD sensors (pointer works well on both desktop + mobile)
   const sensors = useSensors(
@@ -218,19 +267,9 @@ const TeamsViewer = () => {
   const [activeUser, setActiveUser] = useState<UserType | null>(null);
   const [busyUid, setBusyUid] = useState<string | null>(null);
 
-  const assignableEmployees = useMemo(
-    () => activeUsers.filter((u) => u.role === "employee"),
-    [activeUsers]
-  );
-
-  const elevatedAssignedUsers = useMemo(
-    () =>
-      activeUsers.filter(
-        (u) =>
-          u.reportsTo && ["admin", "super-admin", "developer"].includes(u.role)
-      ),
-    [activeUsers]
-  );
+  // `assignableEmployees` and `elevatedAssignedUsers` used to live here,
+  // computed but never rendered — the half-built attempt at managing elevated
+  // users. Superseded by `assignableUsers`, which simply includes everyone.
 
   const handleDragStart = (event: any) => {
     const u = event.active?.data?.current?.user as UserType | undefined;
@@ -274,6 +313,19 @@ const TeamsViewer = () => {
     const newSupervisorUid = dropId === "unassigned" ? "" : dropId;
 
     if (prevReportsTo === newSupervisorUid) return;
+
+    if (wouldCreateCycle(user.uid, newSupervisorUid)) {
+      dispatch(
+        showMessage({
+          text:
+            user.uid === newSupervisorUid
+              ? "Someone can't report to themselves."
+              : "That would create a reporting loop.",
+          severity: "warning",
+        })
+      );
+      return;
+    }
 
     // Optimistic UI
     const nextUsers = users.map((u) =>
@@ -331,7 +383,8 @@ const TeamsViewer = () => {
       <header className="tv-header">
         <h2 className="tv-title">Company Teams</h2>
         <p className="tv-subtitle">
-          Drag employees onto a supervisor (or Unassigned) to update teams.
+          Drag anyone onto a supervisor (or Unassigned) to update teams.
+          Supervisors and admins can report to someone too.
         </p>
       </header>
 
@@ -409,11 +462,11 @@ const TeamsViewer = () => {
                     <DraggableEmployee
                       user={emp}
                       compact
-                      disabled={
-                        busyUid === emp.uid ||
-                        !canReassignTeams ||
-                        ["admin", "super-admin", "developer"].includes(emp.role)
-                      }
+                      // Elevated roles used to be undraggable here, which is
+                      // what made a super-admin's stale reportsTo impossible
+                      // to correct. They can report to a supervisor like
+                      // anyone else; cycles are blocked in handleDragEnd.
+                      disabled={busyUid === emp.uid || !canReassignTeams}
                     />
 
                     {busyUid === emp.uid && (
