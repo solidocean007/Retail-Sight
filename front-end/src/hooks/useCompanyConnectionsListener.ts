@@ -61,5 +61,7 @@ export const useCompanyConnectionsListener = (shouldStartSync = true) => {
     });
 
     return () => unsubscribe();
-  }, [companyId, canSync, dispatch]);
+    // shouldStartSync starts false (appReady not yet true) — without it here,
+    // the listener is never attached for the rest of the session.
+  }, [companyId, canSync, dispatch, shouldStartSync]);
 };

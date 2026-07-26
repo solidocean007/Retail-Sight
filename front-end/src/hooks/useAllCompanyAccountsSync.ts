@@ -41,7 +41,10 @@ const useAllCompanyAccountsSync = (enabled = true, shouldStartSync = true) => {
     };
 
     loadAccounts();
-  }, [user?.companyId, dispatch, canSync, enabled]);
+    // shouldStartSync MUST be a dependency: it's false on first render (appReady
+    // is still false), so without it the effect bails once and never re-runs,
+    // leaving allAccounts permanently empty for the session.
+  }, [user?.companyId, dispatch, canSync, enabled, shouldStartSync]);
 };
 
 export default useAllCompanyAccountsSync;

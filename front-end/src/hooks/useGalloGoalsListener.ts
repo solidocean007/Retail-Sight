@@ -24,5 +24,7 @@ export function useGalloGoalsListener(
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
     };
-  }, [companyId, enabled, canSync,dispatch]);
+    // shouldStartSync starts false (appReady not yet true) — without it here,
+    // the listener is never attached for the rest of the session.
+  }, [companyId, enabled, canSync, dispatch, shouldStartSync]);
 }
