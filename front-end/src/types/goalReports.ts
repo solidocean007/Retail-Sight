@@ -79,9 +79,18 @@ const REASON_LABELS: Record<string, string> = [
 export const getReasonLabel = (key: string): string =>
   REASON_LABELS[key] ?? key;
 
-export type GoalReportResolution =
-  | "removed_from_goal"
-  | "acknowledged_no_action";
+/**
+ * An admin's judgment on a rep's report. Deliberately not a neutral
+ * "acknowledged" — the admin has to take a position, because a shrug is what
+ * teaches reps that reporting is pointless.
+ *
+ *  accepted  — the reason stands. Account comes off the goal, completion math
+ *              adjusts, and the rep watches it disappear from their list.
+ *  follow_up — not accepted. Account STAYS on the goal and is routed to the
+ *              rep's supervisor to review with them. Not a rejection aimed at
+ *              the rep; a note that someone will talk it through.
+ */
+export type GoalReportResolution = "accepted" | "follow_up";
 
 export interface GoalAccountReport {
   id: string;
@@ -115,10 +124,12 @@ export interface GoalAccountReport {
   declinedBy?: string;
   note?: string;
 
-  // Admin triage state — not rep-facing.
+  // Admin decision. `resolution` IS rep-facing — they see the outcome.
   resolvedAt?: string | null;
   resolvedBy?: string | null;
   resolution?: GoalReportResolution | null;
+  /** Admin's direction, shown to the supervisor handling the follow-up. */
+  resolutionNote?: string | null;
 
   createdAt: string;
   updatedAt: string;
@@ -188,3 +199,11 @@ export const isOpenReport = (
 export const isHelpRequest = (
   report: Pick<GoalAccountReport, "helpKeys">,
 ): boolean => Boolean(report.helpKeys?.length);
+
+/**
+ * An admin decided this needs a conversation. These belong in the supervisor's
+ * queue and lead the daily digest — the account is still in play.
+ */
+export const needsFollowUp = (
+  report: Pick<GoalAccountReport, "resolution">,
+): boolean => report.resolution === "follow_up";

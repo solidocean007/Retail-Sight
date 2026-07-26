@@ -11,7 +11,8 @@ type ActivityEventType =
   | "post.comment"
   | "post.commentLike"
   | "post.mention"
-  | "goal.assignment";
+  | "goal.assignment"
+  | "goal.reportResolved";
 
 const db = admin.firestore();
 
@@ -156,6 +157,34 @@ export const onActivityEventCreated = onDocumentCreated(
         title = "New Goal Assigned";
         message = `${safeActorName} assigned you a goal: ${data.goalTitle}`;
         break;
+
+      case "goal.reportResolved": {
+        // A rep hears back about feedback they filed. Tone matters here —
+        // "accepted" is a win (the account came off their goal), and
+        // "follow_up" must read as support, not as being overruled.
+        const accounts = Array.isArray(data.accountNames)
+          ? (data.accountNames as string[])
+          : [];
+        const count = Number(data.accountCount ?? accounts.length) || 0;
+
+        const accountLabel =
+          accounts.length === 1
+            ? accounts[0]
+            : `${count} account${count === 1 ? "" : "s"}`;
+
+        if (data.resolution === "accepted") {
+          title = "Your feedback was accepted";
+          message = `${accountLabel} removed from ${data.goalTitle || "the goal"}.`;
+        } else {
+          title = "Follow-up on your feedback";
+          message = data.resolutionNote
+            ? `${safeActorName} asked your supervisor to follow up on ${accountLabel}: ${String(
+                data.resolutionNote
+              ).slice(0, 140)}`
+            : `${safeActorName} asked your supervisor to follow up on ${accountLabel}.`;
+        }
+        break;
+      }
 
       default:
         console.warn("Unhandled activity type:", type, data);

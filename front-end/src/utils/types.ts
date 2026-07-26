@@ -720,6 +720,21 @@ export type GalloGoalType = {
 export interface GoalAssignmentType {
   uid: string;
   accountNumber: string;
+
+  /**
+   * Removal state, set when an admin acknowledges a rep's report that the
+   * account can't be executed.
+   *
+   * ABSENT MEANS ACTIVE — existing goals predate this field and must keep
+   * working untouched. Never treat undefined as removed.
+   *
+   * Removed accounts stay on the goal (dimmed, not deleted) and are excluded
+   * from completion math. Reversible.
+   */
+  status?: "active" | "removed";
+  removedAt?: string;
+  removedBy?: string;
+  removedReasonKey?: string;
 }
 
 export type GoalNotificationConfig = {

@@ -4,6 +4,7 @@
 // front-end/goal-account-status-design.md for the model.
 
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -152,17 +153,20 @@ export const fetchReportsForGoalIds = async (
 };
 
 /**
- * Admin triage. `removed_from_goal` records that the account was taken out of
- * the goal; `acknowledged_no_action` records that it was seen and left alone.
+ * Record an admin's decision.
  *
- * NOTE: this only writes the report side. Actually removing the account from
- * the goal doc is a separate step (see the removal helpers) so that the two
- * can be batched or retried independently.
+ *  accepted  — reason stands; caller also removes the account from the goal.
+ *  follow_up — account stays; routed to the rep's supervisor to review.
+ *
+ * NOTE: this only writes the report side. Removing the account from the goal
+ * doc is a separate step (see goalAccountRemoval) so the two can be batched or
+ * retried independently.
  */
 export const resolveGoalAccountReports = async (
   reportIds: string[],
   resolution: GoalReportResolution,
   resolvedBy: string,
+  resolutionNote?: string,
 ): Promise<void> => {
   const now = new Date().toISOString();
 
@@ -172,11 +176,66 @@ export const resolveGoalAccountReports = async (
         resolvedAt: now,
         resolvedBy,
         resolution,
+        resolutionNote: resolutionNote?.trim() || null,
         serverUpdatedAt: serverTimestamp(),
       }),
     ),
   );
 };
+
+/**
+ * Tell the rep what an admin decided about their report.
+ *
+ * Goes through `activityEvents` rather than writing the notification directly —
+ * Firestore rules block client writes to `users/{uid}/notifications`
+ * (`allow create: if false`), so the Cloud Function fan-out is the only path.
+ *
+ * One event per rep: reps have different accounts, so a shared message would
+ * be wrong for most of them.
+ */
+export const notifyReportDecision = async (input: {
+  actorUserId: string;
+  actorName: string;
+  targetUserId: string;
+  goalId: string;
+  goalTitle?: string;
+  resolution: GoalReportResolution;
+  accountNames: string[];
+  resolutionNote?: string;
+}): Promise<void> => {
+  if (!input.targetUserId || !input.accountNames.length) return;
+
+  try {
+    await addDoc(collection(db, "activityEvents"), {
+      type: "goal.reportResolved",
+      actorUserId: input.actorUserId,
+      actorName: input.actorName,
+      targetUserIds: [input.targetUserId],
+
+      goalId: input.goalId,
+      goalTitle: input.goalTitle ?? "",
+      resolution: input.resolution,
+      accountNames: input.accountNames,
+      accountCount: input.accountNames.length,
+      resolutionNote: input.resolutionNote ?? "",
+
+      createdAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    // Never let a notification failure undo a decision that already committed.
+    console.error("Failed to emit report decision notification:", err);
+  }
+};
+
+/**
+ * Reports an admin sent back for a conversation — the supervisor's queue.
+ * These lead the daily digest: unlike an unread report, a follow-up is a
+ * commitment someone made out loud.
+ */
+export const getFollowUpReports = (
+  reports: GoalAccountReport[],
+): GoalAccountReport[] =>
+  reports.filter((r) => r.resolution === "follow_up");
 
 /** Undo triage — puts reports back in the open queue. */
 export const reopenGoalAccountReports = async (

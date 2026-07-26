@@ -56,12 +56,9 @@ const MyGalloGoalCard: React.FC<Props> = ({
   const user = useSelector(selectUser);
   const userRoute = user?.salesRouteNum;
 
-  // Fetched once per goal, only while the card is open — a rep with many
-  // accounts must not trigger a read per row.
-  const { reports, refresh: refreshReports } = useGoalAccountReports(
-    goal.goalDetails.goalId,
-    expanded,
-  );
+  // Live for this goal, only while the card is open — one listener per open
+  // card, never one per account row.
+  const { reports } = useGoalAccountReports(goal.goalDetails.goalId, expanded);
 
   const userActiveAccounts = useMemo(() => {
     if (!userRoute) return [];
@@ -197,7 +194,6 @@ const MyGalloGoalCard: React.FC<Props> = ({
               goalTitle: goal.programDetails?.programTitle,
             }}
             reports={reports}
-            onReportSaved={refreshReports}
           />
         </div>
       </Collapse>

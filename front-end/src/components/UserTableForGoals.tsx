@@ -4,6 +4,7 @@ import "./userTableForGoals.css";
 import { CompanyGoalWithIdType, GoalAssignmentType } from "../utils/types";
 import { GoalAccountReport } from "../types/goalReports";
 import AccountReportAction from "./GoalReports/AccountReportAction";
+import AccountReportsFlag from "./GoalReports/AccountReportsFlag";
 
 export interface UserRowType {
   uid: string;
@@ -39,15 +40,25 @@ interface Props {
   enableReporting?: boolean;
   reports?: GoalAccountReport[];
   onReportSaved?: () => void;
+
+  /**
+   * Opt-in admin review — the mirror of enableReporting. Shows a caution pill
+   * on accounts that have feedback. Never both at once: a rep files, an admin
+   * reviews.
+   */
+  reviewReports?: boolean;
+  onAcknowledgeReports?: (reportIds: string[]) => Promise<void>;
 }
 
 const UserTableForGoals: React.FC<Props> = ({
   users,
   goal,
   onViewPostModal,
-  enableReporting = true,
+  enableReporting = false,
   reports = [],
   onReportSaved,
+  reviewReports = false,
+  onAcknowledgeReports,
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -195,6 +206,17 @@ const UserTableForGoals: React.FC<Props> = ({
                                       (Assigned)
                                     </span>
                                   )}
+                                {reviewReports && (
+                                  <AccountReportsFlag
+                                    accountName={acc.accountName}
+                                    reports={reports.filter(
+                                      (r) =>
+                                        r.accountNumber === acc.accountNumber &&
+                                        r.userId === user.uid,
+                                    )}
+                                    onAcknowledge={onAcknowledgeReports}
+                                  />
+                                )}
                               </div>
                               <div className="unsubmitted-account-address">
                                 {acc.accountAddress || "No address"}
