@@ -89,6 +89,43 @@
 }
 
 /* ====================================================
+   Follow-up notice (rep-facing)
+   ====================================================
+   Shown on the rep's own account row when an admin sent their report back
+   for a conversation. Informational, not alarming — the point is that
+   something happened, not that they did something wrong. */
+
+.account-report-followup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.4rem;
+  padding: 0.45rem 0.65rem;
+  border-left: 3px solid var(--secondary-main, #9c27b0);
+  border-radius: 6px;
+  background: rgba(156, 39, 176, 0.08);
+}
+
+.account-report-followup-title {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--secondary-main, #7b1fa2);
+}
+
+.account-report-followup-note {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* The chip itself takes the follow-up colour so the state is legible even
+   when the notice scrolls out of view. */
+.account-report-actions .account-report-chip.reported.follow-up {
+  background-color: var(--secondary-main, #9c27b0);
+  border-color: var(--secondary-main, #9c27b0);
+}
+
+/* ====================================================
    Dialog
    ==================================================== */
 

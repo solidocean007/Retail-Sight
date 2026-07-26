@@ -82,6 +82,7 @@ const AccountReportAction: React.FC<Props> = ({
 
   const hasIssue = Boolean(existingReport?.reasonKeys?.length);
   const hasHelp = Boolean(existingReport?.helpKeys?.length);
+  const awaitingFollowUp = existingReport?.resolution === "follow_up";
 
   const toggle =
     (setter: React.Dispatch<React.SetStateAction<string[]>>) => (key: string) =>
@@ -211,10 +212,28 @@ const AccountReportAction: React.FC<Props> = ({
 
   return (
     <>
+      {/* An admin sent this back for a conversation. The rep gets a push, so
+          the app must show a matching state — otherwise they open it, see
+          nothing changed, and stop trusting either signal. */}
+      {awaitingFollowUp && (
+        <div className="account-report-followup">
+          <span className="account-report-followup-title">
+            Your supervisor will follow up
+          </span>
+          {existingReport?.resolutionNote && (
+            <span className="account-report-followup-note">
+              {existingReport.resolutionNote}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="account-report-actions">
         <button
           type="button"
-          className={`account-report-chip ${hasIssue ? "reported" : ""}`}
+          className={`account-report-chip ${hasIssue ? "reported" : ""} ${
+            awaitingFollowUp ? "follow-up" : ""
+          }`}
           onClick={openDialog("issue")}
         >
           {hasIssue

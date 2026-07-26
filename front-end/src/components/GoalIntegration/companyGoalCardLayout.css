@@ -180,6 +180,16 @@
   color: var(--text-secondary, #9ca3af);
 }
 
+/* The quota can no longer be met from what's left. Stated, not corrected —
+   the admin decides whether to lower it or accept the miss. */
+.cg-quota-warning {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e65100;
+}
+
 /* ── Unresolved feedback strip ──────────────────────────── */
 /* Shown only when something is actually waiting. A count badge would say
    "there are N" — this says what they are, which is what an admin needs

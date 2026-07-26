@@ -4,6 +4,7 @@ import { FireStoreGalloGoalDocType } from "../../utils/types";
 import { formatGoalDate } from "./GalloIntegration/MyGalloGoalCard";
 import { GoalActionsMenu } from "./GoalActionsMenu";
 import { FireStoreGalloGoalWithId } from "../../Slices/galloGoalsSlice";
+import GalloGoalFeedback from "../GoalReports/GalloGoalFeedback";
 
 type Props = {
   goals: FireStoreGalloGoalWithId[];
@@ -93,6 +94,14 @@ export default function GalloGoalsTable({
 
               <div className="gallo-goals-table-submitted-count">
                 <strong>{submittedCount}</strong> / {activeAccounts.length}
+                {/* Reps can file feedback on Gallo goals too — without this
+                    the reports had nowhere to surface for an admin. */}
+                <GalloGoalFeedback
+                  galloGoalDocId={goal.id}
+                  reportGoalId={goal.goalDetails.goalId}
+                  goalTitle={goal.programDetails?.programTitle}
+                  disabledOppIds={inActiveAccounts.map((a) => a.oppId)}
+                />
               </div>
 
               {/* Manage */}

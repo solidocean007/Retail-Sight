@@ -10,6 +10,7 @@ import "./companyGoalCard.css";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
 import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
 import { useGoalAccountReports } from "../../hooks/useGoalAccountReports";
+import { isAssignmentActive } from "../../utils/goalReports/goalAccountRemoval";
 
 interface Props {
   goal: CompanyGoalWithIdType;
@@ -40,15 +41,20 @@ const UserCompanyGoalCard: React.FC<Props> = ({
   // --- Determine which accounts apply to this goal ---
   const accountNumbersForThisGoal = useMemo(() => {
     if (goal.goalAssignments?.length) {
-      return goal.goalAssignments
-        .filter((g) => g.uid === userUid)
-        .map((g) => g.accountNumber.toString());
+      return (
+        goal.goalAssignments
+          .filter((g) => g.uid === userUid)
+          // Accounts an admin accepted off the goal drop out of the rep's list
+          // entirely — that visible disappearance IS the answer to their
+          // report, and it keeps the quota percentage honest about what's
+          // still in play. isAssignmentActive treats absent status as active,
+          // so goals created before this feature are unaffected.
+          .filter(isAssignmentActive)
+          .map((g) => g.accountNumber.toString())
+      );
     }
     return goal.accountNumbersForThisGoal || [];
   }, [goal.goalAssignments, goal.accountNumbersForThisGoal, userUid]);
-
-  // in UserCompanyGoalCard, next to your other logs
-console.log("allAccounts:", allAccounts.length, "assigned:", accountNumbersForThisGoal);
 
   const userAccounts = useMemo(() => {
     const scoped = allAccounts.filter((acc) =>

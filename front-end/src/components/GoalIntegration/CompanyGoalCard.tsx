@@ -27,6 +27,7 @@ import GoalReportsReviewModal, {
 import {
   removeAccountsFromCompanyGoal,
   isAssignmentActive,
+  isQuotaUnreachable,
 } from "../../utils/goalReports/goalAccountRemoval";
 import {
   notifyReportDecision,
@@ -207,7 +208,14 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const accountNumbersForThisGoal = useMemo(() => {
     if (goal.goalAssignments?.length) {
       return Array.from(
-        new Set(goal.goalAssignments.map((g) => g.accountNumber)),
+        new Set(
+          goal.goalAssignments
+            // Accounts accepted off the goal are excluded from totals, so the
+            // completion percentage measures what's actually still in play
+            // rather than punishing a goal for accounts nobody can execute.
+            .filter(isAssignmentActive)
+            .map((g) => g.accountNumber),
+        ),
       );
     }
     return goal.accountNumbersForThisGoal || [];
@@ -420,6 +428,28 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       ? percentageOfGoal
       : percentage;
 
+  /**
+   * Reps whose remaining active accounts can no longer reach their quota —
+   * usually because accounts were accepted off the goal.
+   *
+   * Surfaced, never auto-corrected: an admin set that quota deliberately, and
+   * silently lowering it would hide the fact that the goal became impossible.
+   */
+  const unreachableReps = useMemo(() => {
+    if (!goal.perUserQuota || !goal.goalAssignments?.length) return [];
+
+    const uids = new Set(goal.goalAssignments.map((a) => a.uid));
+
+    return [...uids]
+      .filter((uid) =>
+        isQuotaUnreachable(goal.goalAssignments, uid, goal.perUserQuota),
+      )
+      .map((uid) => {
+        const u = companyUsers.find((c) => c.uid === uid);
+        return `${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim() || "A rep";
+      });
+  }, [goal.goalAssignments, goal.perUserQuota, companyUsers]);
+
   const handleGoalUpdate = (updatedFields: Partial<CompanyGoalWithIdType>) => {
     if (onEdit) onEdit(goal.id, updatedFields);
   };
@@ -527,6 +557,14 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
             {goal.perUserQuota > 1 ? "s" : ""}
           </span>
         ) : null}
+
+        {unreachableReps.length > 0 && (
+          <span className="cg-quota-warning">
+            {unreachableReps.length === 1
+              ? `${unreachableReps[0]} has fewer accounts left than the quota of ${goal.perUserQuota}.`
+              : `${unreachableReps.length} reps have fewer accounts left than the quota of ${goal.perUserQuota}.`}
+          </span>
+        )}
       </div>
 
       {/* ── Unresolved feedback ──────────────────────────────── */}
