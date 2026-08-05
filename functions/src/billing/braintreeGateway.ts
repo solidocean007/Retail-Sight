@@ -15,17 +15,12 @@ export function getBraintreeGateway(): braintree.BraintreeGateway {
   const envRaw = BRAINTREE_ENVIRONMENT.value();
   const env = envRaw?.toLowerCase().trim();
 
-  console.log("ENV NORMALIZED 2:", env);
-  console.log("MERCHANT:", BRAINTREE_MERCHANT_ID.value());
-  console.log("PUBLIC 2:", BRAINTREE_PUBLIC_KEY.value());
-  console.log("PRIVATE 2:", BRAINTREE_PRIVATE_KEY.value());
-
   const environment =
     env === "sandbox"
       ? braintree.Environment.Sandbox
       : braintree.Environment.Production;
 
-  console.log("ENV OBJECT:", environment);
+  console.log("Braintree gateway initialized:", env);
 
   return new braintree.BraintreeGateway({
     environment,

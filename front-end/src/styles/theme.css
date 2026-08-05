@@ -192,7 +192,42 @@
     var(--shadow-slate) 100%
   );
 
-  --table-row-background: var(var(--gray-300));
+  --table-row-background: var(--gray-300);
+
+  /* ============================
+     🔧 Compatibility aliases
+     Several component CSS files (mostly under GoalIntegration/)
+     reference these names, but theme.css never defined them —
+     they were silently resolving to nothing (transparent /
+     inherited), which is why some status pills, chips, and inputs
+     render unstyled. Mapped each to the closest existing token so
+     they pick up the real light/dark theme instead of inventing
+     new colors.
+     ============================ */
+  --bg-card: var(--surface-elevated);
+  --bg-success: var(--status-active-bg);
+  --text-success: var(--status-active-color);
+  --bg-neutral: var(--status-inactive-bg);
+  --bg-danger: var(--error-bg);
+  --text-danger: var(--error-color);
+  --border-default: var(--border-color);
+  --primary-text: var(--text-color);
+  --input-bg: var(--input-background);
+  --secondary-text: var(--text-secondary);
+  --warn-color: var(--warning-color);
+  --font-color: var(--text-color);
+  --main-blue: var(--primary-blue);
+  --surface-color: var(--surface-elevated);
+  --inactive-opacity: 0.5;
+  --hover-bg: var(--outlined-button-hover);
+  --chip-shadow: var(--card-shadow);
+  --chip-hover-bg: var(--btn-secondary-hover);
+  --chip-active-bg: var(--chip-bg-color-selected);
+  --chip-active-text: var(--white);
+  --chip-active-shadow: var(--card-shadow-hover);
+  --button-hover: var(--btn-secondary-hover);
+  --border-radius: var(--card-radius);
+  --color-selected: var(--primary-blue);
 }
 
 /* ============================
@@ -236,7 +271,7 @@
   --card-outline: var(--gray-800);
 
   --notification-dropdown-bg: var(--muted-steel);
-  --unread-notification-bg: var(var(--gray-100));
+  --unread-notification-bg: var(--gray-100);
   --read-notification-bg: var(--gray-200);
 
   --warning-color: red;
