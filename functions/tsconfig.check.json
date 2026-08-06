@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "lib_check_tmp",
+    "sourceMap": false,
+    "strict": true,
+    "target": "ES2022",
+    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM"],
+    "skipLibCheck": true
+  },
+  "include": ["src/findOrphanedUsers.ts", "src/mergeDuplicateUserAccount.ts", "src/repairOrphanedUser.ts"]
+}

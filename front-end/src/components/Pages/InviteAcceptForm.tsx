@@ -261,14 +261,53 @@ export default function InviteAcceptForm() {
       console.error("Create account invite failed:", err);
 
       if (createdAuthUserThisAttempt) {
+        // acceptTeamInvite's Firestore transaction (create users/{uid},
+        // mark the invite accepted) can commit successfully even when a
+        // step AFTER it (setCustomUserClaims / company count recompute)
+        // throws — which makes this whole call reject even though the
+        // invite actually went through. Blindly deleting the Auth account
+        // we just created would strand that committed Firestore doc with
+        // no Auth account behind it (this has happened in production: an
+        // "already used" invite with no matching Firebase Auth user).
+        // So before rolling back, check whether the write actually landed.
+        let alreadyCommitted = false;
+
         try {
-          await getAuth().currentUser?.delete();
-          await signOut(getAuth());
-        } catch (cleanupErr) {
-          console.warn(
-            "Failed to cleanup newly created auth user:",
-            cleanupErr,
-          );
+          const authUser = getAuth().currentUser;
+          if (authUser) {
+            const userSnap = await getDoc(doc(db, "users", authUser.uid));
+            if (userSnap.exists() && userSnap.data()?.companyId) {
+              alreadyCommitted = true;
+
+              await authUser.getIdToken(true);
+              const refreshedUser = await dispatch(
+                refreshCurrentUserProfile(authUser.uid),
+              );
+
+              if (refreshedUser?.companyId) {
+                dispatch(showMessage("✅ Invite accepted. Welcome!"));
+                navigate("/user-home-page");
+                return;
+              }
+            }
+          }
+        } catch (checkErr) {
+          console.warn("Post-failure commit check failed:", checkErr);
+          // Couldn't confirm either way — fall through to the normal,
+          // safe-by-default rollback below.
+          alreadyCommitted = false;
+        }
+
+        if (!alreadyCommitted) {
+          try {
+            await getAuth().currentUser?.delete();
+            await signOut(getAuth());
+          } catch (cleanupErr) {
+            console.warn(
+              "Failed to cleanup newly created auth user:",
+              cleanupErr,
+            );
+          }
         }
       }
 

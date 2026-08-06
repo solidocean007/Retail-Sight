@@ -99,6 +99,9 @@ import { createConnectionRequest } from "./createConnectionRequest";
 import { onCompanyConnectionRequestCreated } from "./onCompanyConnectionRequestCreated";
 import { removeCompanyFromSharedWithPosts } from "./removeCompanyFromSharedWithPosts";
 import { acceptTeamInvite } from "./acceptTeamInvite";
+import { findOrphanedUsers } from "./findOrphanedUsers";
+import { mergeDuplicateUserAccount } from "./mergeDuplicateUserAccount";
+import { repairOrphanedUser } from "./repairOrphanedUser";
 
 export {
   backfillSupplierGoalPosts,
@@ -146,6 +149,9 @@ export {
   // Auth
   getMyAuthClaims,
   adminUpdateCompanyUser,
+  findOrphanedUsers,
+  mergeDuplicateUserAccount,
+  repairOrphanedUser,
 
   // Billing
   testBraintreeAuth,

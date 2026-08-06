@@ -54,6 +54,7 @@ import { normalizeFirestoreData } from "../../utils/normalize";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { RecentlyAcceptedList } from "./RecentlyAcceptedList";
+import MergeDuplicateAccountPanel from "./MergeDuplicateAccountPanel";
 import PlanUsageBanner from "../Pages/PlanUsageBanner";
 import { Navigate, useNavigate } from "react-router-dom";
 import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
@@ -731,6 +732,7 @@ export default function AdminUsersConsole() {
         >
           <Stack spacing={2}>
             <RecentlyAcceptedList users={recentlyAcceptedInvites} />
+            <MergeDuplicateAccountPanel />
             <Accordion defaultExpanded>
               <Typography variant="h6" sx={{ mb: 1 }}>
                 <PersonAddAlt1RoundedIcon
