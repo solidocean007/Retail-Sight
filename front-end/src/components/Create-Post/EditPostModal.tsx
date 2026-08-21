@@ -50,6 +50,7 @@ import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { formatGalloClosedDate } from "../../utils/PostLogic/formatGalloClosedDate";
+import { stripUndefined } from "../../utils/firestore/stripUndefined";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -264,25 +265,29 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       updatedFields.createdByLastName = creator.lastName;
       updatedFields.createdAt = existing.createdAt || new Date().toISOString();
     } else {
-      // Preserve existing creator if present
-      if (existing.createdByUid) {
-        updatedFields.createdByUid = existing.createdByUid;
-        updatedFields.createdByFirstName = existing.createdByFirstName;
-        updatedFields.createdByLastName = existing.createdByLastName;
-        updatedFields.createdAt = existing.createdAt;
-      } else {
-        // Backfill if missing
-        updatedFields.createdByUid = post.postUserUid;
-        updatedFields.createdByFirstName = post.postUserFirstName;
-        updatedFields.createdByLastName = post.postUserLastName;
-        updatedFields.createdAt = post.displayDate || new Date().toISOString();
-      }
+      // Preserve the existing creator, backfilling anything a legacy post is
+      // missing. Older posts can have `createdByUid` without the name fields,
+      // so each value falls back independently rather than as a block —
+      // copying an absent field through would send `undefined` to Firestore.
+      updatedFields.createdByUid =
+        existing.createdByUid ?? post.postUserUid ?? null;
+      updatedFields.createdByFirstName =
+        existing.createdByFirstName ?? post.postUserFirstName ?? null;
+      updatedFields.createdByLastName =
+        existing.createdByLastName ?? post.postUserLastName ?? null;
+      updatedFields.createdAt =
+        existing.createdAt || post.displayDate || new Date().toISOString();
     }
 
-    try {
-      console.log("updated fields: ", updatedFields); // this doesnt log
+    // Firestore rejects `undefined` anywhere in the payload. Legacy posts read
+    // back missing fields as `undefined`, so sanitize before writing —
+    // a dropped key simply leaves that field untouched on the document.
+    const sanitizedFields = stripUndefined(updatedFields);
 
-      await updateDoc(postRef, updatedFields);
+    try {
+      console.log("updated fields: ", sanitizedFields);
+
+      await updateDoc(postRef, sanitizedFields);
       await updatePostWithNewTimestamp(updatedPost.id);
 
       //--------------------------------------------------------
@@ -290,7 +295,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       //--------------------------------------------------------
       const mergedPost: PostWithID = {
         ...existing,
-        ...updatedFields,
+        ...sanitizedFields,
         id: updatedPost.id,
       };
 

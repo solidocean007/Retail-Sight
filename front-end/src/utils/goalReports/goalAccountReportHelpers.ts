@@ -19,6 +19,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { stripUndefined } from "../firestore/stripUndefined";
 import {
   CreateGoalAccountReportInput,
   GoalAccountReport,
@@ -28,12 +29,6 @@ import {
 } from "../../types/goalReports";
 
 const COLLECTION = "goalAccountReports";
-
-/** Drop undefined values — Firestore rejects them. */
-const stripUndefined = <T extends object>(obj: T): Partial<T> =>
-  Object.fromEntries(
-    Object.entries(obj).filter(([, v]) => v !== undefined),
-  ) as Partial<T>;
 
 /**
  * Create or replace a rep's report for one account on one goal.

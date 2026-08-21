@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { CompanyGoalType, GoalAssignmentType, UserType } from "../utils/types";
+import { stripUndefined } from "../utils/firestore/stripUndefined";
 
 type GoalWithNotifications = CompanyGoalType & {
   notifications?: {
@@ -111,7 +112,18 @@ export const updateCompanyGoalInFirestore = createAsyncThunk(
     const cleanedFields: Record<string, any> = { ...updatedFields };
 
     // --- Handle field cleanup ---
-    if (cleanedFields.perUserQuota === 0) {
+    // Turning the per-user quota off sends `perUserQuota: undefined` from the
+    // edit modal, while the older path sent 0. Both mean "clear it", and both
+    // must become a deleteField() sentinel — Firestore rejects `undefined`.
+    // The `in` check matters: a caller that omits the key entirely is asking to
+    // leave the existing quota alone, not to delete it.
+    const clearsQuota =
+      "perUserQuota" in cleanedFields &&
+      (cleanedFields.perUserQuota === 0 ||
+        cleanedFields.perUserQuota === undefined ||
+        cleanedFields.perUserQuota === null);
+
+    if (clearsQuota) {
       cleanedFields.perUserQuota = deleteField();
     }
 
@@ -144,9 +156,17 @@ export const updateCompanyGoalInFirestore = createAsyncThunk(
       }
 
       const existing = snap.data();
-      const merged = { ...existing, ...cleanedFields };
 
-      await updateDoc(goalRef, cleanedFields);
+      // Any other optional field the caller left undefined (Partial<T> permits
+      // an explicitly-undefined value) would also break the write.
+      const payload = stripUndefined(cleanedFields);
+
+      // Redux must not receive the deleteField() sentinel — mirror the delete
+      // by dropping the key from the merged result instead.
+      const merged: Record<string, any> = { ...existing, ...payload };
+      if (clearsQuota) delete merged.perUserQuota;
+
+      await updateDoc(goalRef, payload);
       console.log("✅ Goal updated:", goalId);
       return { goalId, updatedFields: merged };
     } catch (err: any) {
