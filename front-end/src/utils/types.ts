@@ -140,8 +140,29 @@ export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
 
 export type BillingStatus = "active" | "past_due" | "canceled";
 
-// New
-export type PlanName = "free" | "team" | "pro" | "enterprise" | "healy_plan";
+// Which pricing table a plan belongs to (see pricing-model-redesign.md).
+// Keyed off the company's existing companyType.
+export type PlanFamily = "distributor" | "supplier";
+
+// Doc ids in the `plans` collection. For self-serve paid plans the doc id is
+// also the Braintree plan id. `starter` predates this union and was missing
+// from it (existing bug — the backend has always accepted it).
+// `custom_contract` is the shared Braintree plan id for whale deals; each
+// contract gets its own per-contract doc in `plans`.
+export type PlanName =
+  | "free"
+  | "starter"
+  | "team"
+  | "pro"
+  | "enterprise"
+  | "dist_max"
+  | "supplier_free"
+  | "supplier_starter"
+  | "supplier_growth"
+  | "supplier_network"
+  | "supplier_national"
+  | "healy_plan"
+  | "custom_contract";
 
 // 🧩 Full plan definition
 export interface PlanType {
@@ -149,6 +170,14 @@ export interface PlanType {
   price: number;
   connectionLimit: number;
   userLimit: number;
+
+  // Catalog metadata added by the two-family pricing model. Optional because
+  // plan docs seeded before scripts/seedPlans.js ran may not carry them yet.
+  family?: PlanFamily;
+  selfServe?: boolean; // false = custom contract / internal, never in catalog
+  sortOrder?: number; // display order within its family's pricing table
+  active?: boolean; // false = retired, kept for billing history
+  description?: string;
 }
 
 type PendingBillingChange = {
