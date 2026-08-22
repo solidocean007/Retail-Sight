@@ -96,6 +96,32 @@
   margin-top: 5px;
 }
 
+.unbranded-review-filter-action {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--outlined-button-border);
+  border-radius: 8px;
+  background-color: var(--outlined-button-bg);
+}
+
+.unbranded-review-filter-action span {
+  color: var(--text-color);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.unbranded-review-filter-button {
+  width: 100%;
+  margin: 0;
+}
+
 .active-filters-chip-row {
   display: flex;
   flex-wrap: wrap;

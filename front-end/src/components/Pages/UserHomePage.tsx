@@ -77,6 +77,7 @@ const UserHomePage = () => {
   const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [unbrandedReviewTrigger, setUnbrandedReviewTrigger] = useState(0);
 
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
@@ -343,6 +344,7 @@ const displayFetchedAt =
                 setPostIdToScroll={setPostIdToScroll}
                 toggleFilterMenu={toggleFilterMenu}
                 appliedFilters={lastFilters}
+                unbrandedReviewTrigger={unbrandedReviewTrigger}
               />
             )}
           </div>
@@ -367,6 +369,12 @@ const displayFetchedAt =
               toggleFilterMenu={toggleFilterMenu}
               initialFilters={initialFilters}
               isSharedFeed={activeFeedType === "shared"}
+              onFindNextUnbranded={
+                activeFeedType === "company" &&
+                (user?.role === "super-admin" || user?.role === "developer")
+                  ? () => setUnbrandedReviewTrigger((value) => value + 1)
+                  : undefined
+              }
             />
           </div>
         </div>

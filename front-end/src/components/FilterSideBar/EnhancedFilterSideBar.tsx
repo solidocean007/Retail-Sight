@@ -82,6 +82,7 @@ interface EnhancedFilterSideBarProps {
   setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
   initialFilters: PostQueryFilters | undefined;
   isSharedFeed: boolean;
+  onFindNextUnbranded?: () => void;
 }
 
 const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
@@ -97,6 +98,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   toggleFilterMenu,
   initialFilters,
   isSharedFeed,
+  onFindNextUnbranded,
 }) => {
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId,
@@ -683,6 +685,18 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       )}
 
       <h3 className="filter-title">🔎 Filters</h3>
+      {onFindNextUnbranded && (
+        <div className="unbranded-review-filter-action">
+          <span>Temporary cleanup tool</span>
+          <button
+            className="btn-outline unbranded-review-filter-button"
+            type="button"
+            onClick={onFindNextUnbranded}
+          >
+            Next post without brands
+          </button>
+        </div>
+      )}
       <div className="active-filters-chip-row">
         <FilterChips
           filters={filters}

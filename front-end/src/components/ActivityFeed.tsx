@@ -63,6 +63,7 @@ interface ActivityFeedProps {
   setPostIdToScroll: React.Dispatch<React.SetStateAction<string | null>>;
   toggleFilterMenu?: () => void;
   appliedFilters?: PostQueryFilters | null;
+  unbrandedReviewTrigger?: number;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -74,6 +75,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   postIdToScroll,
   setPostIdToScroll,
   appliedFilters,
+  unbrandedReviewTrigger = 0,
 }) => {
   const dispatch = useAppDispatch();
   const initialLoaded = useSelector(selectPostsInitialLoaded);
@@ -91,6 +93,20 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [unbrandedCursorId, setUnbrandedCursorId] = useState<string | null>(
+    null,
+  );
+  const [pendingUnbrandedId, setPendingUnbrandedId] = useState<string | null>(
+    null,
+  );
+  const [findingUnbranded, setFindingUnbranded] = useState(false);
+  const [, setUnbrandedStatus] = useState<string | null>(null);
+
+  const hasNoBrands = useCallback(
+    (post: PostWithID) =>
+      !post.brands?.some((brand) => String(brand).trim().length > 0),
+    [],
+  );
 
   usePosts(currentUserCompanyId, POSTS_BATCH_SIZE);
 
@@ -101,6 +117,121 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       behavior: "smooth",
     });
   };
+
+  const scrollToUnbrandedPost = useCallback(
+    (postId: string) => {
+      const index = displayPosts.findIndex((post) => post.id === postId);
+      if (index === -1) return false;
+
+      virtuosoRef.current?.scrollToIndex({
+        index,
+        align: "start",
+        behavior: "smooth",
+      });
+      setUnbrandedCursorId(postId);
+      setUnbrandedStatus(null);
+      return true;
+    },
+    [displayPosts, virtuosoRef],
+  );
+
+  useEffect(() => {
+    if (!pendingUnbrandedId) return;
+    if (scrollToUnbrandedPost(pendingUnbrandedId)) {
+      setPendingUnbrandedId(null);
+    }
+  }, [pendingUnbrandedId, scrollToUnbrandedPost]);
+
+  const findNextUnbrandedPost = useCallback(async () => {
+    if (findingUnbranded) return;
+
+    const cursorIndex = unbrandedCursorId
+      ? displayPosts.findIndex((post) => post.id === unbrandedCursorId)
+      : -1;
+    const nextPost = displayPosts
+      .slice(cursorIndex + 1)
+      .find(hasNoBrands);
+
+    if (nextPost) {
+      scrollToUnbrandedPost(nextPost.id);
+      return;
+    }
+
+    if (activeCompanyPostSet !== "posts") {
+      setUnbrandedStatus("No more unbranded posts in these results.");
+      return;
+    }
+
+    if (!hasMore) {
+      setUnbrandedStatus("No more unbranded posts found.");
+      return;
+    }
+
+    setFindingUnbranded(true);
+    setUnbrandedStatus("Checking older posts…");
+
+    try {
+      const paginationCursor = rawPosts[rawPosts.length - 1]?.id ?? lastVisible;
+      const action = await dispatch(
+        fetchMorePostsBatch({
+          lastVisible: paginationCursor,
+          limit: 25,
+          currentUser,
+        }),
+      );
+
+      if (!fetchMorePostsBatch.fulfilled.match(action)) {
+        setUnbrandedStatus("Could not load older posts.");
+        return;
+      }
+
+      const { posts, lastVisible: newLastVisible } = action.payload;
+      setLastVisible(newLastVisible);
+
+      if (posts.length === 0) {
+        setHasMore(false);
+        setUnbrandedStatus("No more unbranded posts found.");
+        return;
+      }
+
+      await addPostsToIndexedDB(posts);
+      dispatch(mergeAndSetPosts(posts.map(normalizePost)));
+      const fetchedMatch = posts.find(hasNoBrands);
+
+      if (fetchedMatch) {
+        setPendingUnbrandedId(fetchedMatch.id);
+      } else {
+        setUnbrandedStatus("No match in this batch. Tap again to continue.");
+      }
+    } finally {
+      setFindingUnbranded(false);
+    }
+  }, [
+    findingUnbranded,
+    unbrandedCursorId,
+    displayPosts,
+    hasNoBrands,
+    scrollToUnbrandedPost,
+    activeCompanyPostSet,
+    hasMore,
+    rawPosts,
+    lastVisible,
+    dispatch,
+    currentUser,
+  ]);
+
+  const handledUnbrandedTrigger = useRef(0);
+  useEffect(() => {
+    if (
+      unbrandedReviewTrigger <= 0 ||
+      unbrandedReviewTrigger === handledUnbrandedTrigger.current
+    ) {
+      return;
+    }
+
+    handledUnbrandedTrigger.current = unbrandedReviewTrigger;
+    void findNextUnbrandedPost();
+  }, [unbrandedReviewTrigger, findNextUnbrandedPost]);
 
   const prevActivePostSet = useRef(activeCompanyPostSet);
   useEffect(() => {
@@ -165,11 +296,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
-
-  const getImageSet = useCallback(
-    (post: PostWithID) => derivePostImageVariants(post),
-    [],
-  );
 
   useEffect(() => {
     if (initialLoaded && displayPosts.length === 0) {
