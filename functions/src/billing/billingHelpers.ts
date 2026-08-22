@@ -22,47 +22,49 @@ import { getBraintreeGateway } from "./braintreeGateway";
 const db = admin.firestore();
 
 /**
- * Braintree plan ids that existed before the plans catalog carried the
- * `selfServe` flag. Kept as a safety net so billing keeps working even if
- * the catalog seed (scripts/seedPlans.js) hasn't run yet.
+ * Legacy self-serve Braintree plan ids from before the plans catalog carried
+ * the `selfServe` flag. Used ONLY as an emergency fallback when the catalog
+ * cannot be read, so existing customers can still buy the original ladder.
+ * Deliberately excludes "test" and "healy_plan" — those were never meant to
+ * be generally purchasable — and "custom_contract", which always requires
+ * the explicit planDocId flow.
  */
-export const LEGACY_PLAN_IDS = [
-  "starter",
-  "test",
-  "team",
-  "pro",
-  "enterprise",
-  "healy_plan",
-];
+export const LEGACY_SELF_SERVE_PLAN_IDS = ["starter", "team", "pro", "enterprise"];
 
 /**
- * Braintree plan ids a customer may subscribe to right now.
+ * The sellable plan catalog, keyed by Braintree plan id.
  *
  * Source of truth is the `plans` collection (`selfServe == true`), so adding
- * a sellable plan is a Firestore doc + Braintree plan — no deploy. The legacy
- * ids are always included as a fallback (see LEGACY_PLAN_IDS).
+ * a sellable plan is a Firestore doc + Braintree plan — no deploy. Each value
+ * carries the catalog metadata (family, active, docId) the callables need to
+ * authorize a purchase.
  *
- * "custom_contract" is intentionally NEVER returned: whale deals must go
+ * Returns null when the catalog can't be read or is empty (seed not run /
+ * outage) — callers should then fall back to LEGACY_SELF_SERVE_PLAN_IDS.
+ *
+ * "custom_contract" is intentionally NEVER included: whale deals must go
  * through the explicit planDocId flow in the callables, which verifies the
  * contract doc belongs to the subscribing company.
  */
-export async function getValidBraintreePlanIds(): Promise<Set<string>> {
-  const ids = new Set<string>(LEGACY_PLAN_IDS);
+export async function getSellablePlans(): Promise<Map<string, any> | null> {
   try {
     const snap = await db
       .collection("plans")
       .where("selfServe", "==", true)
       .get();
+    const plans = new Map<string, any>();
     snap.forEach((doc) => {
-      const bt = doc.data()?.braintreePlanId;
+      const data = doc.data();
+      const bt = data?.braintreePlanId;
       if (typeof bt === "string" && bt && bt !== "custom_contract") {
-        ids.add(bt);
+        plans.set(bt, { docId: doc.id, ...data });
       }
     });
+    return plans.size > 0 ? plans : null;
   } catch (err) {
-    console.warn("getValidBraintreePlanIds: falling back to legacy ids", err);
+    console.warn("getSellablePlans: catalog unavailable", err);
+    return null;
   }
-  return ids;
 }
 
 /**
