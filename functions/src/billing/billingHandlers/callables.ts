@@ -495,6 +495,50 @@ export const scheduleBillingDowngrade = onCall(async (request) => {
   return { scheduled: true };
 });
 
+export const updatePaymentMethod = onCall(
+  {
+    secrets: [
+      BRAINTREE_ENVIRONMENT,
+      BRAINTREE_MERCHANT_ID,
+      BRAINTREE_PUBLIC_KEY,
+      BRAINTREE_PRIVATE_KEY,
+    ],
+  },
+  async (request) => {
+    const { companyId, paymentMethodNonce } = request.data;
+
+    if (!companyId || !paymentMethodNonce) {
+      throw new HttpsError("invalid-argument", "Missing required fields.");
+    }
+
+    await assertCompanyBillingAdmin(request.auth, companyId);
+
+    const snap = await admin.firestore().doc(`companies/${companyId}`).get();
+    const customerId = snap.data()?.billing?.braintreeCustomerId;
+
+    if (!customerId) {
+      throw new HttpsError(
+        "failed-precondition",
+        "No billing customer on file."
+      );
+    }
+
+    const gateway = getBraintreeGateway();
+    const res = await gateway.paymentMethod.create({
+      customerId,
+      paymentMethodNonce,
+      options: { makeDefault: true },
+    });
+
+    if (!res.success) {
+      console.error("updatePaymentMethod failed:", res);
+      throw new HttpsError("internal", "Could not update payment method.");
+    }
+
+    return { success: true };
+  }
+);
+
 export const cancelScheduledDowngrade = onCall(async (request) => {
   const { companyId } = request.data;
   await assertCompanyBillingAdmin(request.auth, companyId);

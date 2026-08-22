@@ -1,143 +1,128 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import "./planCard.css";
+import {
+  CatalogPlan,
+  PlanDelta,
+  formatPlanLabel as formatLabel,
+  partnerNoun,
+} from "../../../utils/billing/planCatalog";
+import { PlanFamily } from "../../../utils/types";
 
-export function formatPlanLabel(planId: string) {
-  switch (planId) {
-    case "healy_plan":
-      return "Healy";
-    case "free":
-      return "Free";
-    case "starter":
-      return "Starter";
-    case "team":
-      return "Team";
-    case "pro":
-      return "Pro";
-    case "enterprise":
-      return "Enterprise";
-    default:
-      return planId;
-  }
-}
-
-export const PLAN_COPY = {
-  free: {
-    title: "Free",
-    description: "Best for evaluation and very small teams.",
-  },
-  starter: {
-    title: "Starter",
-    description: "For small distributors and supplier pilot programs.",
-  },
-  team: {
-    title: "Team",
-    description: "For growing distributors building active supplier networks.",
-  },
-  pro: {
-    title: "Pro",
-    description:
-      "For regional organizations with larger teams and reporting needs.",
-  },
-  enterprise: {
-    title: "Enterprise",
-    description: "For large organizations with complex collaboration needs.",
-  },
-};
+// Re-exported for existing consumers (UpcomingDowngradeBanner, dashboards).
+export const formatPlanLabel = formatLabel;
 
 interface PlanCardProps {
-  planId: string;
-  price: number;
-  userLimit: number;
-  connectionLimit: number;
+  plan: CatalogPlan;
+  family: PlanFamily | null;
+  delta: PlanDelta | null;
   isCurrent: boolean;
-  isUpgrade?: boolean;
-  isDowngrade?: boolean;
-  isRecommended?: boolean;
+  isRecommended: boolean;
+  blockedReason?: string | null;
   disabled?: boolean;
+  disabledNote?: string;
   onSelect: () => void;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({
-  planId,
-  price,
-  userLimit,
-  connectionLimit,
-  isCurrent = false,
-  isUpgrade,
-  isDowngrade,
-  isRecommended = false,
-  onSelect,
-  disabled,
-}) => {
-  const [open, setOpen] = useState(isCurrent);
-  const toggle = () => setOpen(!open);
+const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 
-  // Auto-expand on desktop
-  useEffect(() => {
-    if (window.innerWidth >= 1024) setOpen(true);
-  }, []);
+const PlanCard: React.FC<PlanCardProps> = ({
+  plan,
+  family,
+  delta,
+  isCurrent,
+  isRecommended,
+  blockedReason,
+  disabled,
+  disabledNote,
+  onSelect,
+}) => {
+  const label = formatLabel(plan.planDocId);
+  const partner = partnerNoun(family);
+  const blocked = !!blockedReason;
+  const inert = isCurrent || blocked || disabled;
+
+  const cta = isCurrent
+    ? "Current plan"
+    : delta?.direction === "upgrade"
+      ? `Upgrade to ${label}`
+      : delta?.direction === "downgrade"
+        ? `Downgrade to ${label}`
+        : "Select plan";
 
   return (
-    <div className="billing-plan-card">
-      {isRecommended && !isCurrent && (
-        <div className="plan-badge">Most Popular</div>
-      )}
+    <article
+      className={[
+        "plan-card",
+        isCurrent ? "is-current" : "",
+        isRecommended ? "is-recommended" : "",
+        blocked || disabled ? "is-blocked" : "",
+      ]
+        .join(" ")
+        .trim()}
+      aria-label={`${label} plan`}
+    >
+      <header className="plan-card__head">
+        <h3 className="plan-card__name">{label}</h3>
+        {isCurrent && <span className="plan-chip plan-chip--current">Current</span>}
+        {!isCurrent && isRecommended && (
+          <span className="plan-chip plan-chip--reco">Best fit</span>
+        )}
+      </header>
 
-      {isCurrent && <div className="plan-badge current">Current Plan</div>}
-
-      {disabled && <div className="overlay">Downgrade scheduled</div>}
-
-      <div className="plan-top">
-        <h3 className="plan-name">
-          {PLAN_COPY[planId as keyof typeof PLAN_COPY]?.title ??
-            formatPlanLabel(planId)}
-        </h3>
-
-        <div className="plan-price-block">
-          <span className="price-amount">
-            {price === 0 ? "Free" : `$${price}`}
-          </span>
-          {price !== 0 && <span className="price-period">/month</span>}
-        </div>
-      </div>
-
-      <div className="capacity-block">
-        <p>Usage Limits</p>
-
-        <div className="plan-capacity-block">
-          <div className="capacity-item">
-            <span className="capacity-number">{userLimit}</span>
-            <span className="capacity-label">Users</span>
-          </div>
-          <div className="capacity-divider" />
-          <div className="capacity-item">
-            <span className="capacity-number">{connectionLimit}</span>
-            <span className="capacity-label">Connections</span>
-          </div>
-        </div>
-      </div>
-
-      <p className="plan-description">
-        {PLAN_COPY[planId as keyof typeof PLAN_COPY]?.description ??
-          "Contact us for details."}
+      <p className="plan-card__price">
+        {plan.price === 0 ? (
+          <span className="plan-card__amount">Free</span>
+        ) : (
+          <>
+            <span className="plan-card__amount">${plan.price}</span>
+            <span className="plan-card__period">/month</span>
+          </>
+        )}
       </p>
 
+      <dl className="plan-card__capacity">
+        <div>
+          <dt>Team seats</dt>
+          <dd>{plan.userLimit.toLocaleString()}</dd>
+        </div>
+        <div>
+          <dt>{partner} connections</dt>
+          <dd>{plan.connectionLimit.toLocaleString()}</dd>
+        </div>
+      </dl>
+
+      {delta && !isCurrent && delta.direction !== "same" && (
+        <p className="plan-card__delta">
+          {delta.price !== 0 && (
+            <span>{signed(delta.price)}$/mo</span>
+          )}
+          {delta.users !== 0 && <span>{signed(delta.users)} seats</span>}
+          {delta.connections !== 0 && (
+            <span>{signed(delta.connections)} connections</span>
+          )}
+        </p>
+      )}
+
+      {plan.description && !blocked && (
+        <p className="plan-card__desc">{plan.description}</p>
+      )}
+
+      {blocked && <p className="plan-card__blocked">{blockedReason}</p>}
+      {!blocked && disabled && disabledNote && (
+        <p className="plan-card__blocked">{disabledNote}</p>
+      )}
+
       <button
-        className={`plan-cta ${
-          isCurrent ? "btn-secondary btn-disabled" : "button-primary"
+        type="button"
+        className={`plan-card__cta ${
+          delta?.direction === "upgrade" && !inert ? "is-primary" : ""
         }`}
         onClick={onSelect}
-        disabled={isCurrent || disabled}
+        disabled={inert}
       >
-        {isCurrent
-          ? "Current Plan"
-          : isUpgrade
-            ? "Upgrade"
-            : isDowngrade
-              ? "Downgrade"
-              : "Select Plan"}
+        {cta}
       </button>
-    </div>
+    </article>
   );
 };
 
