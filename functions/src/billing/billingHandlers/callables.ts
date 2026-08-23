@@ -200,7 +200,7 @@ export const createSubscription = onCall(
       // Build subscription payload
       const payload: any = {
         paymentMethodToken: pmRes.paymentMethod.token,
-        planId: selectedPlan.braintreePlanId,
+        planId: selectedPlan.braintreePlanId!,
       };
 
       const subRes = await gateway.subscription.create(payload);
@@ -301,7 +301,7 @@ export const changePlanAndRestartBillingCycle = onCall(
 
       const res = await gateway.subscription.create({
         paymentMethodToken,
-        planId: selectedPlan.braintreePlanId,
+        planId: selectedPlan.braintreePlanId!,
       });
 
       if (!res.success || !res.subscription) {
