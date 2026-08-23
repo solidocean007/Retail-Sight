@@ -14,6 +14,57 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+type CatalogPlan = {
+  active?: boolean;
+  braintreePlanId?: string;
+  family?: "distributor" | "supplier";
+  price?: number;
+  selfServe?: boolean;
+};
+
+async function getSelectablePlan(
+  company: FirebaseFirestore.DocumentData,
+  planId: string,
+  allowFree: boolean
+): Promise<CatalogPlan> {
+  const planSnap = await admin.firestore().doc(`plans/${planId}`).get();
+  if (!planSnap.exists) {
+    throw new HttpsError("invalid-argument", "Unknown billing plan.");
+  }
+
+  const plan = planSnap.data() as CatalogPlan;
+  const companyFamily =
+    company.companyType === "supplier" ? "supplier" : "distributor";
+
+  if (
+    plan.family !== companyFamily ||
+    plan.active !== true ||
+    plan.selfServe !== true
+  ) {
+    throw new HttpsError(
+      "failed-precondition",
+      "This plan is not available for the company."
+    );
+  }
+
+  const isFree = typeof plan.price === "number" && plan.price === 0;
+  if (isFree && !allowFree) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Free plans do not require a Braintree subscription."
+    );
+  }
+
+  if (!isFree && !plan.braintreePlanId) {
+    throw new HttpsError(
+      "failed-precondition",
+      "The selected paid plan has no Braintree plan ID."
+    );
+  }
+
+  return plan;
+}
+
 export const getClientToken = onCall(
   {
     secrets: [
@@ -91,22 +142,6 @@ export const createSubscription = onCall(
         );
       }
 
-      const validPlanIds = [
-        "starter",
-        "test",
-        "team",
-        "pro",
-        "enterprise",
-        "healy_plan", // keep
-      ];
-
-      if (!validPlanIds.includes(planId)) {
-        throw new HttpsError(
-          "invalid-argument",
-          `Invalid planId "${planId}". Must be a Braintree plan ID.`
-        );
-      }
-
       if (!companyId || !paymentMethodNonce || !planId) {
         throw new HttpsError("invalid-argument", "Missing required fields.");
       }
@@ -119,7 +154,9 @@ export const createSubscription = onCall(
         throw new HttpsError("not-found", "Company not found.");
       }
 
-      const billing = snap.data()?.billing || {};
+      const company = snap.data()!;
+      const selectedPlan = await getSelectablePlan(company, planId, false);
+      const billing = company.billing || {};
       const gateway = getBraintreeGateway();
 
       // Ensure customer exists
@@ -160,7 +197,7 @@ export const createSubscription = onCall(
       // Build subscription payload
       const payload: any = {
         paymentMethodToken: pmRes.paymentMethod.token,
-        planId,
+        planId: selectedPlan.braintreePlanId,
       };
 
       const subRes = await gateway.subscription.create(payload);
@@ -197,11 +234,6 @@ export const changePlanAndRestartBillingCycle = onCall(
   },
   async (request) => {
     const { companyId, newPlanId } = request.data;
-    const validPlanIds = ["starter", "team", "pro", "enterprise", "healy_plan"];
-
-    if (!validPlanIds.includes(newPlanId)) {
-      throw new HttpsError("invalid-argument", "Invalid plan.");
-    }
 
     if (!companyId || !newPlanId) {
       throw new HttpsError("invalid-argument", "Missing args.");
@@ -211,7 +243,12 @@ export const changePlanAndRestartBillingCycle = onCall(
 
     const companyRef = admin.firestore().doc(`companies/${companyId}`);
     const snap = await companyRef.get();
-    const billing = snap.data()?.billing;
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Company not found.");
+    }
+    const company = snap.data()!;
+    const selectedPlan = await getSelectablePlan(company, newPlanId, false);
+    const billing = company.billing;
 
     if (billing?.pendingPlanChangeInProgress) {
       throw new HttpsError(
@@ -261,7 +298,7 @@ export const changePlanAndRestartBillingCycle = onCall(
 
       const res = await gateway.subscription.create({
         paymentMethodToken,
-        planId: newPlanId,
+        planId: selectedPlan.braintreePlanId,
       });
 
       if (!res.success || !res.subscription) {
@@ -336,17 +373,16 @@ export const scheduleBillingDowngrade = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Missing args.");
   }
 
-  const paidPlans = ["starter", "team", "pro", "enterprise", "healy_plan"];
-
-  if (nextPlanId !== "free" && !paidPlans.includes(nextPlanId)) {
-    throw new HttpsError("invalid-argument", "Invalid plan.");
-  }
-
   await assertCompanyBillingAdmin(request.auth, companyId);
 
   const ref = admin.firestore().doc(`companies/${companyId}`);
   const snap = await ref.get();
-  const billing = snap.data()?.billing;
+  if (!snap.exists) {
+    throw new HttpsError("not-found", "Company not found.");
+  }
+  const company = snap.data()!;
+  await getSelectablePlan(company, nextPlanId, true);
+  const billing = company.billing;
 
   if (!billing?.subscriptionId || !billing?.renewalDate) {
     throw new HttpsError("failed-precondition", "No active subscription.");
