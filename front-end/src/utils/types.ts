@@ -166,6 +166,7 @@ export type PlanName =
 
 // 🧩 Full plan definition
 export interface PlanType {
+  id?: string; // Firestore plan document id; differs from braintreePlanId for free plans
   braintreePlanId: string;
   price: number;
   connectionLimit: number;
