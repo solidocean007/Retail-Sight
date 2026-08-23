@@ -22,6 +22,9 @@ type CatalogPlan = {
   selfServe?: boolean;
 };
 
+/**
+ * Loads a catalog plan and verifies that the company may select it.
+ */
 async function getSelectablePlan(
   company: FirebaseFirestore.DocumentData,
   planId: string,
