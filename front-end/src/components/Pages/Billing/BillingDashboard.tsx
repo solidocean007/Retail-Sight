@@ -95,7 +95,7 @@ const BillingDashboard: React.FC = () => {
         // silent fail, modal will fetch normally
         console.log("Error: ", e); // Error:  FirebaseError: INTERNAL
       });
-  }, [billingInfo?.plan, company?.companyType, currentCompanyId]);
+  }, [currentCompanyId]);
 
   const fetchPlans = useCallback(async () => {
     try {
@@ -131,7 +131,7 @@ const BillingDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentCompanyId]);
+  }, [billingInfo?.plan, company?.companyType, currentCompanyId]);
 
   useEffect(() => {
     if (!currentCompanyId) return;
@@ -160,7 +160,7 @@ const BillingDashboard: React.FC = () => {
 
   const currentPlanPrice = currentPlan?.price ?? 0;
 
-  const currentPlanName = currentPlan?.braintreePlanId ?? "Free Plan";
+  const currentPlanName = currentPlan ? getPlanId(currentPlan) : "Free Plan";
 
   const paymentStatus = derivedPaymentStatus || "inactive";
 
@@ -209,7 +209,7 @@ const BillingDashboard: React.FC = () => {
 
       await scheduleDowngrade({
         companyId: currentCompanyId,
-        nextPlanId: pendingDowngradePlan.braintreePlanId,
+        nextPlanId: getPlanId(pendingDowngradePlan),
       });
 
       dispatch(
@@ -260,13 +260,14 @@ const BillingDashboard: React.FC = () => {
 
       // Downgrade
       if (newPrice < currentPrice) {
-        const isFree = selectedPlan.braintreePlanId === "free";
+        const selectedPlanId = getPlanId(selectedPlan);
+        const isFree = selectedPlan.price === 0;
 
         setConfirmMessage(
           isFree
             ? "Downgrading to Free will cancel your subscription immediately. Continue?"
             : `Downgrade to ${formatPlanLabel(
-                selectedPlan.braintreePlanId,
+                selectedPlanId,
               )} at next renewal?`,
         );
 
@@ -279,7 +280,7 @@ const BillingDashboard: React.FC = () => {
       dispatch(
         showMessage({
           text: `You're already on the ${formatPlanLabel(
-            selectedPlan.braintreePlanId,
+            getPlanId(selectedPlan),
           )} plan.`,
           severity: "info",
         }),
