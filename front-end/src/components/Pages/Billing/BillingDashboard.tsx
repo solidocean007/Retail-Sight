@@ -95,26 +95,37 @@ const BillingDashboard: React.FC = () => {
         // silent fail, modal will fetch normally
         console.log("Error: ", e); // Error:  FirebaseError: INTERNAL
       });
-  }, [currentCompanyId]);
+  }, [billingInfo?.plan, company?.companyType, currentCompanyId]);
 
   const fetchPlans = useCallback(async () => {
     try {
       const querySnap = await getDocs(collection(db, "plans"));
-      const planList = querySnap.docs.map((doc) => ({
-        ...doc.data(),
+      const planList = querySnap.docs.map((planDoc) => ({
+        id: planDoc.id,
+        ...planDoc.data(),
       })) as PlanType[];
 
-      // Show hidden/internal plans only if Healy company
-      const visiblePlans =
-        currentCompanyId === "3WOAwgj3l3bnvHqE4IV3"
-          ? planList
-          : planList.filter((p) => p.braintreePlanId !== "healy_plan");
+      const companyFamily =
+        company?.companyType === "supplier" ? "supplier" : "distributor";
+      const currentBillingPlanId = billingInfo?.plan;
+
+      // Catalog options are scoped to the company's pricing family. Internal
+      // plans (for example healy_plan) remain resolvable only when currently
+      // assigned, but are never exposed as upgrade/downgrade choices.
+      const visiblePlans = planList.filter((plan) => {
+        const planId = plan.id ?? plan.braintreePlanId;
+        const isCurrentPlan = planId === currentBillingPlanId;
+
+        if (isCurrentPlan) return true;
+
+        return (
+          plan.family === companyFamily &&
+          plan.active === true &&
+          plan.selfServe === true
+        );
+      });
 
       setPlans(visiblePlans);
-
-      const freePlan =
-        planList.find((plan) => plan.braintreePlanId === "free") || null;
-      // setFreePlan(freePlan);
     } catch (err) {
       console.error("Error loading plans:", err);
     } finally {
@@ -141,8 +152,10 @@ const BillingDashboard: React.FC = () => {
     fetchPlans();
   }, [fetchPlans]);
 
+  const getPlanId = (plan: PlanType) => plan.id ?? plan.braintreePlanId;
+
   const currentPlan = plans.find(
-    (p) => p.braintreePlanId === billingInfo?.plan,
+    (plan) => getPlanId(plan) === billingInfo?.plan,
   );
 
   const currentPlanPrice = currentPlan?.price ?? 0;
@@ -224,7 +237,7 @@ const BillingDashboard: React.FC = () => {
     if (!currentCompanyId) return;
 
     const currentPlan = plans.find(
-      (p) => p.braintreePlanId === billingInfo?.plan,
+      (p) => getPlanId(p) === billingInfo?.plan,
     );
 
     const currentPrice = currentPlan?.price ?? 0;
@@ -363,24 +376,24 @@ const BillingDashboard: React.FC = () => {
         {/* === Plan Grid === */}
         <div className="plans-grid">
           {[...plans]
-            .filter((plan) => plan.braintreePlanId !== billingInfo?.plan)
+            .filter((plan) => getPlanId(plan) !== billingInfo?.plan)
             .sort((a, b) => a.price - b.price)
             .map((plan) => {
-              const isCurrent = plan.braintreePlanId === billingInfo?.plan;
+              const isCurrent = getPlanId(plan) === billingInfo?.plan;
 
               const currentPlan = plans.find(
-                (p) => p.braintreePlanId === billingInfo?.plan,
+                (p) => getPlanId(p) === billingInfo?.plan,
               );
               const isUpgrade =
                 currentPlan && plan.price > (currentPlan.price || 0);
               const isDowngrade =
                 currentPlan && plan.price < (currentPlan.price || 0);
-              const isRecommended = plan.braintreePlanId === "team";
+              const isRecommended = getPlanId(plan) === "team";
 
               return (
                 <PlanCard
-                  key={plan.braintreePlanId}
-                  planId={plan.braintreePlanId}
+                  key={getPlanId(plan)}
+                  planId={getPlanId(plan)}
                   price={plan.price}
                   userLimit={plan.userLimit}
                   connectionLimit={plan.connectionLimit}
@@ -424,11 +437,11 @@ const BillingDashboard: React.FC = () => {
             setModalOpen(false);
             setShowPaymentUpdate(false);
           }}
-          planId={selectedPlan?.braintreePlanId || currentPlanId}
+          planId={selectedPlan ? getPlanId(selectedPlan) : currentPlanId}
           companyId={currentCompanyId}
           companyName={companyName}
           email={email}
-          planName={selectedPlan?.braintreePlanId || "Payment Update"}
+          planName={selectedPlan ? getPlanId(selectedPlan) : "Payment Update"}
           planPrice={selectedPlan?.price ?? currentPlanPrice}
           isUpgrade={!!selectedPlan && selectedPlan.price > currentPlanPrice}
           mode={showPaymentUpdate ? "update-card" : "subscribe"}
