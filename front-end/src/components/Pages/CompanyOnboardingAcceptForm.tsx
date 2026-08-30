@@ -5,15 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  query,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
@@ -69,21 +61,8 @@ export default function CompanyOnboardingAcceptForm() {
         }
 
         setInvite(inviteData);
-
-        // Prefill names from the access request
-        const qSnap = await getDocs(
-          query(
-            collection(db, "accessRequests"),
-            where("inviteId", "==", inviteId),
-            limit(1),
-          ),
-        );
-
-        if (!qSnap.empty) {
-          const req = qSnap.docs[0].data();
-          if (req.firstName) setFirstName(req.firstName);
-          if (req.lastName) setLastName(req.lastName);
-        }
+        if (inviteData.firstName) setFirstName(inviteData.firstName);
+        if (inviteData.lastName) setLastName(inviteData.lastName);
       } catch (err) {
         console.error("Failed to load invite or access request:", err);
         setError("Failed to load invite.");

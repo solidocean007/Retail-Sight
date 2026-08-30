@@ -22,6 +22,8 @@ import { refreshCurrentUserProfile } from "../../thunks/currentUserThunk";
 type InviteDoc = {
   inviteeEmail: string;
   companyName?: string;
+  firstName?: string;
+  lastName?: string;
   role?: string;
   status?: string;
 };
@@ -124,6 +126,8 @@ export default function InviteAcceptForm() {
         }
 
         setInvite(data);
+        setFirstName(data.firstName || "");
+        setLastName(data.lastName || "");
 
         const checkUserExists = httpsCallable(functions, "checkUserExists");
         const res = await checkUserExists({

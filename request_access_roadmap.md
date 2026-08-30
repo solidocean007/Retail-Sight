@@ -1,5 +1,64 @@
 # 🧭 Request Access & Approval System — Development Roadmap
 
+## 2026-08-30 — Branded access request and abuse hardening
+
+Branch: `feat/request-access-hardening`
+
+### Implemented
+
+- Rebuilt `/request-access` as a responsive, branded two-panel experience
+  using the existing Displaygram SVG logo.
+- Added plain-language Distributor and Supplier / brand definitions.
+- Added layered low-friction abuse controls: a honeypot, minimum form dwell
+  signal, suspicious URL suppression, strict server-side field validation,
+  duplicate pending-request suppression, and a three-request-per-network
+  24-hour rate limit.
+- Automated submissions are acknowledged without creating Firestore records,
+  provisional companies, or email jobs.
+- Company workspaces are now created only after a developer or super-admin
+  approves a request.
+- Approval and rejection callables now require a server-verified developer or
+  super-admin role. Completion also requires the authenticated invite email.
+- Approval now creates a normal seven-day company invite and links to
+  `/accept-invite/{companyId}/{inviteId}`. Accepting it completes the related
+  access request.
+- Access request review fields now use consistent `phone` and `userTypeHint`
+  names while retaining the legacy `userType` fallback.
+- Firestore rules restrict access request documents to platform reviewers and
+  exclude access requests, rate-limit state, pending invites, and mail from the
+  temporary authenticated catch-all.
+- Added optional Firebase App Check initialization for reCAPTCHA Enterprise.
+
+### Firestore integrity notes
+
+- New collection: `accessRequestRateLimits/{sha256ClientAddress}`. It is
+  backend-only and stores counts, timestamps, and an `expiresAt` cleanup hint;
+  raw client addresses are not stored.
+- `accessRequests` adds `normalizedEmail`, `normalizedName`,
+  `submissionMeta`, and consistent `userTypeHint`. Legacy fields remain
+  readable by the review UI.
+- The temporary catch-all still exists for unrelated collections. Removing it
+  should be handled separately with collection-by-collection emulator tests so
+  the established application is not broken.
+
+### Deployment prerequisites
+
+1. Deploy the frontend, Functions, and Firestore rules together because the
+   approval link and invite status contract changed together.
+2. Register the production web app with Firebase App Check using reCAPTCHA
+   Enterprise and set `VITE_FIREBASE_APP_CHECK_SITE_KEY`.
+3. Use a Firebase App Check debug token locally via
+   `VITE_FIREBASE_APP_CHECK_DEBUG_TOKEN`.
+4. Observe App Check metrics before enabling hard enforcement on the public
+   callable; the current abuse controls work without enforcement during the
+   rollout.
+5. Configure a Firestore TTL policy for `accessRequestRateLimits.expiresAt` to
+   remove stale rate-limit documents automatically.
+
+Validation completed locally: frontend production build, Functions lint and
+TypeScript build, Firestore rules dry-run compilation, desktop layout, current
+in-app viewport, company-type interaction, and browser console errors.
+
 ### 🌟 Goal  
 Enable new users to request company access, automatically record requests in Firestore, notify admins via the `mail` service, and allow approval through the Developer Dashboard — creating or linking companies dynamically.
 
@@ -113,4 +172,3 @@ Once completed:
 - Admins can approve/reject requests
 - Approved users auto-link to a company
 - Both request and approval states produce polished onboarding modals
-
