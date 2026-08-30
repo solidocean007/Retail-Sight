@@ -1,7 +1,7 @@
 // export default LoginForm;
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./loginForm.css";
+import AccessPageShell from "./AccessPageShell";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -219,64 +219,69 @@ const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   return (
-    <main className="auth-page" role="main" aria-labelledby="login-title">
-      <div className="auth-card">
-        <header className="auth-header">
-          <img
-            src="/displaygram-logo-long-BLUE.svg"
-            alt="Displaygram"
-            className="login-logo"
-          />
-
-          <p className="auth-welcome">Welcome back</p>
-
-          <h1 id="login-title" className="auth-title">
-            Log in to your account
-          </h1>
-        </header>
-
-        {err && (
-          <div
-            id="form-error"
-            className="auth-alert"
-            role="alert"
-            aria-live="assertive"
-          >
-            {err}
-          </div>
-        )}
-        {submittedReset && (
-          <div className="auth-banner">
-            📧 Reset email sent. Check your inbox and spam folder for a message
-            from Displaygram.
-          </div>
-        )}
-
-        {showRedirectBanner && (
-          <div className="auth-banner">
-            🔒 You must be signed in to view that post. Please log in to
-            continue.
-          </div>
-        )}
-
-        <form
-          className="auth-form"
-          onSubmit={handleEmailLogin}
-          aria-describedby={err ? "form-error" : undefined}
-          aria-busy={submitting ? "true" : "false"}
-          noValidate
+    <AccessPageShell
+      storyEyebrow="Your workspace"
+      storyTitle="The market view your team built together."
+      storyDescription="Return to the displays, goals, and field activity your team uses to stay aligned."
+      highlights={[
+        {
+          label: "Pick up where you left off",
+          detail: "Your company workspace, reporting, and saved activity are ready.",
+        },
+        {
+          label: "Use your approved account",
+          detail: "Sign in with the work email connected to your Displaygram company.",
+        },
+        {
+          label: "New company?",
+          detail: "Request a workspace and our team will verify the organization first.",
+        },
+      ]}
+      panelEyebrow="Welcome back"
+      panelTitle="Log in to Displaygram"
+      panelDescription="Use your approved work account to continue."
+    >
+      {err && (
+        <div
+          id="form-error"
+          className="access-shell-alert"
+          role="alert"
+          aria-live="assertive"
         >
-          <fieldset>
-            <legend className="sr-only">Sign in with email</legend>
+          {err}
+        </div>
+      )}
 
-            <label className="auth-label" htmlFor="email">
-              Email
-            </label>
+      {submittedReset && (
+        <div className="access-shell-banner" role="status">
+          Reset email sent. Check your inbox and spam folder for a message from
+          Displaygram.
+        </div>
+      )}
+
+      {showRedirectBanner && (
+        <div className="access-shell-banner" role="status">
+          Sign in to continue to the shared Displaygram post.
+        </div>
+      )}
+
+      <form
+        className="access-shell-form"
+        onSubmit={handleEmailLogin}
+        aria-describedby={err ? "form-error" : undefined}
+        aria-busy={submitting ? "true" : "false"}
+        noValidate
+      >
+        <fieldset className="access-shell-fieldset">
+          <legend className="sr-only">Sign in with email</legend>
+
+          <div className="access-shell-field">
+            <label htmlFor="email">Work email</label>
             <input
               id="email"
               name="email"
               type="email"
-              className="auth-input"
+              className="access-shell-input"
               placeholder="you@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -289,120 +294,109 @@ const LoginForm: React.FC<LoginFormProps> = ({
               aria-describedby={err ? "form-error" : undefined}
               autoFocus
             />
+          </div>
 
-            <label className="auth-label" htmlFor="password">
-              Password
-            </label>
-            <div className="auth-password-wrapper">
+          <div className="access-shell-field">
+            <label htmlFor="password">Password</label>
+            <div className="access-shell-password">
               <input
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                className="auth-input"
-                placeholder="••••••••"
+                className="access-shell-input"
+                placeholder="Enter your password"
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 autoComplete="current-password"
                 required
-                style={{ marginTop: 0 }}
               />
               <button
                 type="button"
-                className="auth-toggle-password"
+                className="access-shell-password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-          </fieldset>
+          </div>
+        </fieldset>
 
-          <div className="auth-actions">
+        <div className="access-shell-actions">
+          <button
+            type="submit"
+            className="access-shell-primary"
+            disabled={submitting}
+            aria-disabled={submitting ? "true" : "false"}
+          >
+            {submitting ? "Signing in…" : "Sign in"}
+          </button>
+
+          {enableGoogle && (
             <button
-              type="submit"
-              className="btn auth-submit"
+              type="button"
+              className="access-shell-google"
+              onClick={handleGoogle}
               disabled={submitting}
               aria-disabled={submitting ? "true" : "false"}
             >
-              {submitting ? "Signing in…" : "Sign in"}
+              Continue with Google
             </button>
+          )}
+        </div>
 
-            {enableGoogle && (
-              <button
-                type="button"
-                className="btn btn-google"
-                onClick={handleGoogle}
-                disabled={submitting}
-                aria-disabled={submitting ? "true" : "false"}
-                aria-label="Continue with Google"
-              >
-                Continue with Google
-              </button>
-            )}
-          </div>
+        <button
+          type="button"
+          className="access-shell-text-button"
+          onClick={handleResetPassword}
+        >
+          {submittedReset
+            ? "Resend password reset email"
+            : "Forgot your password?"}
+        </button>
 
-          <nav className="auth-links" aria-label="Account help">
-            <button
-              type="button"
-              className="auth-link"
-              onClick={handleResetPassword}
-            >
-              {submittedReset
-                ? "Resend password reset email"
-                : "Forgot password?"}
-            </button>
-          </nav>
+        <footer className="access-shell-footer" aria-label="New user options">
+          <p>Need a Displaygram workspace for your company?</p>
+          <button
+            type="button"
+            className="access-shell-secondary"
+            onClick={async () => {
+              const normalizedEmail = email.trim().toLowerCase();
 
-          {/* <div className="auth-divider" role="separator" aria-hidden="true">
-            <span>or</span>
-          </div> */}
+              if (!normalizedEmail) {
+                navigate("/request-access");
+                return;
+              }
 
-          <footer className="auth-footnote" aria-label="New user options">
-            <p>New to Displaygram?</p>
+              try {
+                const exists = await checkUserExists(normalizedEmail);
 
-            <button
-              type="button"
-              className="auth-request-button"
-              onClick={async () => {
-                const normalizedEmail = email.trim().toLowerCase();
-
-                if (!normalizedEmail) {
-                  navigate("/request-access");
+                if (exists) {
+                  dispatch(
+                    showMessage(
+                      "This email already has an account. Sign in or use forgot password.",
+                    ),
+                  );
                   return;
                 }
 
-                try {
-                  const exists = await checkUserExists(normalizedEmail);
-
-                  if (exists) {
-                    dispatch(
-                      showMessage(
-                        "This email already has an account. Sign in or use forgot password.",
-                      ),
-                    );
-                    return;
-                  }
-
-                  navigate(
-                    `/request-access?email=${encodeURIComponent(normalizedEmail)}`,
-                  );
-                } catch (error) {
-                  console.error("Request access check failed:", error);
-                  dispatch(
-                    showMessage(
-                      "Unable to check this email. Please try again.",
-                    ),
-                  );
-                }
-              }}
-            >
-              Request access for a new company
-            </button>
-          </footer>
-        </form>
-      </div>
-    </main>
+                navigate(
+                  `/request-access?email=${encodeURIComponent(normalizedEmail)}`,
+                );
+              } catch (error) {
+                console.error("Request access check failed:", error);
+                dispatch(
+                  showMessage("Unable to check this email. Please try again."),
+                );
+              }
+            }}
+          >
+            Request company access
+          </button>
+        </footer>
+      </form>
+    </AccessPageShell>
   );
 };
 

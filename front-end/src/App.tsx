@@ -82,6 +82,7 @@ function AppContent() {
     () =>
       new Set([
         "/login",
+        "/sign-up-login",
         "/signup",
         "/request-access",
         "/reset-password",
@@ -95,7 +96,8 @@ function AppContent() {
   const isAuthRoute =
     AUTH_ROUTES.has(pathname) ||
     pathname.startsWith("/accept-invite") ||
-    pathname.startsWith("/onboard-company");
+    pathname.startsWith("/onboard-company") ||
+    pathname.startsWith("/new-company-invite");
 
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
 

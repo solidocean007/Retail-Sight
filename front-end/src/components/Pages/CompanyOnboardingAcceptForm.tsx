@@ -13,6 +13,7 @@ import { IconButton } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import "./companyOnboardingAcceptForm.css";
+import AccessPageShell from "./AccessPageShell";
 import { BusinessType } from "../../utils/types";
 
 export default function CompanyOnboardingAcceptForm() {
@@ -173,55 +174,70 @@ export default function CompanyOnboardingAcceptForm() {
 
   if (loading) {
     return (
-      <main className="company-onboarding-accept-page">
-        <section className="company-onboarding-accept-status-card">
-          Loading company setup…
-        </section>
-      </main>
+      <AccessPageShell
+        storyEyebrow="Company activation"
+        storyTitle="Turn an approved request into a working team space."
+        storyDescription="The first company admin activates the organization and receives the permissions needed to invite the team."
+        highlights={[
+          { label: "Verify approval", detail: "We check that the company invitation is active." },
+          { label: "Confirm company details", detail: "The approved organization and business type are carried forward." },
+          { label: "Activate the admin", detail: "The first user becomes the company workspace administrator." },
+        ]}
+        panelEyebrow="Company setup"
+        panelTitle="Loading your company invitation"
+        panelDescription="This should only take a moment."
+      >
+        <div className="access-shell-status" role="status">
+          <div className="access-shell-status-icon" aria-hidden="true">…</div>
+          <p>Checking the company and approval details.</p>
+        </div>
+      </AccessPageShell>
     );
   }
 
   if (error) {
     return (
-      <main className="company-onboarding-accept-page">
-        <section className="company-onboarding-accept-status-card company-onboarding-accept-status-card--error">
-          {error}
-        </section>
-      </main>
+      <AccessPageShell
+        storyEyebrow="Company activation"
+        storyTitle="Approved companies start with a verified invitation."
+        storyDescription="Activation links are company-specific and can only be used during their active security window."
+        highlights={[
+          { label: "Open the newest email", detail: "A newer activation email may have replaced this link." },
+          { label: "Confirm the intended address", detail: "Use the work email named in the approval message." },
+          { label: "Contact Displaygram", detail: "Support can help confirm the request status." },
+        ]}
+        panelEyebrow="Company setup"
+        panelTitle="This activation link is not active"
+        panelDescription="The invitation may be invalid, expired, or already completed."
+      >
+        <div className="access-shell-status">
+          <div className="access-shell-status-icon" aria-hidden="true">!</div>
+          <div className="access-shell-alert" role="alert">{error}</div>
+          <p>Open the newest approval email or contact support for a fresh link.</p>
+          <a href="mailto:support@displaygram.com" className="access-shell-secondary">
+            Contact support
+          </a>
+        </div>
+      </AccessPageShell>
     );
   }
 
   if (!invite) return null;
 
   return (
-    <main
-      className="company-onboarding-accept-page"
-      aria-labelledby="company-onboarding-accept-title"
+    <AccessPageShell
+      storyEyebrow="Company activation"
+      storyTitle="Give your team one clear view of retail execution."
+      storyDescription="Activate the approved workspace, then invite the people who document displays, follow goals, and support the market."
+      highlights={[
+        { label: "Verified company", detail: "The organization was reviewed before this invitation was sent." },
+        { label: "Admin controls", detail: "You can invite teammates and manage the company workspace." },
+        { label: "Start on the free plan", detail: "Begin with up to five users and two company connections." },
+      ]}
+      panelEyebrow="Company setup approved"
+      panelTitle="Activate your company account"
+      panelDescription="You’re being registered as the first company administrator."
     >
-      <section className="company-onboarding-accept-card">
-        <header className="company-onboarding-accept-header">
-          <img
-            src="/displaygram-logo-long-BLUE.svg"
-            alt="Displaygram"
-            className="company-onboarding-accept-logo"
-          />
-
-          <p className="company-onboarding-accept-eyebrow">
-            Company setup approved
-          </p>
-
-          <h1
-            id="company-onboarding-accept-title"
-            className="company-onboarding-accept-title"
-          >
-            Activate your company account
-          </h1>
-
-          <p className="company-onboarding-accept-subtitle">
-            You’re being registered as the company admin on Displaygram.
-          </p>
-        </header>
-
         <aside className="company-onboarding-accept-plan-card">
           <h2>Free plan</h2>
           <p>
@@ -392,7 +408,6 @@ export default function CompanyOnboardingAcceptForm() {
             </button>
           </p>
         </form>
-      </section>
-    </main>
+    </AccessPageShell>
   );
 }

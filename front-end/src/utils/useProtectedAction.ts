@@ -11,7 +11,7 @@ const useProtectedAction = () => {
   const performAction = (action: () => void) => {
     if (!currentUser) {
       dispatch(showMessage("Sign-up or login to continue"));
-      navigate("/signup");
+      navigate("/request-access");
     } else {
       action();
     }

@@ -75,7 +75,10 @@ const About = () => {
 
           <section className="about-footer-cta">
             <p>Ready to see your team’s execution come together?</p>
-            <button className="cta-button" onClick={() => navigate("/signup")}>
+            <button
+              className="cta-button"
+              onClick={() => navigate("/request-access")}
+            >
               Create an Account
             </button>
           </section>
