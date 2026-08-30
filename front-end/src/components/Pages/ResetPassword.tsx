@@ -1,6 +1,6 @@
 // components/Auth/ResetPassword.tsx
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   getAuth,
   confirmPasswordReset,
@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
+import AccessPageShell from "./AccessPageShell";
 
 const ResetPassword: React.FC = () => {
   const auth = getAuth();
@@ -22,6 +23,8 @@ const ResetPassword: React.FC = () => {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(search);
@@ -70,47 +73,140 @@ const ResetPassword: React.FC = () => {
     }
   };
 
-  if (verifying) return <div className="auth-page">Verifying reset link…</div>;
+  const shellProps = {
+    storyEyebrow: "Account recovery",
+    storyTitle: "A secure path back to your workspace.",
+    storyDescription:
+      "Reset links are verified before a new password can be saved to your Displaygram account.",
+    highlights: [
+      {
+        label: "Verify the link",
+        detail: "Firebase checks that the reset request is genuine and still active.",
+      },
+      {
+        label: "Choose a new password",
+        detail: "Use at least eight characters and avoid a password used elsewhere.",
+      },
+      {
+        label: "Return securely",
+        detail: "After the reset, sign in again with your work email.",
+      },
+    ],
+    panelEyebrow: "Password reset",
+  };
+
+  if (verifying) {
+    return (
+      <AccessPageShell
+        {...shellProps}
+        panelTitle="Checking your reset link"
+        panelDescription="This should only take a moment."
+      >
+        <div className="access-shell-status" role="status" aria-live="polite">
+          <div className="access-shell-status-icon" aria-hidden="true">
+            …
+          </div>
+          <p>Verifying that this password-reset link is valid and unused.</p>
+        </div>
+      </AccessPageShell>
+    );
+  }
 
   if (!valid) {
     return (
-      <div className="auth-page">
-        <div className="auth-card">
-          <h1>Password Reset</h1>
-          <p>{error || "Invalid reset link."}</p>
+      <AccessPageShell
+        {...shellProps}
+        panelTitle="This reset link is not active"
+        panelDescription="Reset links expire after use or after their security window closes."
+      >
+        <div className="access-shell-status">
+          <div className="access-shell-status-icon" aria-hidden="true">
+            !
+          </div>
+          <div className="access-shell-alert" role="alert">
+            {error || "Invalid reset link."}
+          </div>
+          <p>Return to login, enter your email, and request a fresh link.</p>
+          <Link to="/login" className="access-shell-primary">
+            Return to login
+          </Link>
         </div>
-      </div>
+      </AccessPageShell>
     );
   }
 
   return (
-    <main className="auth-page">
-      <div className="auth-card">
-        <h1>Choose a New Password</h1>
-        {error && <div className="auth-error">{error}</div>}
-        <form onSubmit={handleSubmit} className="auth-form">
-          <label>New Password</label>
-          <input
-            type="password"
-            className="auth-input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+    <AccessPageShell
+      {...shellProps}
+      panelTitle="Choose a new password"
+      panelDescription="Create a password that is unique to your Displaygram account."
+    >
+      {error && (
+        <div className="access-shell-alert" role="alert">
+          {error}
+        </div>
+      )}
 
-          <label>Confirm Password</label>
-          <input
-            type="password"
-            className="auth-input"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-          />
+      <form onSubmit={handleSubmit} className="access-shell-form">
+        <div className="access-shell-field">
+          <label htmlFor="new-password">New password</label>
+          <div className="access-shell-password">
+            <input
+              id="new-password"
+              type={showPassword ? "text" : "password"}
+              className="access-shell-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              required
+              aria-invalid={!!error}
+            />
+            <button
+              type="button"
+              className="access-shell-password-toggle"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+        </div>
 
-          <button type="submit" className="auth-submit" disabled={submitting}>
-            {submitting ? "Resetting…" : "Reset Password"}
-          </button>
-        </form>
-      </div>
-    </main>
+        <div className="access-shell-field">
+          <label htmlFor="confirm-password">Confirm password</label>
+          <div className="access-shell-password">
+            <input
+              id="confirm-password"
+              type={showConfirm ? "text" : "password"}
+              className="access-shell-input"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              required
+              aria-invalid={!!error}
+            />
+            <button
+              type="button"
+              className="access-shell-password-toggle"
+              onClick={() => setShowConfirm((current) => !current)}
+              aria-label={showConfirm ? "Hide password" : "Show password"}
+            >
+              {showConfirm ? "Hide" : "Show"}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="access-shell-primary"
+          disabled={submitting}
+        >
+          {submitting ? "Saving new password…" : "Save new password"}
+        </button>
+      </form>
+    </AccessPageShell>
   );
 };
 

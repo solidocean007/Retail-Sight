@@ -7,7 +7,6 @@ import { useAppDispatch } from "../../utils/store";
 import { AccessRequestDraft } from "../DeveloperDashboard/deverloperTypes";
 // import { Eye, EyeOff } from "lucide-react"; // nice minimal icons
 import { getFunctions, httpsCallable } from "firebase/functions";
-import "./signUpLogIn.css";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { checkUserExists } from "../../utils/validation/checkUserExists";

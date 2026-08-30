@@ -1,39 +1,60 @@
-import "./RequestSubmitted.css";
+import { Link } from "react-router-dom";
+import AccessPageShell from "./AccessPageShell";
 
 export default function RequestSubmitted() {
-  
   return (
-    <main className="request-submitted-page">
-      <section className="request-card fade-in-up">
-        <div className="checkmark-container">
-          <div className="checkmark-glow"></div>
-          <div className="checkmark-symbol">✅</div>
+    <AccessPageShell
+      storyEyebrow="Request received"
+      storyTitle="Your company is now in the review queue."
+      storyDescription="A real person reviews every new workspace so Displaygram stays useful, private, and focused on legitimate retail teams."
+      highlights={[
+        {
+          label: "We verify the organization",
+          detail: "The company name, work email, and requested workspace type are reviewed.",
+        },
+        {
+          label: "Watch your work inbox",
+          detail: "Approved contacts receive a secure invitation from Displaygram.",
+        },
+        {
+          label: "Activate the workspace",
+          detail: "The invitation guides the first user through account setup.",
+        },
+      ]}
+      panelEyebrow="Submission complete"
+      panelTitle="We received your request"
+      panelDescription="Most legitimate company requests are reviewed within one business day."
+      trustMessage="You can safely close this page. We will follow up by email."
+    >
+      <div className="access-shell-status">
+        <div className="access-shell-status-icon" aria-hidden="true">
+          ✓
         </div>
 
-        <h1 className="request-title">Request Received</h1>
-
-        <p className="request-message">
-          Thanks for submitting your access request! Our team will review your
-          information and email you from{" "}
+        <p>
+          We’ll review the information you submitted and contact you from{" "}
           <a href="mailto:support@displaygram.com" className="support-link">
             support@displaygram.com
-          </a>{" "}
-          after reviewing your information.
+          </a>
+          .
         </p>
 
-        <div className="button-row">
-          <a href="/" className="btn btn-primary">
+        <div className="access-shell-status-actions">
+          <Link to="/" className="access-shell-primary">
             Return Home
-          </a>
-          <a href="mailto:support@displaygram.com" className="btn btn-outline">
+          </Link>
+          <a
+            href="mailto:support@displaygram.com"
+            className="access-shell-secondary"
+          >
             Contact Support
           </a>
         </div>
 
-        <p className="small-note">
-          You can close this page safely — we’ll be in touch soon.
+        <p className="access-shell-note">
+          No account or company workspace exists until the request is approved.
         </p>
-      </section>
-    </main>
+      </div>
+    </AccessPageShell>
   );
 }

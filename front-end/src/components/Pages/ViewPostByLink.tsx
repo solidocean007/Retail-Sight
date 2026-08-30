@@ -127,7 +127,7 @@ export const PublicPostViewer = () => {
               <h3>Want to share your own displays?</h3>
               <button
                 className="view-post-cta-secondary"
-                onClick={() => navigate("/sign-up-login?mode=signup")}
+                onClick={() => navigate("/request-access")}
               >
                 Join Displaygram
               </button>

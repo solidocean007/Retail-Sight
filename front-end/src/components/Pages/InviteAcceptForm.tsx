@@ -17,6 +17,7 @@ import { db, functions } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import "./inviteAcceptForm.css";
+import AccessPageShell from "./AccessPageShell";
 import { refreshCurrentUserProfile } from "../../thunks/currentUserThunk";
 
 type InviteDoc = {
@@ -346,11 +347,24 @@ export default function InviteAcceptForm() {
 
   if (loading || authLoading) {
     return (
-      <main className="team-invite-accept-page">
-        <section className="team-invite-accept-status-card">
-          Loading invite…
-        </section>
-      </main>
+      <AccessPageShell
+        storyEyebrow="Team invitation"
+        storyTitle="A shared view of what is happening in market."
+        storyDescription="Displaygram connects field activity, retail displays, and company goals in one workspace."
+        highlights={[
+          { label: "Verify the invitation", detail: "We confirm the company, email, and invite status." },
+          { label: "Use the invited email", detail: "Invitations can only be accepted by the intended recipient." },
+          { label: "Join the workspace", detail: "Your company permissions are applied automatically." },
+        ]}
+        panelEyebrow="Team invite"
+        panelTitle="Checking your invitation"
+        panelDescription="This should only take a moment."
+      >
+        <div className="access-shell-status" role="status">
+          <div className="access-shell-status-icon" aria-hidden="true">…</div>
+          <p>Loading the company and invitation details.</p>
+        </div>
+      </AccessPageShell>
     );
   }
 
@@ -358,10 +372,21 @@ export default function InviteAcceptForm() {
     const inviteDebugCode = inviteId?.slice(0, 6).toUpperCase();
 
     return (
-      <main className="team-invite-accept-page">
-        <section className="team-invite-accept-status-card team-invite-accept-status-card--error">
-          <h1>Invite link is no longer active</h1>
-
+      <AccessPageShell
+        storyEyebrow="Team invitation"
+        storyTitle="A shared view of what is happening in market."
+        storyDescription="Displaygram invitations are tied to one company, one email, and a limited activation window."
+        highlights={[
+          { label: "Check the newest email", detail: "A newer invitation may have replaced this link." },
+          { label: "Ask your company admin", detail: "An admin can send a fresh invitation to your work email." },
+          { label: "Keep the link private", detail: "Invitation links should not be forwarded or shared." },
+        ]}
+        panelEyebrow="Team invite"
+        panelTitle="This invitation is not active"
+        panelDescription="It may have expired, already been accepted, or been replaced."
+      >
+        <div className="access-shell-status">
+          <div className="access-shell-status-icon" aria-hidden="true">!</div>
           <p>
             This invite may have expired, already been accepted, or been
             replaced by a newer invite.
@@ -377,40 +402,27 @@ export default function InviteAcceptForm() {
             Please open the newest Displaygram invite email, or ask your admin
             to send a new invite.
           </p>
-        </section>
-      </main>
+        </div>
+      </AccessPageShell>
     );
   }
 
   if (!invite) return null;
 
   return (
-    <main
-      className="team-invite-accept-page"
-      aria-labelledby="team-invite-accept-title"
+    <AccessPageShell
+      storyEyebrow="Team invitation"
+      storyTitle="Your team’s retail work, in one shared view."
+      storyDescription="Join the approved company workspace where your team documents displays, follows goals, and sees field activity."
+      highlights={[
+        { label: "Company-scoped access", detail: "This invitation only grants access to the named workspace." },
+        { label: "Identity matched", detail: "Use the same work email that received the invitation." },
+        { label: "Ready after activation", detail: "Your role and company permissions are applied automatically." },
+      ]}
+      panelEyebrow="Team invite"
+      panelTitle={`Join ${invite.companyName || "your company"}`}
+      panelDescription="Confirm the invited account details to enter the workspace."
     >
-      <section className="team-invite-accept-card">
-        <header className="team-invite-accept-header">
-          <img
-            src="/displaygram-logo-long-BLUE.svg"
-            alt="Displaygram"
-            className="team-invite-accept-logo"
-          />
-
-          <p className="team-invite-accept-eyebrow">Team invite</p>
-
-          <h1
-            id="team-invite-accept-title"
-            className="team-invite-accept-title"
-          >
-            Join {invite.companyName || "your company"}
-          </h1>
-
-          <p className="team-invite-accept-subtitle">
-            You were invited to join this company on Displaygram.
-          </p>
-        </header>
-
         {error && (
           <div className="team-invite-accept-alert" role="alert">
             {error}
@@ -606,7 +618,6 @@ export default function InviteAcceptForm() {
             </p>
           </form>
         )}
-      </section>
-    </main>
+    </AccessPageShell>
   );
 }

@@ -113,7 +113,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
 
-  const goToSignUpLogin = () => navigate("/sign-up-login"); // i ll need to think about where this should take someone?  this page or signup? or login?
+  const goToLogin = () => navigate("/login");
   const handleCreatePostClick = () =>
     protectedAction(() => navigate("/create-post"));
 
@@ -253,7 +253,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         </div>
 
         {!currentUser ? (
-          <button onClick={goToSignUpLogin}>Login</button>
+          <button onClick={goToLogin}>Login</button>
         ) : (
           <div className="header-details">
             <div className="header-buttons">
