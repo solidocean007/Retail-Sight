@@ -1,5 +1,6 @@
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { assertAccessRequestReviewer } from "./accessRequestSecurity";
 
 const db = admin.firestore();
 
@@ -11,12 +12,18 @@ const db = admin.firestore();
  * - Updates accessRequest and sends email
  */
 export const approveAccessRequest = onCall(async (request) => {
+  await assertAccessRequestReviewer(request.auth?.uid);
+
   const { requestId } = request.data || {};
-  if (!requestId) throw new Error("Missing requestId");
+  if (!requestId || typeof requestId !== "string") {
+    throw new HttpsError("invalid-argument", "Missing requestId");
+  }
 
   const reqRef = db.collection("accessRequests").doc(requestId);
   const reqSnap = await reqRef.get();
-  if (!reqSnap.exists) throw new Error("Access request not found");
+  if (!reqSnap.exists) {
+    throw new HttpsError("not-found", "Access request not found");
+  }
 
   const planId = "free";
 
@@ -32,7 +39,9 @@ export const approveAccessRequest = onCall(async (request) => {
     lastName: string;
     workEmail: string;
     companyName: string;
-    userTypeHint: "supplier" | "distributor";
+    normalizedName?: string;
+    userTypeHint?: "supplier" | "distributor";
+    userType?: "supplier" | "distributor";
     status?: string;
   };
 
@@ -47,18 +56,36 @@ export const approveAccessRequest = onCall(async (request) => {
     .toLowerCase()
     .replace(/\s+/g, " ");
 
-  // 🏢 Find existing provisional company
+  const companyType = reqData.userTypeHint || reqData.userType;
+  if (!companyType) {
+    throw new HttpsError(
+      "failed-precondition",
+      "The request is missing a company type."
+    );
+  }
+
+  // Find an existing company. New workspaces are created only after approval.
   const existing = await db
     .collection("companies")
     .where("normalizedName", "==", normalizedName)
     .limit(1)
     .get();
 
-  if (existing.empty) {
-    throw new Error(`No provisional company found for ${reqData.companyName}`);
-  }
-
-  const companyDoc = existing.docs[0];
+  const companyDoc = existing.empty
+    ? await (async () => {
+        const companyRef = db.collection("companies").doc();
+        await companyRef.set({
+          companyName: reqData.companyName,
+          normalizedName: reqData.normalizedName || normalizedName,
+          companyType,
+          verified: false,
+          accessStatus: "off",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        const created = await companyRef.get();
+        return created;
+      })()
+    : existing.docs[0];
   const companyId = companyDoc.id;
 
   // ✅ Mark company as verified and limited access
@@ -67,7 +94,7 @@ export const approveAccessRequest = onCall(async (request) => {
     companyVerified: true,
     accessStatus: "limited", // system-level "active but onboarding" state
     verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-    verifiedBy: "system-admin",
+    verifiedBy: request.auth!.uid,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -94,13 +121,19 @@ export const approveAccessRequest = onCall(async (request) => {
     .collection("invites")
     .add({
       inviteeEmail: reqData.workEmail,
+      inviteeEmailLower: reqData.workEmail.toLowerCase(),
+      firstName: reqData.firstName,
+      lastName: reqData.lastName,
       role: "admin",
       companyId,
       companyName: reqData.companyName,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: "system-approval",
+      expiresAt: admin.firestore.Timestamp.fromMillis(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ),
+      createdBy: request.auth!.uid,
       accepted: false,
-      status: "approved-pending-user",
+      status: "pending",
     });
 
   const inviteId = inviteRef.id;
@@ -109,14 +142,14 @@ export const approveAccessRequest = onCall(async (request) => {
   await reqRef.update({
     status: "approved-pending-user",
     approvedAt: admin.firestore.FieldValue.serverTimestamp(),
-    approvedBy: "system-admin",
+    approvedBy: request.auth!.uid,
     linkedCompanyId: companyId,
     inviteId,
   });
 
   // 📨 Send invite email
   const appDomain = process.env.APP_DOMAIN || "https://displaygram.com";
-  const inviteLink = `${appDomain}/new-company-invite/${inviteId}`;
+  const inviteLink = `${appDomain}/accept-invite/${companyId}/${inviteId}`;
 
   await db.collection("mail").add({
     to: reqData.workEmail,

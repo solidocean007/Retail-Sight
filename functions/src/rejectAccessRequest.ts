@@ -1,5 +1,6 @@
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { assertAccessRequestReviewer } from "./accessRequestSecurity";
 
 const db = admin.firestore();
 
@@ -9,12 +10,18 @@ const db = admin.firestore();
  * Updates status and sends polite rejection email.
  */
 export const rejectAccessRequest = onCall(async (request) => {
+  await assertAccessRequestReviewer(request.auth?.uid);
+
   const { requestId } = request.data || {};
-  if (!requestId) throw new Error("Missing requestId");
+  if (!requestId || typeof requestId !== "string") {
+    throw new HttpsError("invalid-argument", "Missing requestId");
+  }
 
   const reqRef = db.collection("accessRequests").doc(requestId);
   const snap = await reqRef.get();
-  if (!snap.exists) throw new Error("Access request not found");
+  if (!snap.exists) {
+    throw new HttpsError("not-found", "Access request not found");
+  }
 
   const data = snap.data() as {
     firstName: string;
@@ -33,7 +40,7 @@ export const rejectAccessRequest = onCall(async (request) => {
   await reqRef.update({
     status: "rejected",
     rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
-    rejectedBy: "system-admin",
+    rejectedBy: request.auth!.uid,
   });
 
   // 2️⃣ Write email to Firestore mail collection

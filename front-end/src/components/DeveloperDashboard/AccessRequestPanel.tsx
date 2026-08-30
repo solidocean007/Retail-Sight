@@ -17,9 +17,11 @@ type AccessRequest = {
   firstName: string;
   lastName: string;
   workEmail: string;
-  workPhone?: string;
+  phone?: string;
+  notes?: string;
   companyName: string;
-  userTypeHint: "supplier" | "distributor";
+  userTypeHint?: "supplier" | "distributor";
+  userType?: "supplier" | "distributor";
   status:
     | "pending-approval"
     | "approved-pending-user"
@@ -105,17 +107,21 @@ export default function AccessRequestsPanel() {
               {r.firstName} {r.lastName}
               <br />
               <small>{r.workEmail}</small>
-              {r.workPhone && (
+              {r.phone && (
                 <>
                   <br />
-                  <small>{r.workPhone}</small>
+                  <small>{r.phone}</small>
                 </>
               )}
             </p>
 
             <p className="user-type">
-              <small>Type: {r.userTypeHint}</small>
+              <small>
+                Type: {r.userTypeHint || r.userType || "Not specified"}
+              </small>
             </p>
+
+            {r.notes && <p className="request-notes">“{r.notes}”</p>}
 
             <div className="actions">
               <button

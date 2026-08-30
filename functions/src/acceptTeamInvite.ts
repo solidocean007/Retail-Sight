@@ -157,6 +157,20 @@ export const acceptTeamInvite = onCall<AcceptTeamInvitePayload>(
     });
     await recomputeCompanyCountsInternal(companyId);
 
+    const accessRequestSnap = await db
+      .collection("accessRequests")
+      .where("inviteId", "==", inviteId)
+      .limit(1)
+      .get();
+
+    if (!accessRequestSnap.empty) {
+      await accessRequestSnap.docs[0].ref.update({
+        status: "completed",
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        completedBy: uid,
+      });
+    }
+
     return { success: true };
   }
 );

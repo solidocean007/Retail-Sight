@@ -9,6 +9,10 @@ import {
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
@@ -21,6 +25,26 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
+
+const appCheckSiteKey =
+  import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY?.trim();
+
+if (appCheckSiteKey) {
+  const debugToken =
+    import.meta.env.VITE_FIREBASE_APP_CHECK_DEBUG_TOKEN?.trim();
+  if (import.meta.env.DEV && debugToken) {
+    (
+      globalThis as typeof globalThis & {
+        FIREBASE_APPCHECK_DEBUG_TOKEN?: string;
+      }
+    ).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
+  }
+
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
