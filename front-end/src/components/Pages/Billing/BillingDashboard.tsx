@@ -17,7 +17,7 @@ import { showMessage } from "../../../Slices/snackbarSlice";
 import CheckoutModal from "./CheckoutModal";
 import CustomConfirmation from "../../CustomConfirmation";
 import UpcomingDowngradeBanner from "./UpcomingDowngradeBanner";
-import PlanCard, { formatPlanLabel } from "./PlanCard";
+import PlanCard from "./PlanCard";
 import {
   BillingCatalog,
   CatalogPlan,
@@ -25,6 +25,7 @@ import {
   downgradeBlockReason,
   familyLabel,
   fetchBillingCatalog,
+  formatPlanLabel,
   getUsage,
   isCurrentPlan,
   meterState,
@@ -167,7 +168,7 @@ const BillingDashboard: React.FC = () => {
   // ---- derived ---------------------------------------------------------
 
   const family = catalog?.family ?? null;
-  const plans = catalog?.plans ?? [];
+  const plans = useMemo(() => catalog?.plans ?? [], [catalog]);
   const current = catalog?.currentPlan ?? null;
   const partner = partnerNoun(family);
   const usage = getUsage(company?.counts);

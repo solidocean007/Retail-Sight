@@ -1,6 +1,7 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import { getBraintreeGateway } from "../braintreeGateway";
+import { loadFreePlanAssignment } from "../planResolution";
 
 const db = admin.firestore();
 
@@ -39,12 +40,19 @@ export const enforcePastDueGracePeriod = onSchedule(
           await gateway.subscription.cancel(billing.subscriptionId);
         }
 
+        const freePlan = await loadFreePlanAssignment(data.companyType);
         await doc.ref.update({
           "billing.plan": "free",
+          "billing.planDocId": freePlan.planDocId,
           "billing.paymentStatus": "canceled",
+          "billing.totalMonthlyCost": 0,
           "billing.subscriptionId": admin.firestore.FieldValue.delete(),
+          "billing.renewalDate": admin.firestore.FieldValue.delete(),
+          "billing.billingPeriodEnd": admin.firestore.FieldValue.delete(),
           "billing.pendingChange": admin.firestore.FieldValue.delete(),
           "billing.pastDueSince": admin.firestore.FieldValue.delete(),
+          "limits.userLimit": freePlan.userLimit,
+          "limits.connectionLimit": freePlan.connectionLimit,
           subscriptionTier: "free",
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

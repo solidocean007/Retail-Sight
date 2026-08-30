@@ -3,7 +3,7 @@ import "./upcomingDowngradeBanner.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../utils/store";
 import { Timestamp } from "firebase/firestore";
-import { formatPlanLabel } from "./PlanCard";
+import { formatPlanLabel } from "../../../utils/billing/planCatalog";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 const UpcomingDowngradeBanner: React.FC = () => {

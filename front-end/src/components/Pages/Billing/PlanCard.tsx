@@ -3,13 +3,10 @@ import "./planCard.css";
 import {
   CatalogPlan,
   PlanDelta,
-  formatPlanLabel as formatLabel,
+  formatPlanLabel,
   partnerNoun,
 } from "../../../utils/billing/planCatalog";
 import { PlanFamily } from "../../../utils/types";
-
-// Re-exported for existing consumers (UpcomingDowngradeBanner, dashboards).
-export const formatPlanLabel = formatLabel;
 
 interface PlanCardProps {
   plan: CatalogPlan;
@@ -36,7 +33,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   disabledNote,
   onSelect,
 }) => {
-  const label = formatLabel(plan.planDocId);
+  const label = formatPlanLabel(plan.planDocId);
   const partner = partnerNoun(family);
   const blocked = !!blockedReason;
   const inert = isCurrent || blocked || disabled;

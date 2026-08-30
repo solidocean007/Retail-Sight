@@ -29,7 +29,12 @@ const db = admin.firestore();
  * be generally purchasable — and "custom_contract", which always requires
  * the explicit planDocId flow.
  */
-export const LEGACY_SELF_SERVE_PLAN_IDS = ["starter", "team", "pro", "enterprise"];
+export const LEGACY_SELF_SERVE_PLAN_IDS = [
+  "starter",
+  "team",
+  "pro",
+  "enterprise",
+];
 
 /**
  * The sellable plan catalog, keyed by Braintree plan id.

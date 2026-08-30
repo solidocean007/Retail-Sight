@@ -43,10 +43,13 @@ async function assertPlanPurchasable(planId: string, company: any) {
   const catalog = await getSellablePlans();
 
   if (catalog === null) {
-    if (!LEGACY_SELF_SERVE_PLAN_IDS.includes(planId)) {
+    if (
+      company?.companyType !== "distributor" ||
+      !LEGACY_SELF_SERVE_PLAN_IDS.includes(planId)
+    ) {
       throw new HttpsError(
-        "invalid-argument",
-        `Invalid planId "${planId}". Must be a Braintree plan ID.`
+        "failed-precondition",
+        "The billing catalog is temporarily unavailable."
       );
     }
     return;
@@ -59,7 +62,7 @@ async function assertPlanPurchasable(planId: string, company: any) {
       `Invalid planId "${planId}". Must be a Braintree plan ID.`
     );
   }
-  if (plan.active === false) {
+  if (plan.active !== true) {
     throw new HttpsError(
       "failed-precondition",
       "This plan is no longer available."
@@ -67,7 +70,13 @@ async function assertPlanPurchasable(planId: string, company: any) {
   }
 
   const companyType = company?.companyType;
-  if (plan.family && companyType && plan.family !== companyType) {
+  if (companyType !== "distributor" && companyType !== "supplier") {
+    throw new HttpsError(
+      "failed-precondition",
+      "This company does not have a supported billing family."
+    );
+  }
+  if (plan.family !== companyType) {
     throw new HttpsError(
       "invalid-argument",
       `Plan "${planId}" is not available for ${companyType} companies.`
@@ -99,7 +108,7 @@ async function loadCustomContractPlan(companyId: string, planDocId: string) {
       "This custom contract belongs to a different company."
     );
   }
-  if (plan?.active === false) {
+  if (plan?.active !== true) {
     throw new HttpsError("failed-precondition", "Custom contract not active.");
   }
 

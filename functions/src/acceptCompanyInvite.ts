@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { recomputeCompanyCountsInternal } from "./billing/recomputeCompanyCounts";
+import { loadFreePlanAssignment } from "./billing/planResolution";
 import { resolveDraftConnections } from "./acceptInviteAutoResolve";
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -47,6 +48,7 @@ export const acceptCompanyInvite = onCall(async (request) => {
   }
 
   const now = admin.firestore.FieldValue.serverTimestamp();
+  const freePlan = await loadFreePlanAssignment(companyType);
 
   // 🔥 1. CREATE NEW COMPANY
   const newCompanyRef = db.collection("companies").doc();
@@ -58,11 +60,16 @@ export const acceptCompanyInvite = onCall(async (request) => {
 
     billing: {
       plan: "free",
+      planDocId: freePlan.planDocId,
       billingStatus: "active",
       usageCounts: {
         users: 1,
         companyConnections: 0,
       },
+    },
+    limits: {
+      userLimit: freePlan.userLimit,
+      connectionLimit: freePlan.connectionLimit,
     },
   });
 

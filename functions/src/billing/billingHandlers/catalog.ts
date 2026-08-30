@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { assertCompanyMember } from "../billingAuth";
+import { resolvePlanDocId } from "../planResolution";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -77,7 +78,7 @@ export const getAvailableBillingPlans = onCall(async (request) => {
 
     snap.forEach((doc) => {
       const p = doc.data();
-      if (p?.active === false) return;
+      if (p?.active !== true) return;
       if (p?.braintreePlanId === "custom_contract") return;
       plans.push({
         planDocId: doc.id,
@@ -107,28 +108,47 @@ export const getAvailableBillingPlans = onCall(async (request) => {
     const data = snap.data();
     // A contract doc scoped to a different company must never leak.
     if (data?.companyId && data.companyId !== companyId) return;
-    if (data?.braintreePlanId === currentBraintreeId || snap.id === currentBraintreeId) {
+    const isFamilyFreePlan =
+      currentBraintreeId === "free" &&
+      data?.price === 0 &&
+      data?.family === family;
+    if (
+      data?.braintreePlanId === currentBraintreeId ||
+      snap.id === currentBraintreeId ||
+      isFamilyFreePlan
+    ) {
       planDoc = snap;
     }
   };
-  await tryDoc(billing.planDocId);
+  await tryDoc(
+    resolvePlanDocId(currentBraintreeId, billing.planDocId, companyType)
+  );
   await tryDoc(currentBraintreeId);
 
   const planData = planDoc ? planDoc.data() : null;
+  const isFreePlan = currentBraintreeId === "free";
 
   const currentPlan: CurrentPlanSummary = {
     planDocId: planDoc ? planDoc.id : null,
     braintreePlanId: currentBraintreeId,
     // Company-level limits (kept in sync by billing) win over catalog values
     // so grandfathered/custom limits render truthfully.
-    price:
-      billing.totalMonthlyCost ?? (planData ? Number(planData.price ?? 0) : null),
+    // Free workspaces are the exception: older records predate family-specific
+    // planDocIds and may carry stale distributor limits/costs.
+    price: isFreePlan
+      ? 0
+      : (billing.totalMonthlyCost ??
+        (planData ? Number(planData.price ?? 0) : null)),
     userLimit:
-      company.limits?.userLimit ??
-      (planData ? Number(planData.userLimit ?? 0) : null),
+      isFreePlan && planData
+        ? Number(planData.userLimit ?? 0)
+        : (company.limits?.userLimit ??
+          (planData ? Number(planData.userLimit ?? 0) : null)),
     connectionLimit:
-      company.limits?.connectionLimit ??
-      (planData ? Number(planData.connectionLimit ?? 0) : null),
+      isFreePlan && planData
+        ? Number(planData.connectionLimit ?? 0)
+        : (company.limits?.connectionLimit ??
+          (planData ? Number(planData.connectionLimit ?? 0) : null)),
     family: planData?.family ?? null,
     selfServe: planData?.selfServe === true,
     active: planData?.active !== false,

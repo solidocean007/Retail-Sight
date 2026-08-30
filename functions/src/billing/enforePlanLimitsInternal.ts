@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
+import { resolvePlanDocId } from "./planResolution";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -73,14 +74,24 @@ export async function enforcePlanLimitsInternal(
     plans[doc.id] = doc.data();
   });
 
-  const currentPlan = plans[billing.plan];
+  const currentPlanId = resolvePlanDocId(
+    billing.plan,
+    billing.planDocId,
+    company?.companyType
+  );
+  const currentPlan = currentPlanId ? plans[currentPlanId] : null;
   if (!currentPlan) {
     throw new HttpsError("failed-precondition", "Current plan not found");
   }
 
-  const upcomingPlan = billing.pendingChange
-    ? plans[billing.pendingChange.nextPlanId]
+  const upcomingPlanId = billing.pendingChange
+    ? resolvePlanDocId(
+        billing.pendingChange.nextPlanId,
+        billing.pendingChange.planDocId,
+        company?.companyType
+      )
     : null;
+  const upcomingPlan = upcomingPlanId ? plans[upcomingPlanId] : null;
 
   //
   // Effective limits (respect downgrade)

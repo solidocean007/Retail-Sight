@@ -45,6 +45,10 @@ export const fetchAllPlans = createAsyncThunk(
       };
       put(p.planDocId, entry);
       if (p.braintreePlanId !== p.planDocId) put(p.braintreePlanId, entry);
+      // Scheduled free downgrades use the canonical billing id `free`, while
+      // supplier catalog docs are named `supplier_free` and have no Braintree
+      // id. Keep the canonical alias available to usage/downgrade consumers.
+      if (p.price === 0) put("free", entry);
     }
 
     const c = catalog.currentPlan;
