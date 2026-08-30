@@ -254,13 +254,28 @@ service cloud.firestore {
 
     // ==========================================================
     // TEMPORARY CATCH-ALL (allows all authenticated access)
+    //
+    // Firestore rules are additive: any matching allow wins, so this rule
+    // silently defeats the narrower blocks above for every collection it
+    // covers. Collections listed in the exclusion below are opted OUT of
+    // the catch-all so their own rules are actually enforced:
+    //
+    // - plans: billing authorization trusts these docs (price, limits,
+    //   custom-contract companyId). Clients must never write them; the
+    //   explicit /plans rule above (read: authenticated, write: developer)
+    //   becomes the real policy. Cloud Functions and seed scripts use the
+    //   Admin SDK, which bypasses rules entirely.
+    //
+    // The full catch-all removal is still planned (see
+    // supplier-territory-scaling-design.md, Phase 5 access audit).
     // ==========================================================
     match /{topLevelCollection}/{path=**} {
       allow read, write: if request.auth != null &&
         topLevelCollection != "accessRequests" &&
         topLevelCollection != "accessRequestRateLimits" &&
         topLevelCollection != "pendingInvites" &&
-        topLevelCollection != "mail";
+        topLevelCollection != "mail" &&
+        topLevelCollection != "plans";
     }
     }
 }

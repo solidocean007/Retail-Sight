@@ -57,7 +57,9 @@ import {
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
   changePlanAndRestartBillingCycle,
+  updatePaymentMethod,
 } from "./billing/billingHandlers/callables";
+import { getAvailableBillingPlans } from "./billing/billingHandlers/catalog";
 
 import { acceptCompanyInvite } from "./acceptCompanyInvite";
 
@@ -162,6 +164,8 @@ export {
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
   changePlanAndRestartBillingCycle,
+  updatePaymentMethod,
+  getAvailableBillingPlans,
   enforcePastDueGracePeriod,
 
   // Connection function

@@ -1,6 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { assertAccessRequestReviewer } from "./accessRequestSecurity";
+import { loadFreePlanAssignment } from "./billing/planResolution";
 
 const db = admin.firestore();
 
@@ -24,15 +25,6 @@ export const approveAccessRequest = onCall(async (request) => {
   if (!reqSnap.exists) {
     throw new HttpsError("not-found", "Access request not found");
   }
-
-  const planId = "free";
-
-  const planSnap = await db.collection("plans").doc(planId).get();
-  if (!planSnap.exists) {
-    throw new Error(`Plan ${planId} not found`);
-  }
-
-  const plan = planSnap.data()!;
 
   const reqData = reqSnap.data() as {
     firstName: string;
@@ -63,6 +55,7 @@ export const approveAccessRequest = onCall(async (request) => {
       "The request is missing a company type."
     );
   }
+  const freePlan = await loadFreePlanAssignment(companyType);
 
   // Find an existing company. New workspaces are created only after approval.
   const existing = await db
@@ -101,7 +94,8 @@ export const approveAccessRequest = onCall(async (request) => {
   // add billing info to company
   await companyDoc.ref.update({
     billing: {
-      plan: planId,
+      plan: "free",
+      planDocId: freePlan.planDocId,
       paymentStatus: "inactive", // free but enforceable
       braintreeCustomerId: null,
       subscriptionId: null,
@@ -109,8 +103,8 @@ export const approveAccessRequest = onCall(async (request) => {
       totalMonthlyCost: 0,
     },
     limits: {
-      userLimit: plan.userLimit,
-      connectionLimit: plan.connectionLimit,
+      userLimit: freePlan.userLimit,
+      connectionLimit: freePlan.connectionLimit,
     },
   });
 

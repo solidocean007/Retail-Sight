@@ -7,6 +7,7 @@ import {
   refreshBillingFromGateway,
   syncBillingFromSubscription,
 } from "../billingHelpers";
+import { loadFreePlanAssignment } from "../planResolution";
 import {
   BRAINTREE_ENVIRONMENT,
   BRAINTREE_MERCHANT_ID,
@@ -179,13 +180,21 @@ export const handleBraintreeWebhook = onRequest(
         String(subscription.status) === "Canceled"
       ) {
         const snap = await companyRef.get();
-        const currentBilling = snap.data()?.billing;
+        const company = snap.data();
+        const currentBilling = company?.billing;
 
         if (currentBilling?.plan !== "free") {
+          const freePlan = await loadFreePlanAssignment(company?.companyType);
           await companyRef.update({
             "billing.plan": "free",
+            "billing.planDocId": freePlan.planDocId,
+            "billing.totalMonthlyCost": 0,
             "billing.subscriptionId": admin.firestore.FieldValue.delete(),
+            "billing.renewalDate": admin.firestore.FieldValue.delete(),
+            "billing.billingPeriodEnd": admin.firestore.FieldValue.delete(),
             "billing.pendingChange": admin.firestore.FieldValue.delete(),
+            "limits.userLimit": freePlan.userLimit,
+            "limits.connectionLimit": freePlan.connectionLimit,
             subscriptionTier: "free",
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
@@ -255,11 +264,19 @@ async function applyScheduledDowngradeAfterRenewal(companyId: string) {
     await gateway.subscription.cancel(billing.subscriptionId);
 
     // Clear subscription + move to free tier
+    const freePlan = await loadFreePlanAssignment(snap.data()?.companyType);
     await ref.update({
       "billing.plan": "free",
+      "billing.planDocId": freePlan.planDocId,
+      "billing.paymentStatus": "inactive",
+      "billing.totalMonthlyCost": 0,
       "billing.subscriptionId": admin.firestore.FieldValue.delete(),
+      "billing.renewalDate": admin.firestore.FieldValue.delete(),
+      "billing.billingPeriodEnd": admin.firestore.FieldValue.delete(),
       "billing.rawPaymentStatus": "canceled",
       "billing.pendingChange": admin.firestore.FieldValue.delete(),
+      "limits.userLimit": freePlan.userLimit,
+      "limits.connectionLimit": freePlan.connectionLimit,
       subscriptionTier: "free",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
