@@ -1,7 +1,11 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getBraintreeGateway } from "../braintreeGateway";
-import { syncBillingFromSubscription } from "../billingHelpers";
+import {
+  syncBillingFromSubscription,
+  getSellablePlans,
+  LEGACY_SELF_SERVE_PLAN_IDS,
+} from "../billingHelpers";
 import { assertCompanyBillingAdmin } from "../billingAuth";
 import {
   BRAINTREE_ENVIRONMENT,
@@ -12,6 +16,102 @@ import {
 
 if (!admin.apps.length) {
   admin.initializeApp();
+}
+
+/**
+ * Authorizes a self-serve plan purchase or plan change for a company.
+ *
+ * Rules (see pricing-model-redesign.md and the Fable 5 handoff blockers):
+ * - the plan must be in the sellable catalog (`selfServe == true`) — this
+ *   excludes "test", "healy_plan", and "custom_contract" by construction;
+ * - the plan must not be retired (`active === false`);
+ * - the plan's family must match the company's companyType (a distributor
+ *   cannot buy a supplier tier and vice versa);
+ * - continuity exception: a company may always (re)subscribe to the exact
+ *   plan it is already on — this is what keeps healy_plan and grandfathered
+ *   cross-family plans working without making them generally purchasable;
+ * - if the catalog is unreadable, fall back to the original hardcoded
+ *   ladder so existing customers are never locked out by an outage.
+ *
+ * @param planId  Braintree plan id being requested
+ * @param company The company doc's data (must already be loaded)
+ */
+async function assertPlanPurchasable(planId: string, company: any) {
+  // Continuity: same plan as currently assigned is always allowed.
+  if (planId && planId === company?.billing?.plan) return;
+
+  const catalog = await getSellablePlans();
+
+  if (catalog === null) {
+    if (!LEGACY_SELF_SERVE_PLAN_IDS.includes(planId)) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Invalid planId "${planId}". Must be a Braintree plan ID.`
+      );
+    }
+    return;
+  }
+
+  const plan = catalog.get(planId);
+  if (!plan) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Invalid planId "${planId}". Must be a Braintree plan ID.`
+    );
+  }
+  if (plan.active === false) {
+    throw new HttpsError(
+      "failed-precondition",
+      "This plan is no longer available."
+    );
+  }
+
+  const companyType = company?.companyType;
+  if (plan.family && companyType && plan.family !== companyType) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Plan "${planId}" is not available for ${companyType} companies.`
+    );
+  }
+}
+
+/**
+ * Loads and validates a whale-deal contract doc (see "Custom contracts" in
+ * pricing-model-redesign.md). Each contract is its own doc in `plans` with
+ * braintreePlanId "custom_contract", a negotiated price, and the companyId
+ * it was negotiated with — a company can only ever subscribe to its own
+ * contract.
+ *
+ * NOTE: trusting these doc fields requires that clients cannot write to
+ * `plans` — the firestore.rules catch-all must exclude `plans` (fixed in
+ * this branch) before this path is deployed.
+ */
+async function loadCustomContractPlan(companyId: string, planDocId: string) {
+  const snap = await admin.firestore().doc(`plans/${planDocId}`).get();
+  const plan = snap.data();
+
+  if (!snap.exists || plan?.braintreePlanId !== "custom_contract") {
+    throw new HttpsError("invalid-argument", "Invalid custom contract plan.");
+  }
+  if (plan?.companyId !== companyId) {
+    throw new HttpsError(
+      "permission-denied",
+      "This custom contract belongs to a different company."
+    );
+  }
+  if (plan?.active === false) {
+    throw new HttpsError("failed-precondition", "Custom contract not active.");
+  }
+
+  const price = Number(plan?.price);
+  if (!Number.isFinite(price) || price <= 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Custom contract has no valid price."
+    );
+  }
+
+  return { price };
 }
 
 export const getClientToken = onCall(
@@ -83,27 +183,11 @@ export const createSubscription = onCall(
   },
   async (request) => {
     try {
-      const { companyId, paymentMethodNonce, planId } = request.data;
+      const { companyId, paymentMethodNonce, planId, planDocId } = request.data;
       if (planId === "free") {
         throw new HttpsError(
           "failed-precondition",
           "Free plan does not require subscription creation."
-        );
-      }
-
-      const validPlanIds = [
-        "starter",
-        "test",
-        "team",
-        "pro",
-        "enterprise",
-        "healy_plan", // keep
-      ];
-
-      if (!validPlanIds.includes(planId)) {
-        throw new HttpsError(
-          "invalid-argument",
-          `Invalid planId "${planId}". Must be a Braintree plan ID.`
         );
       }
 
@@ -117,6 +201,23 @@ export const createSubscription = onCall(
       const snap = await companyRef.get();
       if (!snap.exists) {
         throw new HttpsError("not-found", "Company not found.");
+      }
+
+      // Authorize the requested plan against the catalog: selfServe, active,
+      // and family must line up with this company. Custom contracts are
+      // validated separately against their own contract doc.
+      let customPrice: number | null = null;
+      if (planId === "custom_contract") {
+        if (!planDocId) {
+          throw new HttpsError(
+            "invalid-argument",
+            "Custom contracts require planDocId."
+          );
+        }
+        customPrice = (await loadCustomContractPlan(companyId, planDocId))
+          .price;
+      } else {
+        await assertPlanPurchasable(planId, snap.data());
       }
 
       const billing = snap.data()?.billing || {};
@@ -163,6 +264,12 @@ export const createSubscription = onCall(
         planId,
       };
 
+      // Whale deals: one shared Braintree plan, price overridden per
+      // contract at subscription creation (no add-ons, no proration).
+      if (customPrice !== null) {
+        payload.price = customPrice.toFixed(2);
+      }
+
       const subRes = await gateway.subscription.create(payload);
 
       if (!subRes.success) {
@@ -173,7 +280,11 @@ export const createSubscription = onCall(
         );
       }
 
-      return syncBillingFromSubscription(companyId, subRes.subscription);
+      return syncBillingFromSubscription(
+        companyId,
+        subRes.subscription,
+        planDocId
+      );
     } catch (err: any) {
       console.error("createSubscription failed:", err);
       throw err instanceof HttpsError
@@ -196,12 +307,7 @@ export const changePlanAndRestartBillingCycle = onCall(
     ],
   },
   async (request) => {
-    const { companyId, newPlanId } = request.data;
-    const validPlanIds = ["starter", "team", "pro", "enterprise", "healy_plan"];
-
-    if (!validPlanIds.includes(newPlanId)) {
-      throw new HttpsError("invalid-argument", "Invalid plan.");
-    }
+    const { companyId, newPlanId, planDocId } = request.data;
 
     if (!companyId || !newPlanId) {
       throw new HttpsError("invalid-argument", "Missing args.");
@@ -212,6 +318,21 @@ export const changePlanAndRestartBillingCycle = onCall(
     const companyRef = admin.firestore().doc(`companies/${companyId}`);
     const snap = await companyRef.get();
     const billing = snap.data()?.billing;
+
+    // Authorize the requested plan: catalog (selfServe/active/family) for
+    // standard plans, the company's own contract doc for custom contracts.
+    let customPrice: number | null = null;
+    if (newPlanId === "custom_contract") {
+      if (!planDocId) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Custom contracts require planDocId."
+        );
+      }
+      customPrice = (await loadCustomContractPlan(companyId, planDocId)).price;
+    } else {
+      await assertPlanPurchasable(newPlanId, snap.data());
+    }
 
     if (billing?.pendingPlanChangeInProgress) {
       throw new HttpsError(
@@ -238,7 +359,13 @@ export const changePlanAndRestartBillingCycle = onCall(
         throw new HttpsError("failed-precondition", "No active subscription.");
       }
 
-      if (billing.plan === newPlanId) {
+      // Same plan → nothing to do. Exception: custom_contract → a different
+      // custom_contract doc is a real change (renegotiated deal), so only
+      // short-circuit when the assigned contract doc is also unchanged.
+      if (
+        billing.plan === newPlanId &&
+        (newPlanId !== "custom_contract" || billing.planDocId === planDocId)
+      ) {
         return { success: true, alreadyApplied: true };
       }
 
@@ -259,10 +386,15 @@ export const changePlanAndRestartBillingCycle = onCall(
         );
       }
 
-      const res = await gateway.subscription.create({
+      const payload: any = {
         paymentMethodToken,
         planId: newPlanId,
-      });
+      };
+      if (customPrice !== null) {
+        payload.price = customPrice.toFixed(2);
+      }
+
+      const res = await gateway.subscription.create(payload);
 
       if (!res.success || !res.subscription) {
         throw new HttpsError("internal", res.message);
@@ -271,7 +403,7 @@ export const changePlanAndRestartBillingCycle = onCall(
       newSub = res.subscription;
 
       // 🔒 Single authoritative sync
-      await syncBillingFromSubscription(companyId, newSub);
+      await syncBillingFromSubscription(companyId, newSub, planDocId);
 
       // Cancel old subscription
       try {
@@ -336,17 +468,18 @@ export const scheduleBillingDowngrade = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Missing args.");
   }
 
-  const paidPlans = ["starter", "team", "pro", "enterprise", "healy_plan"];
-
-  if (nextPlanId !== "free" && !paidPlans.includes(nextPlanId)) {
-    throw new HttpsError("invalid-argument", "Invalid plan.");
-  }
-
   await assertCompanyBillingAdmin(request.auth, companyId);
 
   const ref = admin.firestore().doc(`companies/${companyId}`);
   const snap = await ref.get();
   const billing = snap.data()?.billing;
+
+  // Downgrade targets: free, or any catalog plan this company could buy.
+  // Custom contracts are not schedulable here — those are renegotiated
+  // through the custom flow.
+  if (nextPlanId !== "free") {
+    await assertPlanPurchasable(nextPlanId, snap.data());
+  }
 
   if (!billing?.subscriptionId || !billing?.renewalDate) {
     throw new HttpsError("failed-precondition", "No active subscription.");
@@ -361,6 +494,50 @@ export const scheduleBillingDowngrade = onCall(async (request) => {
 
   return { scheduled: true };
 });
+
+export const updatePaymentMethod = onCall(
+  {
+    secrets: [
+      BRAINTREE_ENVIRONMENT,
+      BRAINTREE_MERCHANT_ID,
+      BRAINTREE_PUBLIC_KEY,
+      BRAINTREE_PRIVATE_KEY,
+    ],
+  },
+  async (request) => {
+    const { companyId, paymentMethodNonce } = request.data;
+
+    if (!companyId || !paymentMethodNonce) {
+      throw new HttpsError("invalid-argument", "Missing required fields.");
+    }
+
+    await assertCompanyBillingAdmin(request.auth, companyId);
+
+    const snap = await admin.firestore().doc(`companies/${companyId}`).get();
+    const customerId = snap.data()?.billing?.braintreeCustomerId;
+
+    if (!customerId) {
+      throw new HttpsError(
+        "failed-precondition",
+        "No billing customer on file."
+      );
+    }
+
+    const gateway = getBraintreeGateway();
+    const res = await gateway.paymentMethod.create({
+      customerId,
+      paymentMethodNonce,
+      options: { makeDefault: true },
+    });
+
+    if (!res.success) {
+      console.error("updatePaymentMethod failed:", res);
+      throw new HttpsError("internal", "Could not update payment method.");
+    }
+
+    return { success: true };
+  }
+);
 
 export const cancelScheduledDowngrade = onCall(async (request) => {
   const { companyId } = request.data;

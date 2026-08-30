@@ -187,6 +187,9 @@ type PendingBillingChange = {
 
 export interface CompanyBilling {
   plan: PlanName;
+  // `plans` doc governing this subscription. Same as `plan` for standard
+  // plans; the per-contract doc id (e.g. "custom_geloso") for whale deals.
+  planDocId?: string;
   totalMonthlyCost: number;
   braintreeCustomerId: string;
   subscriptionId: string;

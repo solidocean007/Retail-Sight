@@ -1,186 +1,164 @@
-.billing-plan-card {
+/* Plan comparison card — quiet by default, state carried by border + chip,
+   never color alone. Tokens from styles/theme.css via .billing-page scope. */
+
+.plan-card {
   display: flex;
   flex-direction: column;
+  gap: 0.6rem;
   background: var(--surface-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 280px;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  position: relative;
+  border: 1px solid var(--bill-border, rgba(17, 24, 39, 0.12));
+  border-radius: var(--card-radius, 16px);
+  padding: 1.25rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.billing-plan-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--card-shadow-hover);
+.plan-card:hover {
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.12);
 }
 
-/* Current plan highlight */
-.billing-plan-card.current {
-  border: 2px solid var(--primary-blue);
+.plan-card.is-recommended {
+  border-color: var(--primary-blue);
 }
 
-/* Badge */
-.plan-badge {
-  position: absolute;
-  top: -10px;
-  right: 16px;
-  background: var(--primary-blue);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+.plan-card.is-current {
+  border-style: dashed;
 }
 
-.plan-badge.current {
-  background: var(--success);
+.plan-card.is-blocked {
+  opacity: 0.75;
 }
 
-/* Header */
-.plan-top {
+.plan-card__head {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
-  text-align: left;
 }
 
-.plan-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--text-color);
+.plan-card__name {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.plan-chip--current {
+  color: var(--text-muted);
+  border: 1px solid var(--bill-border, rgba(17, 24, 39, 0.12));
+}
+
+.plan-chip--reco {
+  color: var(--primary-blue);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.plan-card__price {
   margin: 0;
 }
 
-.plan-price-block {
+.plan-card__amount {
+  font-size: 1.7rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.plan-card__period {
+  margin-left: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.plan-card__capacity {
   display: flex;
-  align-items: baseline;
-  gap: 4px;
+  gap: 1.25rem;
+  margin: 0;
 }
 
-.price-amount {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-color);
+.plan-card__capacity div {
+  display: flex;
+  flex-direction: column-reverse;
 }
 
-.price-period {
+.plan-card__capacity dt {
+  font-size: 0.78rem;
   color: var(--text-muted);
 }
 
-.capacity-block {
+.plan-card__capacity dd {
+  margin: 0;
+  font-weight: 650;
+  font-size: 1.1rem;
+}
+
+.plan-card__delta {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 1rem 0;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
 }
 
-/* Capacity */
-.plan-capacity-block {
-  display: flex;
-  justify-content: space-between;
-  /* padding: 1.25rem 0; */
+.plan-card__delta span {
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--bill-border, rgba(17, 24, 39, 0.12));
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
-.capacity-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-}
-
-.capacity-number {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.capacity-label {
+.plan-card__desc {
+  margin: 0;
   font-size: 0.85rem;
   color: var(--text-muted);
+  min-height: 2.2em;
 }
 
-/* Description */
-.plan-description {
-  font-size: 0.9rem;
+.plan-card__blocked {
+  margin: 0;
+  font-size: 0.83rem;
   color: var(--text-muted);
-  margin-bottom: 1.25rem;
-  min-height: 48px;
+  font-style: italic;
 }
 
-/* CTA */
-.plan-cta {
+.plan-card__cta {
   margin-top: auto;
-  width: 100%;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--bill-border, rgba(17, 24, 39, 0.12));
+  background: transparent;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
-.plan-cta.button-primary {
-  justify-content: center;
+.plan-card__cta:hover:not(:disabled) {
+  background: var(--outlined-button-hover);
 }
 
-/* Disabled */
-.billing-plan-card.disabled {
-  opacity: 0.6;
-  pointer-events: none;
+.plan-card__cta.is-primary {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: #fff;
 }
 
-/* === Mobile === */
-@media (max-width: 768px) {
-  .plan-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .btn-select {
-    width: 100%;
-  }
-
-  .collapse-btn {
-    align-self: flex-end;
-  }
+.plan-card__cta.is-primary:hover:not(:disabled) {
+  background: var(--primary-blue-dark);
 }
 
-/* === Medium (768–1200px) === */
-@media (min-width: 768px) and (max-width: 1200px) {
-  .plans-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .billing-plan-card {
-    flex: 1 1 calc(25% - 1rem); /* 4 cards per row */
-    max-width: 250px;
-  }
+.plan-card__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-/* === Large screens === */
-@media (min-width: 1200px) {
-  .billing-plan-card {
-    flex: 1 1 calc(25% - 1rem);
-    max-width: 250px;
-  }
+.plan-card__cta:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
 
-  .billing-plan-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
-  }
-
-  /* Always show details */
-  .billing-plan-card .plan-body {
-    display: block !important;
-  }
-
-  /* Hide toggle */
-  .billing-plan-card .collapse-btn {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .plan-card,
+  .plan-card__cta {
+    transition: none;
   }
 }
