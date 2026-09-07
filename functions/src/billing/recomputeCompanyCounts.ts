@@ -83,6 +83,7 @@ export async function recomputeCompanyCountsInternal(companyId: string) {
   const draftSnap = await db
     .collection("companyConnectionDrafts")
     .where("initiatorCompanyId", "==", companyId)
+    .where("status", "==", "pending-user-creation")
     .get();
 
   // ❌ DO NOT count incoming pending toward limits
