@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Displaygram</string>
+    <string name="title_activity_main">Displaygram</string>
+    <string name="package_name">com.displaygram.app</string>
+    <string name="custom_url_scheme">com.displaygram.app</string>
+</resources>

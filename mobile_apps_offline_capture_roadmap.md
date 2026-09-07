@@ -489,4 +489,3 @@ Track these metrics without storing photo content in analytics:
 - Photo policy: remove local original after confirmed sync or retain it.
 - Pilot group: internal users and named customer volunteers.
 - Mobile billing: confirm web-only billing for version one.
-

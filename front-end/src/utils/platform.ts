@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 
 /**
- * Native containers use Capacitor plugins for device-only storage and
- * lifecycle behavior. The browser/PWA continues to use IndexedDB.
+ * Native containers use Capacitor plugins for device storage, lifecycle, and
+ * notifications. Browser/PWA-only integrations stay outside those containers.
  */
 export const isNativePlatform = (): boolean => Capacitor.isNativePlatform();

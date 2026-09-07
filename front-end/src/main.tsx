@@ -7,9 +7,15 @@ import "./index.css";
 import "./styles/theme.css";
 import "./utils/firebase.ts";
 import { HelmetProvider } from "react-helmet-async";
+import { isNativePlatform } from "./utils/platform.ts";
+import { initializeNativeRuntime } from "./native/nativeRuntime.ts";
 
 const savedTheme = localStorage.getItem("theme");
 const prefersDark = savedTheme ? savedTheme === "dark" : true;
+
+void initializeNativeRuntime().catch((error) => {
+  console.error("Native runtime initialization failed:", error);
+});
 
 // Apply theme attribute to body early
 document.body.setAttribute("data-theme", prefersDark ? "dark" : "light");
@@ -17,7 +23,7 @@ document.body.setAttribute("data-theme", prefersDark ? "dark" : "light");
 // -----------------------------------------
 // SAFE SERVICE WORKER REGISTRATION (PWA + FCM)
 // -----------------------------------------
-if ("serviceWorker" in navigator) {
+if (!isNativePlatform() && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     const ua = navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(ua);
