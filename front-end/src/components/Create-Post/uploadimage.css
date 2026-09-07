@@ -23,6 +23,39 @@
   font-weight: 600;
 }
 
+.capture-roadmap-notice {
+  max-width: 450px;
+  margin: 0.75rem auto 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--warning-color);
+  border-radius: var(--border-radius);
+  background: var(--warning-bg);
+  color: var(--text-color);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.capture-save-status {
+  width: min(100%, 450px);
+  margin: 0 0 1rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--surface-elevated);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.capture-save-status--saved {
+  border-color: var(--success-color, #2e7d32);
+}
+
+.capture-save-status--error {
+  border-color: var(--error-color, #c62828);
+}
+
 /* === 🧠 AI Detection Beta Feature Card === */
 .ai-detection-card {
   width: min(100%, 560px);

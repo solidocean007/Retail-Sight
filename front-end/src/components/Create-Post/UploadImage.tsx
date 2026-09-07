@@ -13,6 +13,10 @@ import { storage } from "../../utils/firebase";
 import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { PostInputType } from "../../utils/types";
+import {
+  createOfflineCaptureDraft,
+  discardOfflineCaptureDraft,
+} from "../../features/offlineCapture/offlineCaptureService";
 import "./uploadimage.css";
 
 interface UploadImageProps {
@@ -20,6 +24,10 @@ interface UploadImageProps {
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   isAiFeatureEnabled?: boolean; // ✅ control default AI toggle from plan
+  userId?: string;
+  companyId?: string;
+  captureId: string | null;
+  onCaptureSaved: (captureId: string) => void;
 }
 
 export const UploadImage: React.FC<UploadImageProps> = ({
@@ -27,6 +35,10 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   post,
   setPost,
   isAiFeatureEnabled = true, // free-tier companies can disable by default
+  userId,
+  companyId,
+  captureId,
+  onCaptureSaved,
 }) => {
   const dispatch = useAppDispatch();
   const functions = getFunctions();
@@ -35,6 +47,9 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   const [isAiEnabled, setIsAiEnabled] = useState(isAiFeatureEnabled);
   const [showAiInfo, setShowAiInfo] = useState(false);
   const aiAnalysisRequestId = useRef(0);
+  const [captureSaveState, setCaptureSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >(captureId ? "saved" : "idle");
 
   useEffect(() => {
     setPost((prev) => ({
@@ -167,8 +182,29 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         );
       }
 
-      // Mark the image ready before starting optional AI work. This lets the
-      // user continue to store selection while brand suggestions load.
+      if (!userId || !companyId) {
+        throw new Error("Sign in to save a display photo on this device.");
+      }
+
+      setCaptureSaveState("saving");
+      const savedCapture = await createOfflineCaptureDraft({
+        file: finalFile,
+        userId,
+        companyId,
+        post,
+      });
+
+      if (captureId && captureId !== savedCapture.captureId) {
+        discardOfflineCaptureDraft(captureId, userId).catch((error) => {
+          console.warn("Unable to remove replaced offline capture:", error);
+        });
+      }
+
+      onCaptureSaved(savedCapture.captureId);
+      setCaptureSaveState("saved");
+
+      // Mark the locally saved image ready before optional AI work. This lets
+      // the user continue to store selection while brand suggestions load.
       const reader = new FileReader();
       reader.onloadend = () => {
         const preview = reader.result as string;
@@ -182,14 +218,27 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         dispatch(showMessage("Image selected successfully!"));
 
         if (isAiEnabled) {
-          void analyzeBrandsInBackground(finalFile, analysisRequestId);
+          if (navigator.onLine) {
+            void analyzeBrandsInBackground(finalFile, analysisRequestId);
+          } else {
+            dispatch(
+              showMessage(
+                "Photo saved on this device. AI analysis is skipped while offline.",
+              ),
+            );
+          }
         }
       };
       reader.readAsDataURL(finalFile);
     } catch (err) {
       console.error("Error handling image:", err);
+      setCaptureSaveState("error");
       dispatch(
-        showMessage("This photo could not be processed. Try selecting again.")
+        showMessage(
+          err instanceof Error
+            ? err.message
+            : "This photo could not be processed. Try selecting again.",
+        ),
       );
     } finally {
       setIsConverting(false);
@@ -203,35 +252,51 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     <div className="image-selection-box" style={{ position: "relative" }}>
       {!post.imageUrl && (
         <div className="step-one">
-            {/* 📸 Upload buttons */}
-      <div className="upload-buttons">
-        <button type="button" className="upload-button btn-outline">
-          <label>
-            <AddAPhotoIcon /> Take Photo
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onClick={(e) => (e.currentTarget.value = "")}
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-            />
-          </label>
-        </button>
-        <button type="button" className="upload-button btn-outline">
-          <label>
-            <Photo /> Select Photo
-            <input
-              type="file"
-              accept="image/*"
-              onClick={(e) => (e.currentTarget.value = "")}
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-            />
-          </label>
-        </button>
-      </div>
+          <div className="upload-buttons">
+            <button type="button" className="upload-button btn-outline">
+              <label>
+                <AddAPhotoIcon /> Take Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onClick={(e) => (e.currentTarget.value = "")}
+                  onChange={handleImageChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+            </button>
+            <button type="button" className="upload-button btn-outline">
+              <label>
+                <Photo /> Select Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onClick={(e) => (e.currentTarget.value = "")}
+                  onChange={handleImageChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+            </button>
+          </div>
+          <p className="capture-roadmap-notice" role="note">
+            <strong>Planned update:</strong> Selecting an existing photo will be
+            removed after offline camera capture has been validated and tested.
+          </p>
         </div>
+      )}
+
+      {captureSaveState !== "idle" && (
+        <p
+          className={`capture-save-status capture-save-status--${captureSaveState}`}
+          role="status"
+          aria-live="polite"
+        >
+          {captureSaveState === "saving" && "Saving photo on this device…"}
+          {captureSaveState === "saved" && "Saved on this device"}
+          {captureSaveState === "error" &&
+            "Photo was not saved. Select it again before continuing."}
+        </p>
       )}
 
       {/* 🧠 AI BRAND DETECTION FEATURE BOX */}

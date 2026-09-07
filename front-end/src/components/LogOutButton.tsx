@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { resetStore, useAppDispatch } from "../utils/store";
 import { closeAndDeleteIndexedDB } from "../utils/database/indexedDBUtils";
 import { Button } from "@mui/material";
+import { auth } from "../utils/firebase";
+import { countUnsyncedCapturesForUser } from "../features/offlineCapture/offlineCaptureDb";
 
 const LogOutButton: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -12,6 +14,30 @@ const LogOutButton: React.FC = () => {
   const onLogoutClick = async () => {
     try {
       console.log("Logout initiated");
+
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        let pendingCaptureCount: number;
+        try {
+          pendingCaptureCount = await countUnsyncedCapturesForUser(userId);
+        } catch (error) {
+          console.warn("Unable to inspect offline captures before logout:", error);
+          const shouldContinue = window.confirm(
+            "Displaygram could not verify your saved offline displays. Offline data will remain on this device after sign-out. Continue?",
+          );
+          if (!shouldContinue) return;
+          pendingCaptureCount = 0;
+        }
+
+        if (pendingCaptureCount > 0) {
+          const shouldContinue = window.confirm(
+            `You have ${pendingCaptureCount} unsynced display${
+              pendingCaptureCount === 1 ? "" : "s"
+            } saved on this device. They will remain locked to this account on this device after you sign out. Continue?`,
+          );
+          if (!shouldContinue) return;
+        }
+      }
 
       // Perform additional logout operations
       await handleLogout(); // Clear auth state here first
@@ -31,12 +57,14 @@ const LogOutButton: React.FC = () => {
       await Promise.race([deletePromise, timeoutPromise]); // Race between actual deletion and timeout
 
       // Unregister any active service workers
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => {
-          console.log("Unregistering service worker: ", registration);
-          registration.unregister();
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => {
+            console.log("Unregistering service worker: ", registration);
+            registration.unregister();
+          });
         });
-      });
+      }
 
       // Clear localStorage and Redux state
       console.log("Clearing localStorage and Redux state...");

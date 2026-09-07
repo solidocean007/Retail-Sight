@@ -19,6 +19,10 @@ import {
   UserType,
 } from "../../utils/types";
 import { canPostOnBehalf } from "../../utils/userData/permissions";
+import {
+  markOfflineCaptureSynced,
+  setOfflineCaptureSubmissionState,
+} from "../../features/offlineCapture/offlineCaptureService";
 import CreatePostOnBehalfOfOtherUser from "../Create-Post/CreatePostOnBehalfOfOtherUser";
 import { DisplayDescription } from "../Create-Post/DisplayDescription";
 import { PickStore } from "../Create-Post/PickStore";
@@ -64,6 +68,7 @@ const CreatePost = () => {
   } | null>(null);
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [captureId, setCaptureId] = useState<string | null>(null);
   const [, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [selectedGalloGoal, setSelectedGalloGoal] =
@@ -112,6 +117,23 @@ const CreatePost = () => {
       postedByUid: userData?.uid || null,
     }));
   }, [onBehalf, userData]);
+
+  useEffect(() => {
+    if (!captureId || !userData?.uid) return;
+
+    const timeoutId = window.setTimeout(() => {
+      void setOfflineCaptureSubmissionState({
+        captureId,
+        userId: userData.uid,
+        post,
+        state: "draft",
+      }).catch((error) => {
+        console.warn("Unable to update the local display draft:", error);
+      });
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [captureId, post, userData?.uid]);
 
   const handleTotalCaseCountChange = useCallback((caseCount: number) => {
     setPost((previous) => ({ ...previous, totalCaseCount: caseCount }));
@@ -210,12 +232,39 @@ const CreatePost = () => {
       setQuantityConfirmationOpen(true);
       return;
     }
+    if (!captureId || !userData?.uid) {
+      dispatch(
+        showMessage("Save the photo on this device before submitting."),
+      );
+      return;
+    }
+
+    if (!navigator.onLine) {
+      await setOfflineCaptureSubmissionState({
+        captureId,
+        userId: userData.uid,
+        post,
+        state: "queued",
+      });
+      dispatch(
+        showMessage(
+          "Display saved on this device. Automatic sync is not enabled in this build yet.",
+        ),
+      );
+      return;
+    }
 
     setUploadProgress(0);
     setIsUploading(true);
 
     try {
-      await handlePostSubmission(
+      await setOfflineCaptureSubmissionState({
+        captureId,
+        userId: userData.uid,
+        post,
+        state: "uploading",
+      });
+      const newPost = await handlePostSubmission(
         post,
         selectedFile,
         setIsUploading,
@@ -223,8 +272,22 @@ const CreatePost = () => {
         setUploadStatusText,
         galloEnabled ? selectedGalloGoal : undefined,
       );
+      try {
+        await markOfflineCaptureSynced(captureId, userData.uid, newPost.id);
+      } catch (localError) {
+        console.warn("Post synced, but local capture cleanup failed:", localError);
+      }
       navigate("/user-home-page");
     } catch (error) {
+      await setOfflineCaptureSubmissionState({
+        captureId,
+        userId: userData.uid,
+        post,
+        state: "queued",
+        errorCode: "legacy_submission_failed",
+      }).catch((localError) => {
+        console.warn("Unable to return capture to the local queue:", localError);
+      });
       console.error("Upload failed:", error);
       dispatch(
         showMessage(
@@ -243,6 +306,10 @@ const CreatePost = () => {
           setSelectedFile={setSelectedFile}
           post={post}
           setPost={setPost}
+          userId={userData?.uid}
+          companyId={companyId}
+          captureId={captureId}
+          onCaptureSaved={setCaptureId}
         />
       );
     }
