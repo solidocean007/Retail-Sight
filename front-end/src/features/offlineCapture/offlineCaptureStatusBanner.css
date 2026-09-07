@@ -1,0 +1,57 @@
+.offline-capture-banner {
+  align-items: center;
+  background: #eef6ff;
+  border-bottom: 1px solid #b8d7f3;
+  color: #143a59;
+  display: flex;
+  font-size: 0.9rem;
+  gap: 0.65rem;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  position: relative;
+  width: 100%;
+  z-index: 1200;
+}
+
+.offline-capture-banner--offline {
+  background: #fff8e7;
+  border-bottom-color: #ecd28d;
+  color: #664b05;
+}
+
+.offline-capture-banner--attention {
+  background: #fff0f0;
+  border-bottom-color: #efb5b5;
+  color: #782727;
+}
+
+.offline-capture-banner--success {
+  background: #edf9f0;
+  border-bottom-color: #a8d8b2;
+  color: #215c2f;
+}
+
+.offline-capture-banner__spin {
+  animation: offline-capture-spin 1.3s linear infinite;
+}
+
+@keyframes offline-capture-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .offline-capture-banner {
+    align-items: flex-start;
+    font-size: 0.84rem;
+    justify-content: flex-start;
+    line-height: 1.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offline-capture-banner__spin {
+    animation: none;
+  }
+}

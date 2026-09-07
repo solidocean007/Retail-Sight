@@ -373,6 +373,12 @@ service cloud.firestore {
                      (isDeveloper() && isInCompany(resource.data.companyId)));
     }
 
+    // Server-owned idempotency receipts for offline post finalization.
+    // Clients learn the result only through the authenticated callable.
+    match /offlineCaptureReceipts/{receiptId} {
+      allow read, write: if false;
+    }
+
     // ==========================================================
     // TEMPORARY CATCH-ALL (allows all authenticated access)
     //
@@ -398,7 +404,8 @@ service cloud.firestore {
         topLevelCollection != "mail" &&
         topLevelCollection != "plans" &&
         topLevelCollection != "companyGoals" &&
-        topLevelCollection != "goalAccountReports";
+        topLevelCollection != "goalAccountReports" &&
+        topLevelCollection != "offlineCaptureReceipts";
     }
     }
 }

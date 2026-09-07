@@ -35,6 +35,8 @@ import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db, displaygramEnvironment } from "./utils/firebase";
 import { handleLogout } from "./utils/validation/authenticate";
 import { stopViewAsCompany } from "./Slices/impersonationSlice";
+import { OfflineCaptureStatusBanner } from "./features/offlineCapture/OfflineCaptureStatusBanner";
+import { startOfflineCaptureSync } from "./features/offlineCapture/offlineCaptureSync";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -105,6 +107,11 @@ function AppContent() {
   const isCreatePostRoute = pathname === "/create-post";
 
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
+
+  useEffect(() => {
+    if (!user?.uid || !user.companyId || isPublicRoute || isAuthRoute) return;
+    return startOfflineCaptureSync(user.uid, user.companyId);
+  }, [user?.uid, user?.companyId, isPublicRoute, isAuthRoute]);
 
   useAppBootstrap({
     enabled: shouldBootstrapApp,
@@ -237,6 +244,9 @@ function AppContent() {
                 Exit
               </button>
             </div>
+          )}
+          {user?.uid && !isPublicRoute && !isAuthRoute && (
+            <OfflineCaptureStatusBanner userId={user.uid} />
           )}
           {!isPublicRoute && <ThemeToggle />}
 

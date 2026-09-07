@@ -8,6 +8,13 @@ const DATABASE_VERSION = 1;
 const CAPTURES_STORE = "captures";
 const IMAGES_STORE = "captureImages";
 
+export const OFFLINE_CAPTURE_CHANGED_EVENT =
+  "displaygram:offline-capture-changed";
+
+const notifyOfflineCaptureChanged = () => {
+  window.dispatchEvent(new Event(OFFLINE_CAPTURE_CHANGED_EVENT));
+};
+
 const requestResult = <T>(request: IDBRequest<T>): Promise<T> =>
   new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
@@ -66,6 +73,7 @@ export const saveOfflineCapture = async (
 
   try {
     await transactionComplete(transaction);
+    notifyOfflineCaptureChanged();
   } finally {
     database.close();
   }
@@ -163,6 +171,7 @@ export const deleteOfflineCaptureImage = async (
 
   try {
     await transactionComplete(transaction);
+    notifyOfflineCaptureChanged();
   } finally {
     database.close();
   }
@@ -185,6 +194,7 @@ export const deleteOfflineCaptureRecords = async (
 
   try {
     await transactionComplete(transaction);
+    notifyOfflineCaptureChanged();
   } finally {
     database.close();
   }

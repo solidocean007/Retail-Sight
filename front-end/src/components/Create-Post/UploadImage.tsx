@@ -293,7 +293,8 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           aria-live="polite"
         >
           {captureSaveState === "saving" && "Saving photo on this device…"}
-          {captureSaveState === "saved" && "Saved on this device"}
+          {captureSaveState === "saved" &&
+            "Saved safely on this device. If you submit while offline, Displaygram will upload it automatically when you're online and the app is open."}
           {captureSaveState === "error" &&
             "Photo was not saved. Select it again before continuing."}
         </p>

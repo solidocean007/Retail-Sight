@@ -1,6 +1,10 @@
 import { Directory, Filesystem } from "@capacitor/filesystem";
 import { isNativePlatform } from "../../utils/platform";
-import type { CaptureImageStorage } from "./types";
+import { getOfflineCaptureImage } from "./offlineCaptureDb";
+import type {
+  CaptureImageStorage,
+  OfflineCaptureRecord,
+} from "./types";
 
 export interface StoredCaptureImage {
   storage: CaptureImageStorage;
@@ -72,4 +76,32 @@ export const deleteStoredCaptureImage = async (
   } catch (error) {
     console.warn("Unable to remove native offline capture image:", error);
   }
+};
+
+const base64ToBlob = (base64: string, mimeType: string): Blob => {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return new Blob([bytes], { type: mimeType });
+};
+
+export const loadStoredCaptureImage = async (
+  capture: OfflineCaptureRecord,
+): Promise<Blob> => {
+  if (capture.image.storage === "indexeddb") {
+    const image = await getOfflineCaptureImage(capture.captureId);
+    if (!image) throw new Error("The saved photo is missing from this device.");
+    return image;
+  }
+
+  const result = await Filesystem.readFile({
+    path: capture.localImageUri,
+  });
+  if (typeof result.data !== "string") {
+    throw new Error("The saved photo could not be read from this device.");
+  }
+
+  return base64ToBlob(result.data, capture.image.mimeType);
 };

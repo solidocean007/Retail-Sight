@@ -34,6 +34,30 @@ service firebase.storage {
       allow read: if true;                   // Vision API can access via public URL
     }
 
+    // Offline post staging. A signed-in user may upload only into their own
+    // company/user/capture path. The callable finalizer rechecks membership,
+    // validates metadata, copies the file to displayImages, and removes staging.
+    match /offlineUploads/{companyId}/{userId}/{captureId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null &&
+                            request.auth.uid == userId &&
+                            request.auth.token.companyId == companyId &&
+                            request.resource.size > 0 &&
+                            request.resource.size <= 20 * 1024 * 1024 &&
+                            request.resource.contentType.matches('image/(jpeg|png|webp|gif)') &&
+                            request.resource.metadata.captureId == captureId &&
+                            request.resource.metadata.companyId == companyId &&
+                            request.resource.metadata.ownerUid == userId;
+      allow delete: if false;
+    }
+
+    // Final post images are public, matching the current images/** behavior,
+    // but only trusted backend code can create or change these objects.
+    match /displayImages/{companyId}/{userId}/{captureId}/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Deny all other access
     match /{allPaths=**} {
       allow read, write: if false;

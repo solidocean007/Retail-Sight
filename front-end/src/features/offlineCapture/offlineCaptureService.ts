@@ -16,6 +16,9 @@ import {
   type OfflineCaptureState,
 } from "./types";
 
+export const OFFLINE_CAPTURE_SYNCED_EVENT =
+  "displaygram:offline-capture-synced";
+
 const createCaptureId = (): string => {
   if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
   return `${Date.now()}-${crypto.getRandomValues(new Uint32Array(4)).join("-")}`;
@@ -135,6 +138,11 @@ export const markOfflineCaptureSynced = async (
 
   await deleteStoredCaptureImage(captureId, capture.image.storage);
   await deleteOfflineCaptureImage(captureId, userId);
+  window.dispatchEvent(
+    new CustomEvent(OFFLINE_CAPTURE_SYNCED_EVENT, {
+      detail: { captureId, serverPostId },
+    }),
+  );
 };
 
 export const discardOfflineCaptureDraft = async (

@@ -112,6 +112,7 @@ import { acceptTeamInvite } from "./acceptTeamInvite";
 import { findOrphanedUsers } from "./findOrphanedUsers";
 import { mergeDuplicateUserAccount } from "./mergeDuplicateUserAccount";
 import { repairOrphanedUser } from "./repairOrphanedUser";
+import { finalizeOfflineCapture } from "./offlineCapture/finalizeOfflineCapture";
 
 export {
   backfillSupplierGoalPosts,
@@ -162,6 +163,7 @@ export {
   findOrphanedUsers,
   mergeDuplicateUserAccount,
   repairOrphanedUser,
+  finalizeOfflineCapture,
 
   // Billing
   testBraintreeAuth,

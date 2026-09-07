@@ -197,10 +197,10 @@ to SQLite without changing the queue interface.
 1. Generate `captureId` before any upload.
 2. Compress a working copy while retaining the original according to the product
    retention decision.
-3. Upload to a stable, company-scoped path such as
-   `companyUploads/{companyId}/{userId}/{captureId}/original.jpg`.
+3. Upload to the stable, company-scoped staging path
+   `offlineUploads/{companyId}/{userId}/{captureId}/original.jpg`.
 4. Use resumable upload and persist enough state to restart after interruption.
-5. Call a new authenticated function such as `finalizeDisplayCapture` with the
+5. Call the authenticated `finalizeOfflineCapture` function with the
    `captureId`, storage path, and post metadata.
 6. In a Firestore transaction, make the capture ID idempotent: repeated calls
    must return the same post instead of creating duplicates.

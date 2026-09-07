@@ -9,9 +9,12 @@
     "build": "vite build",
     "build:staging": "vite build --mode staging",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
+    "test:storage-rules": "firebase emulators:exec --config ../firebase.json --project retail-sight-offline-test --only storage \"tsx --test tests/storageRules.test.ts\"",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/filesystem": "^8.1.3",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
@@ -58,6 +61,7 @@
     "yup": "^1.2.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/file-saver": "^2.0.7",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^20.11.10",

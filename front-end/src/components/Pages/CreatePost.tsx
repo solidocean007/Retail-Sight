@@ -248,9 +248,10 @@ const CreatePost = () => {
       });
       dispatch(
         showMessage(
-          "Display saved on this device. Automatic sync is not enabled in this build yet.",
+          "Post saved on this device. Displaygram will upload it automatically when you're online and the app is open.",
         ),
       );
+      navigate("/user-home-page");
       return;
     }
 
