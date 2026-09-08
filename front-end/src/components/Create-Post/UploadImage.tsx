@@ -121,6 +121,10 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       }
     }
   };
+
+  useEffect(() => {
+    if (captureId) setCaptureSaveState("saved");
+  }, [captureId]);
   // ----------------------------
   // 📸 HANDLE IMAGE UPLOAD
   // ----------------------------

@@ -8,6 +8,7 @@ import {
 } from "./offlineCaptureDb";
 import {
   deleteStoredCaptureImage,
+  loadStoredCaptureImage,
   storeCaptureImage,
 } from "./captureImageStorage";
 import {
@@ -153,7 +154,53 @@ export const discardOfflineCaptureDraft = async (
   if (!capture || capture.userId !== userId || capture.state === "synced") {
     return;
   }
+  if (capture.state === "uploading" || capture.state === "finalizing") {
+    throw new Error("Wait for the current upload attempt to finish before discarding.");
+  }
 
   await deleteStoredCaptureImage(captureId, capture.image.storage);
   await deleteOfflineCaptureRecords(captureId, userId);
+};
+
+export const restoreOfflineCaptureDraft = async (
+  captureId: string,
+  userId: string,
+  expectedCompanyId: string,
+): Promise<{
+  capture: OfflineCaptureRecord;
+  file: File;
+  post: PostInputType;
+}> => {
+  const capture = await getOfflineCapture(captureId);
+  if (!capture || capture.userId !== userId || capture.state === "synced") {
+    throw new Error("This saved post is no longer available on this device.");
+  }
+  if (capture.companyId !== expectedCompanyId) {
+    throw new Error("This saved post belongs to a different company account.");
+  }
+
+  const image = await loadStoredCaptureImage(capture);
+  const file = new File([image], capture.image.fileName, {
+    type: capture.image.mimeType,
+  });
+  const post = capture.postPayload as PostInputType;
+
+  if (capture.state === "failed") {
+    await updateOfflineCapture(captureId, userId, {
+      state: "draft",
+      lastErrorCode: null,
+    });
+  }
+
+  return { capture, file, post };
+};
+
+export const queueOfflineCaptureForRetry = async (
+  captureId: string,
+  userId: string,
+): Promise<void> => {
+  await updateOfflineCapture(captureId, userId, {
+    state: "queued",
+    lastErrorCode: null,
+  });
 };

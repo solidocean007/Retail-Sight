@@ -13,7 +13,8 @@
   z-index: 1200;
 }
 
-.offline-capture-banner--offline {
+.offline-capture-banner--offline,
+.offline-capture-banner--draft {
   background: #fff8e7;
   border-bottom-color: #ecd28d;
   color: #664b05;
@@ -35,6 +36,23 @@
   animation: offline-capture-spin 1.3s linear infinite;
 }
 
+.offline-capture-banner__action {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.28rem 0.7rem;
+}
+
+.offline-capture-banner__action:hover,
+.offline-capture-banner__action:focus-visible {
+  background: rgb(255 255 255 / 55%);
+}
+
 @keyframes offline-capture-spin {
   to {
     transform: rotate(360deg);
@@ -47,6 +65,10 @@
     font-size: 0.84rem;
     justify-content: flex-start;
     line-height: 1.35;
+  }
+
+  .offline-capture-banner__action {
+    margin-left: auto;
   }
 }
 

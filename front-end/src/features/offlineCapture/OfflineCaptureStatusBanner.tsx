@@ -10,12 +10,14 @@ import {
 import type { OfflineCaptureRecord } from "./types";
 import { OFFLINE_CAPTURE_SYNCED_EVENT } from "./offlineCaptureService";
 import "./offlineCaptureStatusBanner.css";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   userId: string;
 };
 
 export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
+  const navigate = useNavigate();
   const [captures, setCaptures] = useState<OfflineCaptureRecord[]>([]);
   const [online, setOnline] = useState(navigator.onLine);
   const [recentlySynced, setRecentlySynced] = useState(false);
@@ -23,11 +25,7 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
   const refresh = useCallback(() => {
     void listOfflineCapturesForUser(userId)
       .then((records) =>
-        setCaptures(
-          records.filter(
-            (record) => record.state !== "draft" && record.state !== "synced",
-          ),
-        ),
+        setCaptures(records.filter((record) => record.state !== "synced")),
       )
       .catch((error) =>
         console.warn("Unable to read Displaygram saved-post status:", error),
@@ -64,6 +62,7 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
       (capture) => capture.state === "uploading" || capture.state === "finalizing",
     );
     const queued = captures.filter((capture) => capture.state === "queued");
+    const drafts = captures.filter((capture) => capture.state === "draft");
     if (failed.length > 0) {
       return {
         kind: "attention",
@@ -87,6 +86,13 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
           : `${queued.length === 1 ? "A post is" : `${queued.length} posts are`} saved on this device. Displaygram will upload ${queued.length === 1 ? "it" : "them"} automatically when you're online and the app is open.`,
       };
     }
+    if (drafts.length > 0) {
+      return {
+        kind: "draft",
+        icon: <CloudOffOutlinedIcon />,
+        text: `${drafts.length === 1 ? "An unfinished post is" : `${drafts.length} unfinished posts are`} saved on this device. Review ${drafts.length === 1 ? "it" : "them"} when convenient.`,
+      };
+    }
     if (recentlySynced) {
       return {
         kind: "success",
@@ -107,6 +113,15 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
     >
       {status.icon}
       <span>{status.text}</span>
+      {status.kind !== "success" && (
+        <button
+          type="button"
+          className="offline-capture-banner__action"
+          onClick={() => navigate("/saved-posts")}
+        >
+          View saved posts
+        </button>
+      )}
     </aside>
   );
 };

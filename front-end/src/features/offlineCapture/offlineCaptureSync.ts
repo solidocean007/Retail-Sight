@@ -23,6 +23,13 @@ type FinalizeOfflineCaptureResult = {
   alreadyFinalized: boolean;
 };
 
+export const OFFLINE_CAPTURE_SYNC_REQUEST_EVENT =
+  "displaygram:offline-capture-sync-request";
+
+export const requestOfflineCaptureSync = () => {
+  window.dispatchEvent(new Event(OFFLINE_CAPTURE_SYNC_REQUEST_EVENT));
+};
+
 const RETRYABLE_STATES = new Set(["queued", "uploading", "finalizing"]);
 const PERMANENT_FUNCTION_CODES = new Set([
   "functions/invalid-argument",
@@ -188,6 +195,7 @@ export const startOfflineCaptureSync = (
   };
 
   window.addEventListener("online", onOnline);
+  window.addEventListener(OFFLINE_CAPTURE_SYNC_REQUEST_EVENT, onOnline);
   window.addEventListener(NATIVE_APP_RESUMED_EVENT, onOnline);
   window.addEventListener(NATIVE_NETWORK_STATUS_EVENT, onNativeNetwork);
   void run();
@@ -196,6 +204,7 @@ export const startOfflineCaptureSync = (
     stopped = true;
     if (retryTimer !== null) window.clearTimeout(retryTimer);
     window.removeEventListener("online", onOnline);
+    window.removeEventListener(OFFLINE_CAPTURE_SYNC_REQUEST_EVENT, onOnline);
     window.removeEventListener(NATIVE_APP_RESUMED_EVENT, onOnline);
     window.removeEventListener(NATIVE_NETWORK_STATUS_EVENT, onNativeNetwork);
     if (stopActiveSync === stop) stopActiveSync = null;

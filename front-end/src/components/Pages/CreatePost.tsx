@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Container } from "@mui/material";
 import { CancelRounded } from "@mui/icons-material";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import { fetchCompanyConnections } from "../../Slices/companyConnectionSlice";
@@ -21,6 +21,7 @@ import {
 import { canPostOnBehalf } from "../../utils/userData/permissions";
 import {
   markOfflineCaptureSynced,
+  restoreOfflineCaptureDraft,
   setOfflineCaptureSubmissionState,
 } from "../../features/offlineCapture/offlineCaptureService";
 import CreatePostOnBehalfOfOtherUser from "../Create-Post/CreatePostOnBehalfOfOtherUser";
@@ -50,6 +51,7 @@ const CreatePost = () => {
   );
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const companyId = userData?.companyId;
   const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
@@ -84,6 +86,76 @@ const CreatePost = () => {
     postUser: userData || null,
     account: null,
   }));
+  const restoreRequestHandled = useRef<string | null>(null);
+  const restoredPreviewUrl = useRef<string | null>(null);
+
+  const offlineCaptureId = (
+    location.state as { offlineCaptureId?: string } | null
+  )?.offlineCaptureId;
+
+  useEffect(() => {
+    if (
+      !offlineCaptureId ||
+      !userData?.uid ||
+      restoreRequestHandled.current === offlineCaptureId
+    ) {
+      return;
+    }
+
+    restoreRequestHandled.current = offlineCaptureId;
+    let active = true;
+
+    void restoreOfflineCaptureDraft(
+      offlineCaptureId,
+      userData.uid,
+      userData.companyId,
+    )
+      .then(({ capture, file, post: restoredPost }) => {
+        if (!active) return;
+        if (restoredPreviewUrl.current) {
+          URL.revokeObjectURL(restoredPreviewUrl.current);
+        }
+        const previewUrl = URL.createObjectURL(file);
+        restoredPreviewUrl.current = previewUrl;
+        setPost({
+          ...restoredPost,
+          imageUrl: previewUrl,
+          originalImageUrl: undefined,
+        });
+        setSelectedFile(file);
+        setCaptureId(capture.captureId);
+        setOnBehalf(
+          restoredPost.postUser?.uid !== userData.uid
+            ? restoredPost.postUser
+            : null,
+        );
+        setCurrentStep(1);
+        dispatch(showMessage("Saved post reopened from this device."));
+      })
+      .catch((error) => {
+        restoreRequestHandled.current = null;
+        dispatch(
+          showMessage(
+            error instanceof Error
+              ? error.message
+              : "This saved post could not be reopened.",
+          ),
+        );
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [offlineCaptureId, userData?.uid, userData?.companyId, dispatch]);
+
+  useEffect(
+    () => () => {
+      if (restoredPreviewUrl.current) {
+        URL.revokeObjectURL(restoredPreviewUrl.current);
+      }
+    },
+    [],
+  );
 
   const storePrefetch = useEarlyStorePrefetch({ userLocation });
 

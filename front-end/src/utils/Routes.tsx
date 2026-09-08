@@ -30,6 +30,9 @@ const LoginForm = lazy(() => import("../components/Pages/LoginForm"));
 const UserHomePage = lazy(() => import("../components/Pages/UserHomePage"));
 const Dashboard = lazy(() => import("../components/Pages/Dashboard"));
 const CreatePost = lazy(() => import("../components/Pages/CreatePost"));
+const SavedPostsPage = lazy(
+  () => import("../features/offlineCapture/SavedPostsPage"),
+);
 const BillingDashboard = lazy(
   () => import("../components/Pages/Billing/BillingDashboard"),
 );
@@ -109,6 +112,14 @@ export const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <CreatePost />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/saved-posts"
+          element={
+            <ProtectedRoute>
+              <SavedPostsPage />
             </ProtectedRoute>
           }
         />
