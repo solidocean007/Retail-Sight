@@ -14,15 +14,53 @@ import {
   ReCaptchaEnterpriseProvider,
 } from "firebase/app-check";
 
+const configuredValue = (value: string | undefined, fallback: string) =>
+  value?.trim() || fallback;
+
+export const displaygramEnvironment = configuredValue(
+  import.meta.env.VITE_DISPLAYGRAM_ENV,
+  "production",
+);
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
-  authDomain: "retail-sight.firebaseapp.com",
-  projectId: "retail-sight",
-  storageBucket: "retail-sight.appspot.com",
-  messagingSenderId: "484872165965",
-  appId: "1:484872165965:web:feb232cfe100a4b9105a04",
-  measurementId: "G-XSXPNG7BCB",
+  apiKey: configuredValue(
+    import.meta.env.VITE_FIREBASE_API_KEY,
+    "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
+  ),
+  authDomain: configuredValue(
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    "retail-sight.firebaseapp.com",
+  ),
+  projectId: configuredValue(
+    import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    "retail-sight",
+  ),
+  storageBucket: configuredValue(
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    "retail-sight.appspot.com",
+  ),
+  messagingSenderId: configuredValue(
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    "484872165965",
+  ),
+  appId: configuredValue(
+    import.meta.env.VITE_FIREBASE_APP_ID,
+    "1:484872165965:web:feb232cfe100a4b9105a04",
+  ),
+  measurementId: configuredValue(
+    import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+    "G-XSXPNG7BCB",
+  ),
 };
+
+if (
+  displaygramEnvironment !== "production" &&
+  firebaseConfig.projectId === "retail-sight"
+) {
+  throw new Error(
+    "A non-production Displaygram build cannot use the production Firebase project.",
+  );
+}
 
 export const app = initializeApp(firebaseConfig);
 

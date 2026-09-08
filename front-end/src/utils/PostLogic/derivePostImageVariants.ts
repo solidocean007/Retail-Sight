@@ -1,7 +1,5 @@
-const BUCKET = "retail-sight.appspot.com";
-
-function build(path: string) {
-  return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(
+function build(bucket: string, path: string) {
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
     path
   )}?alt=media`;
 }
@@ -16,11 +14,15 @@ const MULTI_SIZE_CUTOFF = new Date("2025-11-27T02:36:17.409Z");
 export function derivePostImageVariants(post: {
   imageUrl?: string;
   originalImageUrl?: string;
+  offlineCaptureId?: string;
   displayDate?: string | Date | { toDate(): Date };
 }): FeedImageSet {
   const original = post.originalImageUrl || post.imageUrl;
   if (!original) {
     return { feedSrc: null, modalChain: [] };
+  }
+  if (post.offlineCaptureId) {
+    return { feedSrc: original, modalChain: [original] };
   }
 
   const date =
@@ -33,6 +35,12 @@ export function derivePostImageVariants(post: {
   const isMultiSizeEra = !!date && date >= MULTI_SIZE_CUTOFF;
 
   const url = new URL(original);
+  const bucket = decodeURIComponent(
+    url.pathname.split("/b/")[1]?.split("/o/")[0] || "",
+  );
+  if (!bucket) {
+    return { feedSrc: original, modalChain: [original] };
+  }
   const encoded = decodeURIComponent(url.pathname.split("/o/")[1]);
   const slash = encoded.lastIndexOf("/");
   const folder = encoded.substring(0, slash + 1);
@@ -41,11 +49,11 @@ export function derivePostImageVariants(post: {
   const ext = filename.split(".").pop() || "jpg";
   const base = filename.replace(/\.\w+$/, "");
 
-  const legacyResized = build(`${folder}resized.${ext}`);
-  const legacy200 = build(`${folder}resized_200x200.${ext}`);
+  const legacyResized = build(bucket, `${folder}resized.${ext}`);
+  const legacy200 = build(bucket, `${folder}resized_200x200.${ext}`);
 
-  const p800 = build(`${folder}${base}_800x800.${ext}`);
-  const p1200 = build(`${folder}${base}_1200x1200.${ext}`);
+  const p800 = build(bucket, `${folder}${base}_800x800.${ext}`);
+  const p1200 = build(bucket, `${folder}${base}_1200x1200.${ext}`);
 
   return {
     feedSrc: isMultiSizeEra ? p800 : legacyResized || legacy200,

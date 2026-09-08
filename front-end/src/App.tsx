@@ -32,7 +32,7 @@ import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
 
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "./utils/firebase";
+import { db, displaygramEnvironment } from "./utils/firebase";
 import { handleLogout } from "./utils/validation/authenticate";
 import { stopViewAsCompany } from "./Slices/impersonationSlice";
 
@@ -126,7 +126,7 @@ function AppContent() {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  // Keep this device's FCM token fresh + registered under the
+  // Keep this device''s FCM token fresh + registered under the
   // CURRENT account. Runs only when permission was already granted
   // (never prompts). Fixes: stale tokens after FCM rotation, and
   // tokens not following the user across account switches.
@@ -208,7 +208,7 @@ function AppContent() {
         show
         message={
           profileError
-            ? "We couldn't load your profile."
+            ? "We couldn''t load your profile."
             : (loadingMessage ?? "Loading…")
         }
         errored={profileError}
@@ -225,6 +225,11 @@ function AppContent() {
         <CssBaseline />
 
         <div className="app-shell">
+          {displaygramEnvironment !== "production" && (
+            <div className="test-environment-banner" role="status">
+              Displaygram Test Environment — posts here are test data
+            </div>
+          )}
           {isImpersonating && (
             <div className="view-as-banner">
               👁 View-As Active: {impersonatedCompanyId}
@@ -242,8 +247,8 @@ function AppContent() {
               !isAuthRoute &&
               !isStandalonePostRoute &&
               !isCreatePostRoute && (
-              <Footer />
-            )}
+                <Footer />
+              )}
           </div>
 
           {snackbar.current && (

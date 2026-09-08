@@ -7,6 +7,7 @@
     "dev:5173": "vite --port 5173",
     "dev:5174": "vite --port 5174",
     "build": "vite build",
+    "build:staging": "vite build --mode staging",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "preview": "vite preview"
   },

@@ -479,3 +479,12 @@ tr:nth-child(even) {
     margin: 5px 0px;
   }
 }
+.test-environment-banner {
+  background: #3d2b73;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.45rem 1rem;
+  text-align: center;
+}

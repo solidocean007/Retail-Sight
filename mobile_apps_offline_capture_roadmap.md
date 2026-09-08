@@ -1,8 +1,86 @@
 # Displaygram Mobile Apps and Offline Capture Roadmap
 
-Status: Planning  
+Status: Reintegration in progress  
 Created: September 7, 2026  
 Target platforms: Google Play, Apple App Store, and the existing web/PWA app
+
+## Current reintegration status
+
+On October 7, 2026, production `main` was fast-forwarded to the create-post
+workflow already deployed from commit `45fa9ce`. A fresh
+`feat/mobile-offline-capture-v2` branch was created from that production
+baseline. The September offline branch remains preserved as a reference and
+must not be merged wholesale because the production capture workflow changed
+substantially.
+
+The staging project `displaygram-staging` exists, but it still needs Firebase
+app registration, database and storage initialization, repository aliases,
+test-only seed data, and its first deployment.
+
+## Historical implementation progress
+
+Started September 7, 2026 on `feat/mobile-apps-offline-capture`, branched from
+`main`.
+
+Completed foundation:
+
+- Added Capacitor 8 and generated tracked Android and iOS native projects from
+  the existing Vite application.
+- Added Camera, Filesystem, Network, App lifecycle, and Push Notifications
+  plugins for the roadmap's native integration points.
+- Kept the web/PWA service worker out of native containers and registered early
+  native lifecycle/network events for camera-result recovery and future queue
+  sync wakeups.
+- Added required iOS camera and photo-library permission descriptions.
+- Added a temporary Create Post notice explaining that existing-photo selection
+  is planned for removal only after offline camera capture is validated.
+- Added a separate versioned offline-capture database, platform-specific image
+  persistence, local capture states, and a visible "Saved on this device"
+  confirmation before any AI or Firebase upload begins.
+- Preserved the offline-capture database during the existing application cache
+  reset and added a sign-out warning for unsynced captures.
+- Added an app-wide pending-upload banner using the Displaygram product name.
+  It confirms that posts are safe on the device, explains that foreground sync
+  is automatic, and reminds users to reopen Displaygram when a post still needs
+  to finish.
+- Added foreground automatic synchronization on initial app load, restored
+  connectivity, and native app resume, with a single active worker and bounded
+  retry backoff.
+- Added the authenticated `finalizeOfflineCapture` function, deterministic post
+  IDs, server-owned idempotency receipts, active company-membership checks, and
+  server-side post/user/account validation.
+- Added owner/company-scoped `offlineUploads/**` Storage rules and backend-only
+  `displayImages/**` writes. Firestore clients are explicitly denied access to
+  offline capture receipts, including through the temporary catch-all rule.
+- Added Storage emulator coverage for correct user/company uploads, retries,
+  unauthenticated and cross-scope attempts, invalid metadata/content, and final
+  image access. All five tests passed locally on September 8, 2026 using the
+  Firebase Storage emulator and Java 21.
+- Added a protected Saved Posts screen linked from the status banner. Users can
+  preview local photos, reopen unfinished or failed drafts, retry queued work,
+  and deliberately discard captures when no upload is active.
+- Added environment-based Firebase web configuration, a staging configuration
+  template, a visible test-environment banner, and a build-time guard that
+  prevents a staging build from silently connecting to the production
+  `retail-sight` Firebase project.
+
+Open decisions and gates:
+
+- `com.displaygram.app` is a provisional development identifier; ownership must
+  be confirmed before Firebase native apps, signing, or store records are made.
+- Native Google/Apple authentication strategy and organization developer-account
+  status still need owner confirmation.
+- A separate Firebase staging project and non-customer seed data are required
+  before deploying the phone-test channel. A Hosting preview channel by itself
+  still connects to whichever Firebase backend was compiled into the app.
+- Cloud Functions remains on Node 20 and must be upgraded and regression-tested
+  before the mobile backend is deployed.
+- The new sync protocol no longer uses the broadly writable `images/**` or
+  `tempUploads/**` paths. Those legacy paths remain an independent integrity
+  issue and should be tightened after their existing callers are inventoried.
+- AI, custom-product/manual-account, and Gallo follow-up work is not yet routed
+  through retry-safe backend jobs. A core post can sync, but this branch must not
+  be deployed to the pilot until those side effects and recovery UI are handled.
 
 ## Outcome
 
