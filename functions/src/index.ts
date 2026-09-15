@@ -98,6 +98,7 @@ import { repairConnectionVisibility } from "./repairConnectionVisibility";
 import { uploadCompanyProducts } from "./products/uploadCompanyProducts";
 import { syncCompanyBrandCatalog } from "./products/syncCompanyBrandCatalog";
 import { createConnectionRequest } from "./createConnectionRequest";
+import { getConnectedDistributorStores } from "./getConnectedDistributorStores";
 import { onCompanyConnectionRequestCreated } from "./onCompanyConnectionRequestCreated";
 import { removeCompanyFromSharedWithPosts } from "./removeCompanyFromSharedWithPosts";
 import { acceptTeamInvite } from "./acceptTeamInvite";
@@ -171,6 +172,7 @@ export {
   // Connection function
   removeCompanyFromSharedWithPosts,
   createConnectionRequest,
+  getConnectedDistributorStores,
   onCompanyConnectionRequestCreated,
   createInviteAndDraftConnection,
   onConnectionBrandsUpdated,

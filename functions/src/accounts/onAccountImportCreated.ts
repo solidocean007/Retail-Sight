@@ -79,8 +79,9 @@ export const onAccountImportCreated = onDocumentCreated(
       return;
     }
 
-    const configuredEmails = Array.isArray(settings?.notificationEmails)
-      ? settings.notificationEmails
+    const notificationEmails = settings?.notificationEmails;
+    const configuredEmails = Array.isArray(notificationEmails)
+      ? notificationEmails
           .map((email: unknown) =>
             typeof email === "string" ? email.trim().toLowerCase() : ""
           )

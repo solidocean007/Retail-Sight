@@ -59,6 +59,9 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
         <div className="set-display-instructions">
           <h2>Set Display Details</h2>
           <p>Select the brands and product types for this display.</p>
+          {post.account?.originCompanyName && (
+            <p>Shared brands for {post.account.originCompanyName}</p>
+          )}
           {!isValid && (
             <p className="error-message">Select Brand and Product Type</p>
           )}
@@ -82,6 +85,7 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           selectedProductType={productTypes}
           onChange={handleBrandsChange}
           rawCandidates={post.rawCandidates}
+          partnerCompanyId={post.account?.originCompanyId}
           // autoDetectedBrands={post.autoDetectedBrands}
         />
 

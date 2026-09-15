@@ -47,6 +47,14 @@ export const updateVisibility = async ({
 
   postsSnap.forEach((docSnap) => {
     const post = docSnap.data();
+    const storeDistributorId = post.account?.originCompanyId;
+    if (
+      mode === "add" &&
+      storeDistributorId &&
+      storeDistributorId !== sourceCompanyId &&
+      storeDistributorId !== targetCompanyId
+    )
+      return;
 
     const postBrandIds = Array.isArray(post.brandIds)
       ? post.brandIds.map((id: string) => String(id).trim())

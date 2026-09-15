@@ -636,6 +636,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
               <BrandsSelector
                 selectedBrands={editablePost.brands ?? []}
                 selectedProductType={editablePost.productType ?? []}
+                partnerCompanyId={editablePost.account?.originCompanyId}
                 onChange={(brands, productTypes) =>
                   setEditablePost((prev) => ({
                     ...prev,

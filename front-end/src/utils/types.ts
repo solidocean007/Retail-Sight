@@ -886,6 +886,8 @@ export interface FireStoreGalloGoalDocType {
 
 export type CompanyAccountType = {
   accountNumber: string;
+  originCompanyId?: string;
+  originCompanyName?: string;
   accountName: string;
   accountAddress: string;
   streetAddress: string;

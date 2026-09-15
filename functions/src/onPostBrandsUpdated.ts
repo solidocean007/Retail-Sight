@@ -59,8 +59,11 @@ export const onPostBrandsUpdated = onDocumentUpdated(
 
     const brandIdsChanged = arraysChanged(beforeBrandIds, afterBrandIds);
     const brandNamesChanged = arraysChanged(beforeBrandNames, afterBrandNames);
+    const storeConnectionChanged =
+      before.account?.originCompanyId !== after.account?.originCompanyId;
 
-    if (!brandIdsChanged && !brandNamesChanged) return;
+    if (!brandIdsChanged && !brandNamesChanged && !storeConnectionChanged)
+      return;
 
     console.log("🔥 onPostBrandsUpdated fired", {
       postId,
@@ -116,6 +119,13 @@ export const onPostBrandsUpdated = onDocumentUpdated(
       if (!otherCompanyId) return;
 
       connectedCompanyIds.add(otherCompanyId);
+      const storeDistributorId = after.account?.originCompanyId;
+      if (
+        storeDistributorId &&
+        storeDistributorId !== companyId &&
+        storeDistributorId !== otherCompanyId
+      )
+        return;
 
       const sharedBrandIds = cleanStringArray(conn.sharedBrandIds);
 

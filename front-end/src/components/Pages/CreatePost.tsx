@@ -3,6 +3,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { selectUser } from "../../Slices/userSlice";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice";
+import { fetchCompanyConnections } from "../../Slices/companyConnectionSlice";
+import { RootState } from "../../utils/store";
 import { AppBar, Box, Container } from "@mui/material";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
 import {
@@ -30,6 +33,8 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
 
   const CreatePost = () => {
   const userData = useSelector(selectUser);
+  const isSupplier = useSelector(selectIsSupplier);
+  const connections = useSelector((state: RootState) => state.companyConnections.connections);
   const dispatch = useAppDispatch();
   const companyId = userData?.companyId;
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
@@ -66,6 +71,12 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
   const [selectedGalloGoal, setSelectedGalloGoal] =
     useState<FireStoreGalloGoalDocType | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isSupplier && companyId) {
+      dispatch(fetchCompanyConnections(companyId));
+    }
+  }, [isSupplier, companyId, dispatch]);
 
   // Start location lookup immediately so it's ready when the user reaches Pick Store
   useEffect(() => {
@@ -114,7 +125,13 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
   );
 
   const isStep1Valid = !!selectedFile; // UploadImage picked a file
-  const isStep2Valid = !!post.account; // PickStore chose an account
+  const isStep2Valid = !!post.account && (!isSupplier || (
+    !!post.account.originCompanyId && connections.some((connection) =>
+      connection.status === "approved" &&
+      [connection.requestFromCompanyId, connection.requestToCompanyId].includes(companyId || "") &&
+      [connection.requestFromCompanyId, connection.requestToCompanyId].includes(post.account?.originCompanyId || ""),
+    )
+  )); // Supplier stores must resolve to an approved distributor connection.
   const isStep3Valid =
     (post.brands?.length || 0) > 0 && (post.productType?.length || 0) > 0; // SetDisplayDetails
   const isStep4Valid = true; // DisplayDescription is optional

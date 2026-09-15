@@ -9,7 +9,7 @@ import {
 } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
-import { Box, CircularProgress, Typography, Button } from "@mui/material";
+import { Box, CircularProgress, Typography, Button, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount";
 import {
   getAllCompanyAccountsFromIndexedDB,
@@ -35,6 +35,26 @@ import NoResults from "../NoResults";
 import { GoalPickerModal } from "./GoalPickerModal";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 import DebugValues from "./DebugValues";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../../utils/firebase";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice";
+
+// Keep connected store reads to one per partner during a posting session.
+const connectedStoreCache = new Map<string, { accounts: CompanyAccountType[]; loadedAt: number }>();
+const getConnectedStores = async (companyId: string) => {
+  const cached = connectedStoreCache.get(companyId);
+  if (cached && Date.now() - cached.loadedAt < 5 * 60 * 1000) return cached.accounts;
+  const request = httpsCallable<
+    { distributorCompanyId: string },
+    { stores: CompanyAccountType[] }
+  >(functions, "getConnectedDistributorStores");
+  const response = await request({ distributorCompanyId: companyId });
+  const accounts = response.data.stores ?? [];
+  if (accounts.length > 0) {
+    connectedStoreCache.set(companyId, { accounts, loadedAt: Date.now() });
+  }
+  return accounts;
+};
 
 // Normalize abbreviations and compare address similarity
 const normalizeCache = new Map<string, string>();
@@ -132,6 +152,54 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [openManualAccountForm, setOpenManualAccountForm] = useState(false);
   const salesRouteNum = user?.salesRouteNum;
   const companyId = user?.companyId;
+  const isSupplier = useSelector(selectIsSupplier);
+  const connections = useSelector(
+    (state: RootState) => state.companyConnections.connections,
+  );
+  const partnerCompanies = useMemo(() => {
+    if (!isSupplier || !companyId) return [];
+    const map = new Map<string, string>();
+    connections.forEach((connection) => {
+      if (connection.status !== "approved") return;
+      if (connection.requestFromCompanyId === companyId && connection.requestToCompanyType === "distributor") {
+        map.set(connection.requestToCompanyId, connection.requestToCompanyName);
+      } else if (connection.requestToCompanyId === companyId && connection.requestFromCompanyType === "distributor") {
+        map.set(connection.requestFromCompanyId, connection.requestFromCompanyName);
+      }
+    });
+    return [...map.entries()].map(([id, name]) => ({ id, name: name || "Connected company" }));
+  }, [isSupplier, companyId, connections]);
+  const [partnerAccounts, setPartnerAccounts] = useState<CompanyAccountType[]>([]);
+  const [loadingPartnerAccounts, setLoadingPartnerAccounts] = useState(false);
+  useEffect(() => {
+    if (!isSupplier || partnerCompanies.length === 0) {
+      setPartnerAccounts([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingPartnerAccounts(true);
+    Promise.allSettled(partnerCompanies.map(async (partner) => {
+      const accounts = await getConnectedStores(partner.id);
+      return accounts.map((account) => ({
+        ...account,
+        originCompanyId: partner.id,
+        originCompanyName: partner.name,
+      }));
+    })).then((results) => {
+      if (cancelled) return;
+      setPartnerAccounts(results.flatMap((result) =>
+        result.status === "fulfilled" ? result.value : [],
+      ));
+      results.forEach((result) => {
+        if (result.status === "rejected") {
+          console.error("Failed to load connected company stores:", result.reason);
+        }
+      });
+    }).finally(() => {
+      if (!cancelled) setLoadingPartnerAccounts(false);
+    });
+    return () => { cancelled = true; };
+  }, [isSupplier, partnerCompanies]);
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
   const [manualAccountAdded, setManualAccountAdded] = useState(false);
@@ -155,15 +223,40 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const userAccounts = useSelector(
     (state: RootState) => state.userAccounts.accounts,
   );
+  const customAccounts = useSelector(
+    (state: RootState) => state.customAccounts.accounts,
+  );
+  const supplierManualAccounts = useMemo(
+    () => customAccounts.filter((account) =>
+      !account.originCompanyId ||
+      partnerCompanies.some((partner) => partner.id === account.originCompanyId),
+    ),
+    [customAccounts, partnerCompanies],
+  );
 
   const [isAllStoresShown, setIsAllStoresShown] = useState(
     isAdminOrAbove || user?.role === "supervisor",
   );
 
   const combinedAccounts = useMemo(
-    () => (isAllStoresShown ? allCompanyAccounts : userAccounts),
-    [isAllStoresShown, allCompanyAccounts, userAccounts],
+    () => isSupplier
+      ? [...partnerAccounts, ...supplierManualAccounts]
+      : (isAllStoresShown ? allCompanyAccounts : userAccounts),
+    [isSupplier, partnerAccounts, supplierManualAccounts, isAllStoresShown, allCompanyAccounts, userAccounts],
   );
+  const resolvePartnerForStore = (account: CompanyAccountType) => {
+    if (account.originCompanyId && partnerCompanies.some((partner) =>
+      partner.id === account.originCompanyId)) {
+      return partnerCompanies.find((partner) => partner.id === account.originCompanyId) ?? null;
+    }
+    const address = normalizeAddress(account.streetAddress || account.accountAddress);
+    if (!address) return null;
+    const matches = new Set(partnerAccounts.filter((candidate) =>
+      normalizeAddress(candidate.streetAddress || candidate.accountAddress) === address,
+    ).map((candidate) => candidate.originCompanyId).filter(Boolean));
+    if (matches.size !== 1) return null;
+    return partnerCompanies.find((partner) => partner.id === [...matches][0]) ?? null;
+  };
 
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
@@ -330,7 +423,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   // 🎯 Effect 2: run account matching once BOTH places AND accounts are ready
   // This fixes the race where Places returned before accounts finished loading.
   useEffect(() => {
-    if (fetchedPlaces === null || loadingAccounts || post.account) return;
+    if (fetchedPlaces === null || loadingAccounts || loadingPartnerAccounts || post.account) return;
 
     if (!fetchedPlaces.length) {
       // Places API returned nothing — leave modal open for manual selection
@@ -378,7 +471,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
       })
       .sort((a, b) => b.score - a.score)[0];
 
-    if (bestMatch?.score > 0.45 && bestMatch.account) {
+    const ambiguousDistributor = isSupplier && bestMatch?.account?.originCompanyId &&
+      partnerAccounts.some((account) =>
+        account.originCompanyId !== bestMatch.account?.originCompanyId &&
+        normalizeAddress(account.streetAddress || account.accountAddress) ===
+          normalizeAddress(bestMatch.account?.streetAddress || bestMatch.account?.accountAddress || ""),
+      );
+    if (bestMatch?.score > 0.45 && bestMatch.account && !ambiguousDistributor) {
       handleAccountSelect(bestMatch.account);
       dispatch(
         showMessage(`Auto-detected store: ${bestMatch.account.accountName}`),
@@ -388,7 +487,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       setOpenAccountModal(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchedPlaces, combinedAccounts, loadingAccounts, post.account]);
+  }, [fetchedPlaces, combinedAccounts, loadingAccounts, loadingPartnerAccounts, post.account]);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -404,9 +503,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
       await saveAllCompanyAccountsToIndexedDB(fresh);
       setLoadingAccounts(false);
     };
-    if (isAllStoresShown) fetchAccounts();
+    if (!isSupplier && isAllStoresShown) fetchAccounts();
     else setLoadingAccounts(false);
-  }, [isAllStoresShown, user?.role, user?.companyId, dispatch]);
+  }, [isSupplier, isAllStoresShown, user?.role, user?.companyId, dispatch]);
 
   const handleCompanyGoalSelection = (goal?: CompanyGoalWithIdType) => {
     if (!goal) return;
@@ -442,6 +541,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const handleAccountSelect = (account: CompanyAccountType) => {
+    const partner = isSupplier ? resolvePartnerForStore(account) : null;
+    const originCompanyId = isSupplier ? partner?.id : account.originCompanyId;
+    const originCompanyName = isSupplier ? partner?.name : account.originCompanyName;
     const {
       accountName,
       accountAddress,
@@ -457,9 +559,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
     setPost((p) => ({
       ...p,
+      brands: [],
+      brandIds: [],
+      productType: [],
       account: {
         accountName,
         accountAddress,
+        ...(originCompanyId && { originCompanyId, originCompanyName }),
         streetAddress,
         city,
         state,
@@ -484,6 +590,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
     setPost((p) => ({
       ...p,
       account: null,
+      brands: [],
+      brandIds: [],
+      productType: [],
       accountNumber: "",
       city: "",
       state: "",
@@ -493,7 +602,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     setSelectedCompanyGoal(undefined);
   };
 
-  if (loadingAccounts) return <CircularProgress />;
+  if (loadingAccounts || loadingPartnerAccounts) return <CircularProgress />;
 
   return (
     <div className="pick-store">
@@ -532,6 +641,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </>
       )}
 
+      {isSupplier && partnerCompanies.length === 0 && (
+        <Typography variant="body2" color="textSecondary" px={3} mt={2}>
+          An approved distributor connection is needed before posting a display.
+        </Typography>
+      )}
+
       <Box className="store-selection">
         {combinedAccounts.length > 0 && (
           <Button
@@ -557,7 +672,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       </Box>
 
       {/* My Stores / All Stores toggle */}
-      {!post.account?.accountNumber && combinedAccounts.length > 0 && (
+      {!isSupplier && !post.account?.accountNumber && combinedAccounts.length > 0 && (
         <Box mt={3}>
           <Box mt={0} display="flex" justifyContent="center" gap={2}>
             <Typography
@@ -585,6 +700,44 @@ export const PickStore: React.FC<PickStoreProps> = ({
           <Typography variant="body2" color="textSecondary">
             {post.account.accountAddress}
           </Typography>
+          {isSupplier && post.account.originCompanyId && (
+            <Typography variant="body2" color="primary" mt={1}>
+              Connected distributor: {post.account.originCompanyName ||
+                partnerCompanies.find((partner) => partner.id === post.account?.originCompanyId)?.name}
+            </Typography>
+          )}
+          {isSupplier && !post.account.originCompanyId && partnerCompanies.length > 0 && (
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel id="unmatched-store-partner-label">Connected distributor</InputLabel>
+              <Select
+                labelId="unmatched-store-partner-label"
+                value=""
+                label="Connected distributor"
+                onChange={(event) => {
+                  const partner = partnerCompanies.find((item) => item.id === event.target.value);
+                  if (!partner) return;
+                  setPost((previous) => ({
+                    ...previous,
+                    brands: [],
+                    brandIds: [],
+                    productType: [],
+                    account: previous.account ? {
+                      ...previous.account,
+                      originCompanyId: partner.id,
+                      originCompanyName: partner.name,
+                    } : null,
+                  }));
+                }}
+              >
+                {partnerCompanies.map((partner) => (
+                  <MenuItem key={partner.id} value={partner.id}>{partner.name}</MenuItem>
+                ))}
+              </Select>
+              <Typography variant="caption" mt={1}>
+                We couldn't identify one connected distributor for this store. Choose one to continue.
+              </Typography>
+            </FormControl>
+          )}
           {selectedCompanyGoal && (
             <Typography variant="body2" color="primary" mt={1}>
               Goal: {selectedCompanyGoal.goalTitle}
@@ -643,7 +796,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           })}
         </Box>
       )}
-      {!post.account && !nearbyStores.length && (
+      {!post.account && (!nearbyStores.length || combinedAccounts.length > 0) && (
         <Box textAlign="center" mt={1}>
           <Typography variant="body2" color="textSecondary" mb={1}>
             Can’t find the store in your list?
@@ -688,6 +841,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
           onAccountSelect={handleAccountSelect}
           isAllStoresShown={isAllStoresShown}
           setIsAllStoresShown={setIsAllStoresShown}
+          showStoreScopeToggle={!isSupplier}
+          showOriginCompany={isSupplier}
         />
       )}
 

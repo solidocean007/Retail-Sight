@@ -95,7 +95,13 @@ export const onPostCreated = onDocumentCreated(
           ? conn.companyIds.find((id: string) => id !== companyId)
           : null;
 
-        if (otherCompanyId) {
+        const storeDistributorId = postData.account?.originCompanyId;
+        if (
+          otherCompanyId &&
+          (!storeDistributorId ||
+            storeDistributorId === companyId ||
+            storeDistributorId === otherCompanyId)
+        ) {
           sharedWith.add(otherCompanyId);
         }
       });

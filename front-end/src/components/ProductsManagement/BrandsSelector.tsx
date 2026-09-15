@@ -1,16 +1,17 @@
 // src/components/ProductsManagement/BrandsSelector.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Autocomplete, TextField, Chip, FormControl } from "@mui/material";
 import { useBrandOptions } from "../../hooks/useBrandOptions";
 import "./styles/brandsSelector.css";
 import { showMessage } from "../../Slices/snackbarSlice";
-import { useAppDispatch } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import { getBrandMatches } from "../../utils/helperFunctions/getBrandMatches";
 import CustomConfirmation from "../CustomConfirmation";
 import { BRAND_BLACKLIST } from "../../utils/helperFunctions/brandBlackList";
 import { useCompanyBrandCatalog } from "../../hooks/useCompanyBrandCatalog";
 import { selectUser } from "../../Slices/userSlice";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 
 //
@@ -85,6 +86,7 @@ export interface BrandsSelectorProps {
     brandIds: string[],
   ) => void;
   rawCandidates?: string[];
+  partnerCompanyId?: string;
 }
 
 const MAX_BRANDS = 5;
@@ -100,12 +102,41 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   selectedProductType,
   onChange,
   rawCandidates,
+  partnerCompanyId,
 }) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
+  const isSupplier = useSelector(selectIsSupplier);
+  const connections = useSelector(
+    (state: RootState) => state.companyConnections.connections,
+  );
   const [hasAppliedAiMatches, setHasAppliedAiMatches] = useState(false);
-  const brandOptions = useBrandOptions();
+  const companyBrandOptions = useBrandOptions();
+
+  const supplierBrands = useMemo(() => {
+    if (!isSupplier || !companyId || !partnerCompanyId) return [];
+    const byName = new Map<string, string>();
+    connections.forEach((connection) => {
+      if (connection.status !== "approved") return;
+      const companyIds = [
+        connection.requestFromCompanyId,
+        connection.requestToCompanyId,
+      ];
+      if (!companyIds.includes(companyId) || !companyIds.includes(partnerCompanyId)) return;
+      (connection.sharedBrandNames ?? []).forEach((name) => {
+        const clean = name?.trim();
+        if (clean && !byName.has(clean.toLowerCase())) {
+          byName.set(clean.toLowerCase(), clean);
+        }
+      });
+    });
+    return [...byName.values()].sort((a, b) => a.localeCompare(b));
+  }, [isSupplier, companyId, partnerCompanyId, connections]);
+  const brandOptions = useMemo(
+    () => isSupplier ? supplierBrands : companyBrandOptions,
+    [isSupplier, supplierBrands, companyBrandOptions],
+  );
 
   const {
     getBrandIdByName,
@@ -113,7 +144,14 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
     getSearchTextForBrandOption,
   } = useCompanyBrandCatalog(companyId);
 
-  const derivedProductTypes = getProductTypesForBrandNames(selectedBrands);
+  // Invite-created connections can deduplicate names and IDs independently.
+  // Name matching still auto-shares supplier posts without risking a wrong ID.
+  const getSelectedBrandIdByName = (name: string) =>
+    isSupplier ? null : getBrandIdByName(name);
+  const getSelectedProductTypes = (names: string[]) =>
+    isSupplier ? [] : getProductTypesForBrandNames(names);
+
+  const derivedProductTypes = getSelectedProductTypes(selectedBrands);
 
   const [brandInput, setBrandInput] = useState("");
   const [typeInput, setTypeInput] = useState("");
@@ -157,10 +195,10 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
     const cleaned = dedupeBrands(list).slice(0, MAX_BRANDS);
 
     const brandIds = cleaned
-      .map((brandName) => getBrandIdByName(brandName))
+      .map((brandName) => getSelectedBrandIdByName(brandName))
       .filter((id): id is string => Boolean(id));
 
-    const derived = getProductTypesForBrandNames(cleaned).map((t) =>
+    const derived = getSelectedProductTypes(cleaned).map((t) =>
       t.toLowerCase(),
     );
 
@@ -214,11 +252,16 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   // 5️⃣ Product Types
   //
   const handleTypesChange = (_: any, types: string[]) => {
+    const brandNames = new Set(brandOptions.map((brand) => brand.toLowerCase()));
+    const productTypes = types.filter((type) => !brandNames.has(type.trim().toLowerCase()));
+    if (productTypes.length !== types.length) {
+      dispatch(showMessage("Choose brand names under Brands, not Product Types."));
+    }
     const brandIds = selectedBrands
-      .map((brandName) => getBrandIdByName(brandName))
+      .map((brandName) => getSelectedBrandIdByName(brandName))
       .filter((id): id is string => Boolean(id));
 
-    onChange(selectedBrands, types, brandIds);
+    onChange(selectedBrands, productTypes, brandIds);
   };
   //
   // 6️⃣ Auto-select AI fuzzy matches (your corrected behavior)
@@ -252,7 +295,7 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   //
 
   const filterBrandOptions = createFilterOptions<string>({
-    stringify: (option) => getSearchTextForBrandOption(option),
+    stringify: (option) => isSupplier ? option : getSearchTextForBrandOption(option),
   });
 
   return (
@@ -334,7 +377,14 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
             setBrandInput("");
           }}
           renderInput={(params) => (
-            <TextField {...params} label="Brands" placeholder="Select brand" />
+            <TextField
+              {...params}
+              label="Brands"
+              placeholder="Select brand"
+              helperText={isSupplier && brandOptions.length === 0
+                ? "No shared brands are available for the selected partner."
+                : undefined}
+            />
           )}
         />
 

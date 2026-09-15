@@ -97,6 +97,13 @@ export const onConnectionApproved = onDocumentUpdated(
 
       snap.forEach((docSnap) => {
         const post = docSnap.data();
+        const storeDistributorId = post.account?.originCompanyId;
+        if (
+          storeDistributorId &&
+          storeDistributorId !== sourceCompanyId &&
+          storeDistributorId !== targetCompanyId
+        )
+          return;
 
         const postBrandIds = Array.isArray(post.brandIds)
           ? post.brandIds.map((id: string) => String(id || "").trim())

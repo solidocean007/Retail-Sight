@@ -21,6 +21,8 @@ interface AccountModalSelectorProps {
   onAccountSelect: (account: CompanyAccountType) => void;
   isAllStoresShown: boolean;
   setIsAllStoresShown: (isAllStoresShown: boolean) => void;
+  showStoreScopeToggle?: boolean;
+  showOriginCompany?: boolean;
 }
 
 const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
@@ -30,6 +32,8 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
   onAccountSelect,
   isAllStoresShown,
   setIsAllStoresShown,
+  showStoreScopeToggle = true,
+  showOriginCompany = false,
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -67,7 +71,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <Box display="flex" justifyContent="center" mb={2}>
+      {showStoreScopeToggle && <Box display="flex" justifyContent="center" mb={2}>
         <Button
           variant={isAllStoresShown ? "contained" : "outlined"}
           onClick={() => setIsAllStoresShown(false)}
@@ -82,7 +86,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
         >
           All Stores
         </Button>
-      </Box>
+      </Box>}
 
       <DialogContent>
         <Autocomplete
@@ -91,7 +95,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
             inputValue.length < 2
               ? [] // hide list until 2+ chars
               : options.filter((acc) =>
-                  `${acc.accountName} ${acc.accountAddress}`
+                  `${acc.accountName} ${acc.accountAddress} ${showOriginCompany ? acc.originCompanyName || "" : ""}`
                     .toLowerCase()
                     .includes(inputValue.toLowerCase())
                 )
@@ -102,7 +106,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
             </span>
           }
           getOptionLabel={(account) =>
-            `${account.accountName} - ${account.accountAddress}`
+            `${account.accountName} - ${account.accountAddress}${showOriginCompany && account.originCompanyName ? ` (${account.originCompanyName})` : ""}`
           }
           onChange={(e, value) => {
             if (value) {
