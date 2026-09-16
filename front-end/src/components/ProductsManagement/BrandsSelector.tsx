@@ -10,6 +10,7 @@ import { getBrandMatches } from "../../utils/helperFunctions/getBrandMatches";
 import CustomConfirmation from "../CustomConfirmation";
 import { BRAND_BLACKLIST } from "../../utils/helperFunctions/brandBlackList";
 import { useCompanyBrandCatalog } from "../../hooks/useCompanyBrandCatalog";
+import { useProductTypeOptions } from "../../hooks/useProductTypeOptions";
 import { selectUser } from "../../Slices/userSlice";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import { createFilterOptions } from "@mui/material/Autocomplete";
@@ -148,10 +149,25 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   // Name matching still auto-shares supplier posts without risking a wrong ID.
   const getSelectedBrandIdByName = (name: string) =>
     isSupplier ? null : getBrandIdByName(name);
-  const getSelectedProductTypes = (names: string[]) =>
-    isSupplier ? [] : getProductTypesForBrandNames(names);
+  const getSelectedProductTypes = (names: string[]) => {
+    const types = getProductTypesForBrandNames(names);
+    return isSupplier
+      ? types.filter((type) => type.trim().toLowerCase() !== "unspecified")
+      : types;
+  };
 
+  const companyProductTypeOptions = useProductTypeOptions();
   const derivedProductTypes = getSelectedProductTypes(selectedBrands);
+  const productTypeOptions = isSupplier
+    ? dedupeBrands([
+        ...derivedProductTypes,
+        ...companyProductTypeOptions.filter(
+          (type) => type.trim().toLowerCase() !== "unspecified",
+        ),
+        "beer pkg",
+        "wine unfortified",
+      ]).sort((a, b) => a.localeCompare(b))
+    : derivedProductTypes;
 
   const [brandInput, setBrandInput] = useState("");
   const [typeInput, setTypeInput] = useState("");
@@ -202,7 +218,7 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
       t.toLowerCase(),
     );
 
-    let defaultTypes = ["unspecified"];
+    let defaultTypes: string[] = isSupplier ? [] : ["unspecified"];
 
     if (derived.some((t) => t.includes("beer"))) {
       defaultTypes = ["beer pkg"];
@@ -253,8 +269,11 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   //
   const handleTypesChange = (_: any, types: string[]) => {
     const brandNames = new Set(brandOptions.map((brand) => brand.toLowerCase()));
-    const productTypes = types.filter((type) => !brandNames.has(type.trim().toLowerCase()));
-    if (productTypes.length !== types.length) {
+    const productTypes = types.filter((type) =>
+      !(isSupplier && type.trim().toLowerCase() === "unspecified") &&
+      !brandNames.has(type.trim().toLowerCase()),
+    );
+    if (types.some((type) => brandNames.has(type.trim().toLowerCase()))) {
       dispatch(showMessage("Choose brand names under Brands, not Product Types."));
     }
     const brandIds = selectedBrands
@@ -393,7 +412,7 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
           multiple
           freeSolo
           autoHighlight
-          options={derivedProductTypes}
+          options={productTypeOptions}
           value={selectedProductType}
           inputValue={typeInput}
           onInputChange={(_, v) => setTypeInput(v)}
@@ -407,7 +426,14 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
           }}
           sx={{ mt: 2 }}
           renderInput={(params) => (
-            <TextField {...params} label="Product Types" />
+            <TextField
+              {...params}
+              label="Product Types"
+              placeholder="Select product type"
+              helperText={isSupplier && selectedBrands.length > 0 && selectedProductType.length === 0
+                ? "Choose the product type for this display."
+                : undefined}
+            />
           )}
         />
       </FormControl>

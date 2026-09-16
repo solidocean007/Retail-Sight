@@ -91,20 +91,18 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
       <DialogContent>
         <Autocomplete
           options={accounts}
-          filterOptions={(options, { inputValue }) =>
-            inputValue.length < 2
-              ? [] // hide list until 2+ chars
-              : options.filter((acc) =>
+          filterOptions={(options, { inputValue }) => {
+            const search = inputValue.trim().toLowerCase();
+            const matches = search
+              ? options.filter((acc) =>
                   `${acc.accountName} ${acc.accountAddress} ${showOriginCompany ? acc.originCompanyName || "" : ""}`
                     .toLowerCase()
-                    .includes(inputValue.toLowerCase())
+                    .includes(search)
                 )
-          }
-          noOptionsText={
-            <span style={{ opacity: 0.7, fontSize: "0.9rem" }}>
-              Start typing to search accounts
-            </span>
-          }
+              : options;
+            return matches.slice(0, 100);
+          }}
+          noOptionsText="No matching stores"
           getOptionLabel={(account) =>
             `${account.accountName} - ${account.accountAddress}${showOriginCompany && account.originCompanyName ? ` (${account.originCompanyName})` : ""}`
           }
@@ -121,7 +119,8 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
             <TextField
               {...params}
               label="Search account"
-              placeholder="Type at least 2 letters..."
+              placeholder="Browse stores or search by name, address, or distributor"
+              helperText={accounts.length > 100 ? `Showing the first 100 of ${accounts.length} stores. Search to find any store.` : undefined}
               variant="outlined"
               sx={{
                 mt: 1,

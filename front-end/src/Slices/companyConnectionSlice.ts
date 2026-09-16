@@ -165,10 +165,16 @@ const companyConnectionSlice = createSlice({
     builder
       .addCase(fetchCompanyConnections.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchCompanyConnections.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = null;
         state.connections = action.payload;
+      })
+      .addCase(fetchCompanyConnections.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to load connections";
       })
       .addCase(createConnectionRequest.fulfilled, (state, action) => {
         const connection = action.payload;

@@ -156,6 +156,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const connections = useSelector(
     (state: RootState) => state.companyConnections.connections,
   );
+  const connectionsLoading = useSelector(
+    (state: RootState) => state.companyConnections.loading,
+  );
+  const connectionsError = useSelector(
+    (state: RootState) => state.companyConnections.error,
+  );
   const partnerCompanies = useMemo(() => {
     if (!isSupplier || !companyId) return [];
     const map = new Map<string, string>();
@@ -171,13 +177,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
   }, [isSupplier, companyId, connections]);
   const [partnerAccounts, setPartnerAccounts] = useState<CompanyAccountType[]>([]);
   const [loadingPartnerAccounts, setLoadingPartnerAccounts] = useState(false);
+  const [partnerStoreProblem, setPartnerStoreProblem] = useState("");
   useEffect(() => {
     if (!isSupplier || partnerCompanies.length === 0) {
       setPartnerAccounts([]);
+      setPartnerStoreProblem("");
       return;
     }
     let cancelled = false;
     setLoadingPartnerAccounts(true);
+    setPartnerStoreProblem("");
     Promise.allSettled(partnerCompanies.map(async (partner) => {
       const accounts = await getConnectedStores(partner.id);
       return accounts.map((account) => ({
@@ -190,11 +199,18 @@ export const PickStore: React.FC<PickStoreProps> = ({
       setPartnerAccounts(results.flatMap((result) =>
         result.status === "fulfilled" ? result.value : [],
       ));
-      results.forEach((result) => {
-        if (result.status === "rejected") {
-          console.error("Failed to load connected company stores:", result.reason);
-        }
+      const failedPartners = results.flatMap((result, index) => {
+        if (result.status !== "rejected") return [];
+        console.error("Failed to load connected company stores:", result.reason);
+        return [partnerCompanies[index].name];
       });
+      if (failedPartners.length > 0) {
+        setPartnerStoreProblem(`Could not load stores from ${failedPartners.join(", ")}. Refresh and try again.`);
+      } else if (results.every((result) =>
+        result.status === "fulfilled" && result.value.length === 0
+      )) {
+        setPartnerStoreProblem("Your connected distributors have no stores available.");
+      }
     }).finally(() => {
       if (!cancelled) setLoadingPartnerAccounts(false);
     });
@@ -642,8 +658,17 @@ export const PickStore: React.FC<PickStoreProps> = ({
       )}
 
       {isSupplier && partnerCompanies.length === 0 && (
-        <Typography variant="body2" color="textSecondary" px={3} mt={2}>
-          An approved distributor connection is needed before posting a display.
+        <Typography variant="body2" color={connectionsError ? "error" : "textSecondary"} px={3} mt={2}>
+          {connectionsLoading
+            ? "Loading your distributor connections..."
+            : connectionsError
+              ? "Could not load your distributor connections. Refresh and try again."
+              : "No approved distributor connection was found for this supplier."}
+        </Typography>
+      )}
+      {isSupplier && partnerStoreProblem && (
+        <Typography variant="body2" color="error" px={3} mt={2}>
+          {partnerStoreProblem}
         </Typography>
       )}
 
