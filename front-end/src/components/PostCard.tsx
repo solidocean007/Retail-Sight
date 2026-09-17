@@ -36,7 +36,7 @@ import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { RootState } from "../utils/store";
 import ImageModal from "./ImageModal";
-import { ChatBubbleOutline, MoreVert } from "@mui/icons-material";
+import { CampaignOutlined, MoreVert } from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import LinkShareModal from "./LinkShareModal";
@@ -132,10 +132,9 @@ const PostCard: React.FC<PostCardProps> = ({
     (isShareNoteAuthorCompany || isShareNoteAudience)
       ? post.shareNote.trim()
       : "";
-  const sharedContextTitle = isShareNoteAuthorCompany
-    ? "Message for " +
-      (post.shareNoteAudienceCompanyName || "connected distributor")
-    : "Message from " + postCompanyName;
+  const sharedContextCompanyName = isShareNoteAuthorCompany
+    ? post.shareNoteAudienceCompanyName || "Connected distributor"
+    : postCompanyName;
 
   useEffect(() => {
     if (!initialOpenComments) return;
@@ -358,8 +357,8 @@ const PostCard: React.FC<PostCardProps> = ({
         {sharedContext && (
           <div className="shared-post-context" role="note">
             <div className="shared-post-context-heading">
-              <ChatBubbleOutline fontSize="small" />
-              <span>{sharedContextTitle}</span>
+              <CampaignOutlined fontSize="small" />
+              <span>{sharedContextCompanyName}</span>
             </div>
             <p>{sharedContext}</p>
           </div>
