@@ -25,9 +25,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import CreatePostOnBehalfOfOtherUser from "../Create-Post/CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
-import { mergeAndSetPosts } from "../../Slices/postsSlice";
 import { UploadImage } from "../Create-Post/UploadImage";
-import { normalizePost } from "../../utils/normalize";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 import { canPostOnBehalf } from "../../utils/userData/permissions";
 
@@ -227,7 +225,7 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
     try {
       // 🔒 Gate gallo args right here
       const galloGoal = galloEnabled ? selectedGalloGoal : undefined;
-      const newPost = await handlePostSubmission(
+      await handlePostSubmission(
         post,
         selectedFile,
         setIsUploading,
@@ -235,7 +233,6 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
         setUploadStatusText,
         galloGoal,
       );
-      dispatch(mergeAndSetPosts([normalizePost(newPost)]));
       navigate("/user-home-page");
     } catch (err: any) {
       console.error("Upload failed:", err);

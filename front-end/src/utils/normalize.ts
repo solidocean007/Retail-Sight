@@ -5,6 +5,7 @@ import { DeveloperNotificationType, UserNotificationType } from "./types";
 /** 🔁 Universal Firestore normalizer (Timestamp → ms) */
 export const normalizeFirestoreData = <T>(input: T): T => {
   const walk = (val: any): any => {
+    if (val instanceof Date) return val.toISOString();
     if (val instanceof Timestamp) return val.toDate().toISOString();
     if (Array.isArray(val)) return val.map(walk);
     if (val && typeof val === "object") {

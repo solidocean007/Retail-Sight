@@ -2,7 +2,13 @@
   padding: 10px;
 }
 
+.post-card-stack {
+  width: 100%;
+}
+
 .card-border {
+  position: relative;
+  z-index: 1;
   padding: 3px;
   background-color: var(--text-color);
   /* border-radius: var(--card-radius); */
@@ -216,24 +222,30 @@
 }
 
 .shared-post-context {
-  margin: 0 15px 10px;
-  padding: 0.7rem 0.8rem;
-  border-left: 3px solid var(--primary-blue);
-  border-radius: 6px;
+  position: relative;
+  z-index: 0;
+  margin: 0 18px -10px;
+  padding: 0.7rem 0.85rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 45%, transparent);
+  border-bottom: 0;
+  border-radius: 12px 12px 5px 5px;
   background: var(--input-background);
   color: var(--text-color);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.shared-post-context span {
-  display: block;
-  font-size: 0.75rem;
+.shared-post-context-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
 .shared-post-context p {
-  margin: 0.25rem 0 0;
+  margin: 0.3rem 0 0;
   font-size: 0.9rem;
   line-height: 1.4;
   white-space: pre-wrap;
