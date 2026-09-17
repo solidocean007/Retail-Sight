@@ -112,17 +112,9 @@
 .feed-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-end;
   width: 100%;
   padding: 10px 12px 8px;
-}
-
-.feed-title {
-  margin: 0;
-  color: var(--text-color);
-  font-size: 1.05rem;
-  font-weight: 650;
 }
 
 .feed-toggle {

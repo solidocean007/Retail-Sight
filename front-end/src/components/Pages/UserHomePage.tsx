@@ -401,10 +401,8 @@ const displayFetchedAt =
 
         <div className="home-page-content">
           <div className="activity-feed-container">
-            <div className="feed-toolbar">
-              <h2 className="feed-title">Displays</h2>
-
-              {sharedPosts.length > 0 && (
+            {sharedPosts.length > 0 && (
+              <div className="feed-toolbar">
                 <div
                   className="feed-toggle"
                   role="tablist"
@@ -442,8 +440,8 @@ const displayFetchedAt =
                     )}
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             {activeFeedType === "shared" ? (
               <SharedFeed
                 virtuosoRef={virtuosoRef}
