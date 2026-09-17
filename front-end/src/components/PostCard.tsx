@@ -69,6 +69,29 @@ interface PostCardProps {
   focusCommentId?: string | null;
 }
 
+interface FeedImageProps {
+  sources: string[];
+  onClick: () => void;
+}
+
+const FeedImage: React.FC<FeedImageProps> = ({ sources, onClick }) => {
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const src = sources[sourceIndex];
+
+  if (!src) return null;
+
+  return (
+    <img
+      title="display image"
+      src={src}
+      className="post-image"
+      loading="lazy"
+      onClick={onClick}
+      onError={() => setSourceIndex((index) => index + 1)}
+    />
+  );
+};
+
 const PostCard: React.FC<PostCardProps> = ({
   imageSet,
   id,
@@ -328,6 +351,19 @@ const PostCard: React.FC<PostCardProps> = ({
     ),
   };
 
+  // Firebase's resize extension creates the feed image asynchronously. A new
+  // post can reach the realtime listener before that derivative exists, so
+  // fall back to an image that was uploaded with the post instead of showing
+  // a broken image until the page is refreshed.
+  const feedImageSources = [
+    safeImageSet.feedSrc,
+    post.imageUrl,
+    post.originalImageUrl,
+  ].filter(
+    (src, index, sources): src is string =>
+      Boolean(src) && sources.indexOf(src) === index,
+  );
+
   return (
     <>
       <div className="card-border">
@@ -526,12 +562,10 @@ const PostCard: React.FC<PostCardProps> = ({
                       setIsImageModalOpen(true);
                     }}
                   /> */}
-                  {safeImageSet.feedSrc && (
-                    <img
-                      title="display image"
-                      src={safeImageSet.feedSrc}
-                      className="post-image"
-                      loading="lazy"
+                  {feedImageSources.length > 0 && (
+                    <FeedImage
+                      key={feedImageSources.join("|")}
+                      sources={feedImageSources}
                       onClick={() => setIsImageModalOpen(true)}
                     />
                   )}
