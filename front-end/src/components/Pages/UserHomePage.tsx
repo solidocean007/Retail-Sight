@@ -356,6 +356,43 @@ const displayFetchedAt =
 
     setActiveFeedType(type);
   };
+  const renderFeedToggle = () => (
+    <div className="feed-toggle" role="tablist" aria-label="Display feed">
+      <button
+        className={
+          "feed-toggle-option " +
+          (activeFeedType === "company" ? "active" : "")
+        }
+        type="button"
+        role="tab"
+        aria-selected={activeFeedType === "company"}
+        onClick={() => handleFeedSwitch("company")}
+      >
+        Company
+      </button>
+
+      <button
+        className={
+          "feed-toggle-option " +
+          (activeFeedType === "shared" ? "active" : "")
+        }
+        type="button"
+        role="tab"
+        aria-selected={activeFeedType === "shared"}
+        onClick={() => handleFeedSwitch("shared")}
+      >
+        Shared
+        {activeFeedType !== "shared" && unreadSharedCount > 0 && (
+          <span
+            className="shared-unread-badge"
+            aria-label={unreadSharedCount + " unread shared displays"}
+          >
+            {unreadSharedCount > 9 ? "9+" : unreadSharedCount}
+          </span>
+        )}
+      </button>
+    </div>
+  );
 
   return (
     <>
@@ -388,6 +425,8 @@ const displayFetchedAt =
                 <TuneIcon />
               </Fab>
 
+              {sharedPosts.length > 0 && renderFeedToggle()}
+
               <Fab
                 color="primary"
                 aria-label="create"
@@ -402,45 +441,7 @@ const displayFetchedAt =
         <div className="home-page-content">
           <div className="activity-feed-container">
             {sharedPosts.length > 0 && (
-              <div className="feed-toolbar">
-                <div
-                  className="feed-toggle"
-                  role="tablist"
-                  aria-label="Display feed"
-                >
-                  <button
-                    className={`feed-toggle-option ${
-                      activeFeedType === "company" ? "active" : ""
-                    }`}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeFeedType === "company"}
-                    onClick={() => handleFeedSwitch("company")}
-                  >
-                    Company
-                  </button>
-
-                  <button
-                    className={`feed-toggle-option ${
-                      activeFeedType === "shared" ? "active" : ""
-                    }`}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeFeedType === "shared"}
-                    onClick={() => handleFeedSwitch("shared")}
-                  >
-                    Shared
-                    {activeFeedType !== "shared" && unreadSharedCount > 0 && (
-                      <span
-                        className="shared-unread-badge"
-                        aria-label={`${unreadSharedCount} unread shared displays`}
-                      >
-                        {unreadSharedCount > 9 ? "9+" : unreadSharedCount}
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
+              <div className="feed-toolbar">{renderFeedToggle()}</div>
             )}
             {activeFeedType === "shared" ? (
               <SharedFeed
