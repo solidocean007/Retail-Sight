@@ -38,6 +38,7 @@ import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
 import { useIsDirty } from "../../hooks/useIsDirty";
 import { selectUser } from "../../Slices/userSlice";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import GoalChangeConfirmation from "./GoalChangeConfirmation";
 import { duplicatePostWithNewGoal } from "../../utils/PostLogic/dupilcatePostWithNewGoal";
@@ -67,6 +68,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId,
   );
+  const isSupplier = useSelector(selectIsSupplier);
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const functions = getFunctions(undefined, "us-central1");
   const sendGalloCF = httpsCallable(functions, "galloSendAchievement");
@@ -136,6 +138,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const isDirty = useIsDirty(
     {
       description: post.description,
+      shareNote: post.shareNote ?? "",
       totalCaseCount: post.totalCaseCount,
       brands: post.brands || [],
       companyGoalId: post.companyGoalId,
@@ -146,6 +149,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     },
     {
       description,
+      shareNote: editablePost.shareNote ?? "",
       totalCaseCount: updatedCaseCount,
       brands: editablePost.brands || [],
       companyGoalId: selectedCompanyGoal?.id ?? null,
@@ -184,9 +188,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     setEditablePost((prev) => ({
       ...prev,
       account: {
-        accountNumber: account.accountNumber,
-        accountName: account.accountName,
-        accountAddress: account.accountAddress,
+        ...account,
         salesRouteNums: account.salesRouteNums || [],
         streetAddress: account.streetAddress || "",
       },
@@ -220,8 +222,17 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     const ownershipCorrection =
       useOnBehalf && onBehalf && onBehalf.uid !== post.postUserUid;
 
+    const cleanedShareNote = updatedPost.shareNote?.trim();
+
     const updatedFields: any = {
       description: updatedPost.description,
+      shareNote: cleanedShareNote || null,
+      shareNoteAudienceCompanyId: cleanedShareNote
+        ? updatedPost.account?.originCompanyId ?? null
+        : null,
+      shareNoteAudienceCompanyName: cleanedShareNote
+        ? updatedPost.account?.originCompanyName ?? null
+        : null,
       migratedVisibility: updatedPost.migratedVisibility,
       totalCaseCount: updatedPost.totalCaseCount,
       hashtags: updatedPost.hashtags,
@@ -563,6 +574,31 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 sx={{ mb: 2 }}
               />
+
+              {isSupplier && editablePost.account?.originCompanyId && (
+                <TextField
+                  fullWidth
+                  variant="filled"
+                  label={
+                    "Message for " +
+                    (editablePost.account.originCompanyName ||
+                      "the connected distributor")
+                  }
+                  helperText="Explain why you are sharing this display or what their team should notice. This appears in their Shared feed."
+                  multiline
+                  minRows={2}
+                  maxRows={4}
+                  inputProps={{ maxLength: 400 }}
+                  value={editablePost.shareNote ?? ""}
+                  onChange={(event) =>
+                    setEditablePost((current) => ({
+                      ...current,
+                      shareNote: event.target.value,
+                    }))
+                  }
+                  sx={{ mb: 2 }}
+                />
+              )}
 
               {activeCompanyGoals.length > 0 && hadOriginalGoal && (
                 <>

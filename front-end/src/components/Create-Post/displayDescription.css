@@ -52,3 +52,42 @@
   background-color: var(--form-background-color);
   padding: 0 9px; /* Avoids clipping */
 }
+
+.supplier-share-note {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 40%, transparent);
+  border-radius: 8px;
+  background: var(--input-background);
+}
+
+.supplier-share-note label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--text-color);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.supplier-share-note label span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.supplier-share-note p {
+  margin: 0.4rem 0 0.75rem;
+  color: var(--text-color);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  opacity: 0.78;
+}
+
+.supplier-share-note-input {
+  min-height: 5.5rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--text-color) 22%, transparent);
+  border-radius: 6px;
+  background: var(--form-background-color);
+}

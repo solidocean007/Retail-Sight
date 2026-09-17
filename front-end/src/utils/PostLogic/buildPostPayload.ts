@@ -22,12 +22,20 @@ export const buildPostPayload = (
   const cleanedDescription = post.description
     ?.replace(/(#|[*])\s+/g, "$1") // Remove spaces after # or *
     .trim(); // Trim any leading/trailing spaces
+  const cleanedShareNote = post.shareNote?.trim();
+  const shareNoteAudienceCompanyId = account?.originCompanyId;
 
   return {
     ...(shared.size > 0 && {
       sharedWithCompanies: Array.from(shared),
     }),
     description: cleanedDescription || "",
+    ...(cleanedShareNote &&
+      shareNoteAudienceCompanyId && {
+        shareNote: cleanedShareNote,
+        shareNoteAudienceCompanyId,
+        shareNoteAudienceCompanyName: account?.originCompanyName ?? "",
+      }),
     companyId: post.postUser?.companyId || "",
     imageUrl: post.imageUrl || "",
 

@@ -79,6 +79,9 @@ export const updateVisibility = async ({
         mode === "add"
           ? FieldValue.arrayUnion(targetCompanyId)
           : FieldValue.arrayRemove(targetCompanyId),
+      ...(mode === "add" && {
+        autoSharedAt: FieldValue.serverTimestamp(),
+      }),
     });
 
     updateCount += 1;

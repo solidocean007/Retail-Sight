@@ -4,6 +4,7 @@ import { PostWithID } from "../utils/types";
 
 interface DirtyCheckParams {
   description: string;
+  shareNote?: string;
   totalCaseCount: number;
   brands: string[];
   companyGoalId: string | null;
@@ -20,6 +21,7 @@ export function useIsDirty(
   original: Pick<
     PostWithID,
     | "description"
+    | "shareNote"
     | "totalCaseCount"
     | "brands"
     | "companyGoalId"
@@ -33,6 +35,9 @@ export function useIsDirty(
   return useMemo(() => {
     // 1) Description changed?
     if (edited.description !== original.description) return true;
+
+    // Supplier context changed?
+    if ((edited.shareNote ?? "") !== (original.shareNote ?? "")) return true;
 
     // 2) Case count changed?
     if (edited.totalCaseCount !== original.totalCaseCount) return true;
@@ -76,6 +81,7 @@ export function useIsDirty(
   }, [
     // original deps
     original.description,
+    original.shareNote,
     original.totalCaseCount,
     JSON.stringify(original.brands ?? []),
     original.companyGoalId,
@@ -86,6 +92,7 @@ export function useIsDirty(
 
     // edited deps
     edited.description,
+    edited.shareNote,
     edited.totalCaseCount,
     JSON.stringify(edited.brands),
     edited.companyGoalId,

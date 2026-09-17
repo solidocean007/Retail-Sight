@@ -36,7 +36,7 @@ import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { RootState } from "../utils/store";
 import ImageModal from "./ImageModal";
-import { MoreVert } from "@mui/icons-material";
+import { ChatBubbleOutline, MoreVert } from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import LinkShareModal from "./LinkShareModal";
@@ -67,6 +67,7 @@ interface PostCardProps {
   postIdToScroll?: string | null; // New prop to control highlighting
   initialOpenComments?: boolean;
   focusCommentId?: string | null;
+  sourceCompanyName?: string;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -83,6 +84,7 @@ const PostCard: React.FC<PostCardProps> = ({
   postIdToScroll = null, // Default to null if not provided
   initialOpenComments = false,
   focusCommentId = null,
+  sourceCompanyName,
 }) => {
   // const { small, medium, original } = imageSet;
   const updatedPost = useSelector((state: RootState) =>
@@ -114,8 +116,26 @@ const PostCard: React.FC<PostCardProps> = ({
   const isOwner = user?.uid === post.postUser?.uid;
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
   const isSharedPost = post.companyId !== user?.companyId;
+  const postCompanyName =
+    post.postUserCompanyName?.trim() ||
+    post.postUser?.company?.trim() ||
+    sourceCompanyName?.trim() ||
+    (isSharedPost ? "Connected company" : "");
 
   const canEditPost = (isOwner || isAdmin) && !isSharedPost;
+  const isShareNoteAuthorCompany = post.companyId === user?.companyId;
+  const isShareNoteAudience = post.shareNoteAudienceCompanyId
+    ? post.shareNoteAudienceCompanyId === user?.companyId
+    : isSharedPost;
+  const sharedContext =
+    post.shareNote?.trim() &&
+    (isShareNoteAuthorCompany || isShareNoteAudience)
+      ? post.shareNote.trim()
+      : "";
+  const sharedContextTitle = isShareNoteAuthorCompany
+    ? "Message for " +
+      (post.shareNoteAudienceCompanyName || "connected distributor")
+    : "Message from " + postCompanyName;
 
   useEffect(() => {
     if (!initialOpenComments) return;
@@ -330,7 +350,21 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <>
-      <div className="card-border">
+      <div
+        className={
+          "post-card-stack" + (sharedContext ? " has-shared-context" : "")
+        }
+      >
+        {sharedContext && (
+          <div className="shared-post-context" role="note">
+            <div className="shared-post-context-heading">
+              <ChatBubbleOutline fontSize="small" />
+              <span>{sharedContextTitle}</span>
+            </div>
+            <p>{sharedContext}</p>
+          </div>
+        )}
+        <div className="card-border">
         <div
           className={`post-card-container ${
             shouldHighlight ? "shouldHighlight" : ""
@@ -451,12 +485,21 @@ const PostCard: React.FC<PostCardProps> = ({
                   )}
                 </div>
 
-                <div className="user-company-box">
-                  <p>{post.postUser?.company}</p>{" "}
-                </div>
+                {postCompanyName && (
+                  <div
+                    className={`user-company-box ${
+                      isSharedPost ? "shared-post-company" : ""
+                    }`}
+                  >
+                    <p>
+                      {isSharedPost ? `From ${postCompanyName}` : postCompanyName}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
           {post.companyGoalId && (
             <div className="company-goal-banner textured-background">
               Company Goal: {post.companyGoalTitle}
@@ -553,6 +596,7 @@ const PostCard: React.FC<PostCardProps> = ({
             )}
           </div>
           {user && <CommentSection post={post} />}
+          </div>
         </div>
       </div>
 

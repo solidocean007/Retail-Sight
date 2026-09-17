@@ -123,7 +123,12 @@ const postsSlice = createSlice({
       state.lastVisibleFiltered = action.payload;
     },
     addNewPost: (state, action: PayloadAction<PostWithID>) => {
-      state.posts.push(action.payload);
+      const newPost = normalizePost(action.payload);
+      const withoutExistingCopy = state.posts.filter(
+        (post) => post.id !== newPost.id,
+      );
+
+      state.posts = sortPostsByDate([newPost, ...withoutExistingCopy]);
     },
     mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const newPosts = action.payload;
