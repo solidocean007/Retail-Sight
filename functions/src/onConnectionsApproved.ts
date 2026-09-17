@@ -127,6 +127,7 @@ export const onConnectionApproved = onDocumentUpdated(
 
         batch.update(docSnap.ref, {
           sharedWithCompanies: FieldValue.arrayUnion(targetCompanyId),
+          autoSharedAt: FieldValue.serverTimestamp(),
         });
 
         updateCount += 1;

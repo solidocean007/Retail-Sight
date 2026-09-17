@@ -207,6 +207,14 @@
   margin: 0;
 }
 
+.shared-post-company {
+  margin-top: 2px;
+  color: var(--text-color);
+  font-size: 0.82rem;
+  font-weight: 650;
+  opacity: 0.78;
+}
+
 .user-company-box a {
   margin-left: 4px;
 }

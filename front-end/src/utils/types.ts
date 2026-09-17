@@ -476,6 +476,7 @@ export interface PostType {
   visibility?: "public" | "company";
   migratedVisibility: "public" | "companyOnly" | "network";
   sharedWithCompanies?: string[];
+  autoSharedAt?: Timestamp | string;
 
   // 🎯 Goals
   companyGoalId?: string | null;

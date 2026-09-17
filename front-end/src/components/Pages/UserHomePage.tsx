@@ -1,5 +1,5 @@
 // userHomePage.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VirtuosoHandle } from "react-virtuoso";
 import ActivityFeed from "./../ActivityFeed";
 import "./userHomePage.css";
@@ -37,15 +37,39 @@ import { setResetting } from "../../Slices/appSlice";
 import { resetApp } from "../../utils/resetApp";
 import { showMessage } from "../../Slices/snackbarSlice";
 import InstallPrompt from "../PWA/InstallPrompt";
-import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import { selectEffectiveCompanyId } from "../../Slices/impersonationSlice";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db } from "../../utils/firebase";
+
+const toMillis = (value: unknown): number => {
+  if (!value) return 0;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Date.parse(value) || 0;
+  if (value instanceof Date) return value.getTime();
+
+  const timestamp = value as {
+    toDate?: () => Date;
+    seconds?: number;
+  };
+
+  if (typeof timestamp.toDate === "function") {
+    return timestamp.toDate().getTime();
+  }
+
+  return typeof timestamp.seconds === "number" ? timestamp.seconds * 1000 : 0;
+};
+
+const getSharedPostTimestamp = (post: PostWithID): number =>
+  toMillis(post.autoSharedAt) ||
+  toMillis(post.createdAt) ||
+  toMillis(post.timestamp) ||
+  toMillis(post.displayDate);
 
 const UserHomePage = () => {
   const navigate = useNavigate();
-  const isSupplier = useSelector(selectIsSupplier);
   // const companyId = useSelector(selectUser)?.companyId;
   const effectiveCompanyId = useSelector(selectEffectiveCompanyId);
-  const companyUsers = useSelector(selectCompanyUsers) || [];
+  const companyUsers = useSelector(selectCompanyUsers);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -54,9 +78,8 @@ const UserHomePage = () => {
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
-  const [activeFeedType, setActiveFeedType] = useState<"company" | "shared">(
-    isSupplier ? "shared" : "company",
-  );
+  const [activeFeedType, setActiveFeedType] =
+    useState<"company" | "shared">("company");
   const [activeCompanyPostSet, setActiveCompanyPostSet] = useState<
     "posts" | "filteredPosts"
   >("posts");
@@ -65,10 +88,13 @@ const UserHomePage = () => {
   >("posts");
   const [clearInput, setClearInput] = useState(false);
   const user = useSelector(selectUser);
+  const [sharedFeedLastViewedAt, setSharedFeedLastViewedAt] = useState(0);
+  const [sharedViewInitialized, setSharedViewInitialized] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
   const filterText = useMemo(
-    () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
+    () =>
+      lastFilters ? getFilterSummaryText(lastFilters, companyUsers || []) : "",
     [lastFilters, companyUsers],
   );
   // const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
@@ -107,12 +133,6 @@ const displayFetchedAt =
     activeFeedType === "shared" ? filteredSharedPostCount : filteredCount;
 
   useEffect(() => {
-    if (isSupplier) {
-      setActiveFeedType("shared");
-    }
-  }, [isSupplier]);
-
-  useEffect(() => {
     const flag = localStorage.getItem("showOnboardingModal");
     if (flag) {
       setVariant(flag === "approved" ? "approved" : "submitted");
@@ -126,22 +146,114 @@ const displayFetchedAt =
     effectiveCompanyId || "",
     batchSize,
   );
-  const hasShownSharedEmpty = useRef(false);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setSharedViewInitialized(false);
+      setSharedFeedLastViewedAt(0);
+      return;
+    }
+
+    let cancelled = false;
+    const storageKey = `displaygram:shared-feed-viewed:${user.uid}`;
+    let locallyViewedAt = 0;
+
+    try {
+      locallyViewedAt = Number(localStorage.getItem(storageKey)) || 0;
+    } catch (error) {
+      console.warn("Could not read shared-feed view state:", error);
+    }
+
+    const loadSharedFeedViewState = async () => {
+      let savedViewedAt = 0;
+
+      try {
+        const settingsSnapshot = await getDoc(
+          doc(db, "users", user.uid, "notificationSettings", "sharedFeed"),
+        );
+        savedViewedAt = toMillis(settingsSnapshot.data()?.lastViewedAt);
+      } catch (error) {
+        console.warn("Could not load shared-feed view state:", error);
+      }
+
+      if (cancelled) return;
+
+      const viewedAt = Math.max(locallyViewedAt, savedViewedAt) || Date.now();
+
+      setSharedFeedLastViewedAt(viewedAt);
+      setSharedViewInitialized(true);
+
+      try {
+        localStorage.setItem(storageKey, String(viewedAt));
+      } catch (error) {
+        console.warn("Could not cache shared-feed view state:", error);
+      }
+    };
+
+    loadSharedFeedViewState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
+
+  const unreadSharedCount = useMemo(() => {
+    if (!sharedViewInitialized) return 0;
+
+    return sharedPosts.filter(
+      (post) => getSharedPostTimestamp(post) > sharedFeedLastViewedAt,
+    ).length;
+  }, [sharedFeedLastViewedAt, sharedPosts, sharedViewInitialized]);
+
+  const markSharedFeedViewed = useCallback(() => {
+    if (!user?.uid) return;
+
+    const viewedAt = Date.now();
+    const storageKey = `displaygram:shared-feed-viewed:${user.uid}`;
+
+    setSharedFeedLastViewedAt(viewedAt);
+
+    try {
+      localStorage.setItem(storageKey, String(viewedAt));
+    } catch (error) {
+      console.warn("Could not cache shared-feed view state:", error);
+    }
+
+    setDoc(
+      doc(db, "users", user.uid, "notificationSettings", "sharedFeed"),
+      { lastViewedAt: serverTimestamp() },
+      { merge: true },
+    ).catch((error) =>
+      console.warn("Could not save shared-feed view state:", error),
+    );
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (
+      !sharedLoading &&
+      activeFeedType === "shared" &&
+      sharedPosts.length === 0
+    ) {
+      setActiveFeedType("company");
+    }
+  }, [activeFeedType, sharedLoading, sharedPosts.length]);
 
   useEffect(() => {
     if (
       activeFeedType === "shared" &&
-      sharedPosts.length === 0 &&
-      !hasShownSharedEmpty.current
+      !sharedLoading &&
+      sharedPosts.length > 0 &&
+      sharedViewInitialized
     ) {
-      dispatch(showMessage("No shared posts available."));
-      hasShownSharedEmpty.current = true;
+      markSharedFeedViewed();
     }
-
-    if (sharedPosts.length > 0) {
-      hasShownSharedEmpty.current = false;
-    }
-  }, [activeFeedType, sharedPosts.length, dispatch]);
+  }, [
+    activeFeedType,
+    markSharedFeedViewed,
+    sharedLoading,
+    sharedPosts.length,
+    sharedViewInitialized,
+  ]);
 
   const openPostViewer = (options: OpenPostViewerOptions) => {
     setPostViewerOptions(options);
@@ -237,16 +349,9 @@ const displayFetchedAt =
   }, [dispatch]);
 
   const handleFeedSwitch = (type: "company" | "shared") => {
-    if (type === "shared") {
-      if (sharedLoading) {
-        dispatch(showMessage("Loading shared posts..."));
-        return;
-      }
-
-      if (sharedPosts.length === 0) {
-        dispatch(showMessage("No shared posts available."));
-        return;
-      }
+    if (type === "shared" && sharedLoading) {
+      dispatch(showMessage("Loading shared displays..."));
+      return;
     }
 
     setActiveFeedType(type);
@@ -296,28 +401,48 @@ const displayFetchedAt =
 
         <div className="home-page-content">
           <div className="activity-feed-container">
-            <div className="feed-toggle">
-              <button
-                className={
-                  activeFeedType === "company"
-                    ? "btn-secondary active"
-                    : "status-inactive"
-                }
-                onClick={() => handleFeedSwitch("company")}
-              >
-                Company
-              </button>
+            <div className="feed-toolbar">
+              <h2 className="feed-title">Displays</h2>
 
-              <button
-                className={
-                  activeFeedType === "shared"
-                    ? "btn-secondary active"
-                    : "status-inactive"
-                }
-                onClick={() => handleFeedSwitch("shared")}
-              >
-                Shared
-              </button>
+              {sharedPosts.length > 0 && (
+                <div
+                  className="feed-toggle"
+                  role="tablist"
+                  aria-label="Display feed"
+                >
+                  <button
+                    className={`feed-toggle-option ${
+                      activeFeedType === "company" ? "active" : ""
+                    }`}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeFeedType === "company"}
+                    onClick={() => handleFeedSwitch("company")}
+                  >
+                    Company
+                  </button>
+
+                  <button
+                    className={`feed-toggle-option ${
+                      activeFeedType === "shared" ? "active" : ""
+                    }`}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeFeedType === "shared"}
+                    onClick={() => handleFeedSwitch("shared")}
+                  >
+                    Shared
+                    {activeFeedType !== "shared" && unreadSharedCount > 0 && (
+                      <span
+                        className="shared-unread-badge"
+                        aria-label={`${unreadSharedCount} unread shared displays`}
+                      >
+                        {unreadSharedCount > 9 ? "9+" : unreadSharedCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
             {activeFeedType === "shared" ? (
               <SharedFeed

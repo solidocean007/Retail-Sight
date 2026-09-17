@@ -27,6 +27,7 @@ interface PostCardRendererProps {
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   postIdToScroll?: string | null;
   onPostVisible?: (postId: string) => void;
+  sourceCompanyName?: string;
 }
 
 const PostCardRenderer: React.FC<PostCardRendererProps> = ({
@@ -39,6 +40,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   setIsSearchActive,
   postIdToScroll,
   onPostVisible,
+  sourceCompanyName,
 }) => {
   const cardRef = useRef<HTMLDivElement | null>(null);
 
@@ -76,6 +78,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
         setActivePostSet={setActivePostSet}
         setIsSearchActive={setIsSearchActive}
         postIdToScroll={postIdToScroll}
+        sourceCompanyName={sourceCompanyName}
       />
     </div>
   );

@@ -54,6 +54,9 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
+  const connections = useSelector(
+    (s: RootState) => s.companyConnections.connections || [],
+  );
   const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
   const loading = useSelector((s: RootState) => s.sharedPosts.loading);
 
@@ -72,6 +75,27 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
       ? filteredSharedPosts
       : sharedPosts;
   }, [activeSharedPostSet, filteredSharedPosts, sharedPosts]);
+
+  const sourceCompanyNames = useMemo(() => {
+    const names = new Map<string, string>();
+
+    connections.forEach((connection) => {
+      if (connection.status !== "approved") return;
+
+      if (connection.requestFromCompanyId && connection.requestFromCompanyName) {
+        names.set(
+          connection.requestFromCompanyId,
+          connection.requestFromCompanyName,
+        );
+      }
+
+      if (connection.requestToCompanyId && connection.requestToCompanyName) {
+        names.set(connection.requestToCompanyId, connection.requestToCompanyName);
+      }
+    });
+
+    return names;
+  }, [connections]);
 
   const scrollToTop = () => {
     virtuosoRef?.current?.scrollToIndex({
@@ -157,6 +181,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                   setActivePostSet={setSharedFeedPostSet}
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}
+                  sourceCompanyName={sourceCompanyNames.get(post.companyId)}
                 />
               </div>
             );

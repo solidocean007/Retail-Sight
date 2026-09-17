@@ -67,6 +67,7 @@ interface PostCardProps {
   postIdToScroll?: string | null; // New prop to control highlighting
   initialOpenComments?: boolean;
   focusCommentId?: string | null;
+  sourceCompanyName?: string;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -83,6 +84,7 @@ const PostCard: React.FC<PostCardProps> = ({
   postIdToScroll = null, // Default to null if not provided
   initialOpenComments = false,
   focusCommentId = null,
+  sourceCompanyName,
 }) => {
   // const { small, medium, original } = imageSet;
   const updatedPost = useSelector((state: RootState) =>
@@ -114,6 +116,11 @@ const PostCard: React.FC<PostCardProps> = ({
   const isOwner = user?.uid === post.postUser?.uid;
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
   const isSharedPost = post.companyId !== user?.companyId;
+  const postCompanyName =
+    post.postUserCompanyName?.trim() ||
+    post.postUser?.company?.trim() ||
+    sourceCompanyName?.trim() ||
+    (isSharedPost ? "Connected company" : "");
 
   const canEditPost = (isOwner || isAdmin) && !isSharedPost;
 
@@ -451,9 +458,17 @@ const PostCard: React.FC<PostCardProps> = ({
                   )}
                 </div>
 
-                <div className="user-company-box">
-                  <p>{post.postUser?.company}</p>{" "}
-                </div>
+                {postCompanyName && (
+                  <div
+                    className={`user-company-box ${
+                      isSharedPost ? "shared-post-company" : ""
+                    }`}
+                  >
+                    <p>
+                      {isSharedPost ? `From ${postCompanyName}` : postCompanyName}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
