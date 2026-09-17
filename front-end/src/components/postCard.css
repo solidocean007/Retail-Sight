@@ -215,6 +215,30 @@
   opacity: 0.78;
 }
 
+.shared-post-context {
+  margin: 0 15px 10px;
+  padding: 0.7rem 0.8rem;
+  border-left: 3px solid var(--primary-blue);
+  border-radius: 6px;
+  background: var(--input-background);
+  color: var(--text-color);
+}
+
+.shared-post-context span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+
+.shared-post-context p {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
 .user-company-box a {
   margin-left: 4px;
 }

@@ -186,6 +186,7 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
         return (
           <DisplayDescription
             post={post}
+            isSupplier={isSupplier}
             handleFieldChange={handleFieldChange}
           />
         );

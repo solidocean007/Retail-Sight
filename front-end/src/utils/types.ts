@@ -463,6 +463,9 @@ export interface PostType {
 
   // 📸 Post Content
   description: string;
+  shareNote?: string;
+  shareNoteAudienceCompanyId?: string;
+  shareNoteAudienceCompanyName?: string;
   imageUrl?: string;
   originalImageUrl?: string;
   photos?: { file: string }[];
@@ -502,6 +505,9 @@ export interface PostType {
 
 export type PostInputType = {
   description: string;
+  shareNote?: string;
+  shareNoteAudienceCompanyId?: string;
+  shareNoteAudienceCompanyName?: string;
   imageUrl?: string;
   originalImageUrl?: string;
   totalCaseCount: number;

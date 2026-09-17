@@ -1,4 +1,3 @@
-// ReviewAndSubmit.tsx
 import {
   Backdrop,
   Box,
@@ -18,7 +17,7 @@ interface ReviewAndSubmitProps {
   post: PostInputType;
   handleFieldChange: (
     field: keyof PostInputType,
-    value: PostInputType[keyof PostInputType]
+    value: PostInputType[keyof PostInputType],
   ) => void;
   isUploading: boolean;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -33,8 +32,35 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   uploadProgress,
   uploadStatusText,
 }) => {
+  const shareNote = post.shareNote?.trim();
+
   return (
     <div className="review-and-submit">
+      {shareNote && post.account?.originCompanyId && (
+        <Box
+          mt={2}
+          p={2}
+          sx={{
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "var(--input-background)",
+          }}
+        >
+          <Typography variant="subtitle2" fontWeight={700}>
+            Message for{" "}
+            {post.account.originCompanyName || "the connected distributor"}
+          </Typography>
+          <Typography
+            variant="body2"
+            mt={0.5}
+            sx={{ whiteSpace: "pre-wrap" }}
+          >
+            {shareNote}
+          </Typography>
+        </Box>
+      )}
+
       <Box mt={2}>
         <Typography variant="h6" display="flex" alignItems="center" gap={1}>
           Post Visibility
@@ -58,8 +84,10 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         <Select
           fullWidth
           variant="outlined"
-          value={post.migratedVisibility ?? "network"} // 👈 ensures "network" shows by default
-          onChange={(e) => handleFieldChange("migratedVisibility", e.target.value)}
+          value={post.migratedVisibility ?? "network"}
+          onChange={(event) =>
+            handleFieldChange("migratedVisibility", event.target.value)
+          }
         >
           <MenuItem value="network">Network (default)</MenuItem>
           <MenuItem value="companyOnly">Company Only</MenuItem>
@@ -73,7 +101,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
 
       <Backdrop
         open={isUploading}
-        sx={{ color: "#fff", zIndex: (t) => t.zIndex.drawer + 1 }}
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
         <Box textAlign="center">
           <Typography variant="h6" sx={{ mb: 2 }}>

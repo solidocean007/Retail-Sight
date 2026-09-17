@@ -123,6 +123,13 @@ const PostCard: React.FC<PostCardProps> = ({
     (isSharedPost ? "Connected company" : "");
 
   const canEditPost = (isOwner || isAdmin) && !isSharedPost;
+  const sharedContext =
+    isSharedPost &&
+    post.shareNote?.trim() &&
+    (!post.shareNoteAudienceCompanyId ||
+      post.shareNoteAudienceCompanyId === user?.companyId)
+      ? post.shareNote.trim()
+      : "";
 
   useEffect(() => {
     if (!initialOpenComments) return;
@@ -472,6 +479,12 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
+          {sharedContext && (
+            <div className="shared-post-context">
+              <span>Why this was shared</span>
+              <p>{sharedContext}</p>
+            </div>
+          )}
           {post.companyGoalId && (
             <div className="company-goal-banner textured-background">
               Company Goal: {post.companyGoalTitle}
