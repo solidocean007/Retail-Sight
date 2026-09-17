@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { Photo } from "@mui/icons-material";
@@ -37,6 +37,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   const [isConverting, setIsConverting] = useState(false);
   const [isAiEnabled, setIsAiEnabled] = useState(isAiFeatureEnabled);
   const [showAiInfo, setShowAiInfo] = useState(false);
+  const aiAnalysisRequestId = useRef(0);
 
   useEffect(() => {
     setPost((prev) => ({
@@ -45,11 +46,68 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     }));
   }, [isAiEnabled]);
 
+  const analyzeBrandsInBackground = async (
+    imageFile: File,
+    requestId: number,
+  ) => {
+    try {
+      const path = "tempUploads/" + Date.now() + "_" + imageFile.name;
+      const imageRef = ref(storage, path);
+      await uploadBytes(imageRef, imageFile);
+      const url = await getDownloadURL(imageRef);
+      const detectFn = httpsCallable(functions, "detectBrands");
+      const res: any = await detectFn({ imageUrl: url });
+
+      if (requestId !== aiAnalysisRequestId.current) return;
+
+      const detected = res.data?.detectedBrands || [];
+      const rawCandidates = res.data?.rawCandidates || [];
+
+      setPost((prev) => ({
+        ...prev,
+        autoDetectedBrands: detected,
+        rawCandidates,
+      }));
+
+      if (Array.isArray(detected) && detected.length > 0) {
+        dispatch(
+          showMessage(
+            "✅ AI detected " +
+              detected.length +
+              " brand" +
+              (detected.length > 1 ? "s" : "") +
+              " automatically.",
+          ),
+        );
+      } else if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
+        dispatch(
+          showMessage(
+            "🤖 AI found text in the image — you can review suggestions on the display-details step.",
+          ),
+        );
+      } else {
+        dispatch(
+          showMessage("AI could not find any text or brands in this image."),
+        );
+      }
+    } catch (err) {
+      if (requestId !== aiAnalysisRequestId.current) return;
+
+      console.error("🚨 AI detection failed:", err);
+      setPost((prev) => ({
+        ...prev,
+        autoDetectedBrands: [],
+        rawCandidates: [],
+      }));
+      dispatch(showMessage("AI detection failed — continuing without it."));
+    }
+  };
   // ----------------------------
   // 📸 HANDLE IMAGE UPLOAD
   // ----------------------------
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    const analysisRequestId = ++aiAnalysisRequestId.current;
     if (!file) {
       dispatch(showMessage("No file selected. Please choose an image."));
       return;
@@ -100,69 +158,24 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         );
       }
 
-      // Show preview
+      // Mark the image ready before starting optional AI work. This lets the
+      // user continue to store selection while brand suggestions load.
       const reader = new FileReader();
-      reader.onloadend = async () => {
+      reader.onloadend = () => {
         const preview = reader.result as string;
-        setPost((prev) => ({ ...prev, imageUrl: preview }));
+        setPost((prev) => ({
+          ...prev,
+          imageUrl: preview,
+          autoDetectedBrands: isAiEnabled ? undefined : [],
+          rawCandidates: [],
+        }));
         setSelectedFile(finalFile);
         dispatch(showMessage("Image selected successfully!"));
 
-        // ---------------------------------
-        // 🤖 AI DETECTION (optional)
-        // ---------------------------------
-        if (!post.aiEnabled) {
-          setPost((prev) => ({
-            ...prev,
-            autoDetectedBrands: [],
-            rawCandidates: [],
-          }));
-          return;
-        }
-
-        try {
-          const path = `tempUploads/${Date.now()}_${finalFile.name}`;
-          const imageRef = ref(storage, path);
-          await uploadBytes(imageRef, finalFile);
-          const url = await getDownloadURL(imageRef);
-          const detectFn = httpsCallable(functions, "detectBrands");
-          const res: any = await detectFn({ imageUrl: url });
-
-          const detected = res.data?.detectedBrands || [];
-          const rawCandidates = res.data?.rawCandidates || [];
-
-          setPost((prev) => ({
-            ...prev,
-            autoDetectedBrands: detected,
-            rawCandidates,
-          }));
-
-          // ✅ Improved message logic
-          if (Array.isArray(detected) && detected.length > 0) {
-            dispatch(
-              showMessage(
-                `✅ AI detected ${detected.length} brand${
-                  detected.length > 1 ? "s" : ""
-                } automatically.`
-              )
-            );
-          } else if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
-            dispatch(
-              showMessage(
-                "🤖 AI found text in the image — you can review suggestions on the next step."
-              )
-            );
-          } else {
-            dispatch(
-              showMessage("AI could not find any text or brands in this image.")
-            );
-          }
-        } catch (err) {
-          console.error("🚨 AI detection failed:", err);
-          dispatch(showMessage("AI detection failed — continuing without it."));
+        if (isAiEnabled) {
+          void analyzeBrandsInBackground(finalFile, analysisRequestId);
         }
       };
-
       reader.readAsDataURL(finalFile);
     } catch (err) {
       console.error("Error handling image:", err);
