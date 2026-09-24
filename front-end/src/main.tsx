@@ -9,7 +9,7 @@ import "./utils/firebase.ts";
 import { HelmetProvider } from "react-helmet-async";
 
 const savedTheme = localStorage.getItem("theme");
-const prefersDark = savedTheme === "dark";
+const prefersDark = savedTheme ? savedTheme === "dark" : true;
 
 // Apply theme attribute to body early
 document.body.setAttribute("data-theme", prefersDark ? "dark" : "light");

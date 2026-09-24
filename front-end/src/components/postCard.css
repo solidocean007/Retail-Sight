@@ -556,7 +556,30 @@
 
 /* Refined activity card surface, preserving every existing card action. */
 .memoized-post-card {
+  --feed-card-surface: #f8fbfd;
+  --feed-card-surface-soft: #edf4f8;
+  --feed-card-edge: rgba(27, 65, 95, 0.2);
+  --feed-card-edge-highlight: rgba(255, 255, 255, 0.92);
+  --feed-card-pattern: rgba(18, 76, 116, 0.035);
+  --feed-card-pattern-accent: rgba(151, 108, 39, 0.04);
+  --feed-card-shared: #eaf6fd;
+  --feed-card-shared-border: #cbddea;
+  --feed-card-image-bed: #e8eef3;
+  --feed-card-shadow: rgba(17, 42, 70, 0.13);
   padding: 0;
+}
+
+[data-theme="dark"] .memoized-post-card {
+  --feed-card-surface: #182433;
+  --feed-card-surface-soft: #111d2b;
+  --feed-card-edge: rgba(119, 180, 220, 0.34);
+  --feed-card-edge-highlight: rgba(210, 235, 250, 0.12);
+  --feed-card-pattern: rgba(160, 211, 242, 0.045);
+  --feed-card-pattern-accent: rgba(218, 180, 102, 0.045);
+  --feed-card-shared: #142a3b;
+  --feed-card-shared-border: #31516a;
+  --feed-card-image-bed: #0e1824;
+  --feed-card-shadow: rgba(0, 0, 0, 0.38);
 }
 
 .card-border {
@@ -564,18 +587,37 @@
   border-radius: 18px;
   background: linear-gradient(
     145deg,
-    rgba(22, 119, 200, 0.22),
-    rgba(7, 26, 47, 0.08)
+    var(--feed-card-edge-highlight),
+    var(--feed-card-edge) 45%,
+    color-mix(in srgb, var(--feed-card-edge) 45%, transparent)
   );
   box-shadow:
-    0 16px 42px rgba(17, 42, 70, 0.12),
-    0 2px 7px rgba(17, 42, 70, 0.07);
+    0 16px 42px var(--feed-card-shadow),
+    0 2px 7px color-mix(in srgb, var(--feed-card-shadow) 58%, transparent);
 }
 
 .post-card-container {
   border-radius: 17px;
-  background: var(--post-card-background);
-  background-image: none;
+  background-color: var(--feed-card-surface);
+  background-image:
+    radial-gradient(
+      circle at 1px 1px,
+      var(--feed-card-pattern) 0.75px,
+      transparent 0.9px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 8px,
+      var(--feed-card-pattern-accent) 8px 9px,
+      transparent 9px 17px
+    ),
+    linear-gradient(
+      145deg,
+      var(--feed-card-surface),
+      var(--feed-card-surface-soft)
+    );
+  background-size: 7px 7px, 24px 24px, auto;
+  background-blend-mode: normal, soft-light, normal;
   box-shadow: none;
   animation: none;
 }
@@ -608,9 +650,9 @@
 }
 
 .shared-post-context {
-  border: 1px solid #cbddea;
+  border: 1px solid var(--feed-card-shared-border);
   border-radius: 16px 16px 0 0;
-  background: #eaf6fd;
+  background: var(--feed-card-shared);
 }
 
 .brands-list {
@@ -630,7 +672,7 @@
 
 .image-aspect-wrapper {
   border-radius: 12px;
-  background: #e8eef3;
+  background: var(--feed-card-image-bed);
 }
 
 .post-card img.post-image {
