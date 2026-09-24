@@ -204,8 +204,13 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 
   return (
     <>
-      <div className="header-bar">
-        <div className="website-title" onClick={() => navigate("/")}>
+      <header className="header-bar">
+        <button
+          type="button"
+          className="website-title"
+          onClick={() => navigate("/")}
+          aria-label="Go to Displaygram home"
+        >
           <div className="title-and-version">
             <img
               src={
@@ -250,7 +255,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               <p className="up-to-date-message">✅ App is up to date</p>
             )}
           </div>
-        </div>
+        </button>
 
         {!currentUser ? (
           <button onClick={goToLogin}>Login</button>
@@ -328,7 +333,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             </div>
           </div>
         )}
-      </div>
+      </header>
     </>
   );
 };

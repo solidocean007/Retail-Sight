@@ -553,3 +553,131 @@
     max-width: 100%;
   }
 }
+
+/* Refined activity card surface, preserving every existing card action. */
+.memoized-post-card {
+  padding: 0;
+}
+
+.card-border {
+  padding: 1px;
+  border-radius: 18px;
+  background: linear-gradient(
+    145deg,
+    rgba(22, 119, 200, 0.22),
+    rgba(7, 26, 47, 0.08)
+  );
+  box-shadow:
+    0 16px 42px rgba(17, 42, 70, 0.12),
+    0 2px 7px rgba(17, 42, 70, 0.07);
+}
+
+.post-card-container {
+  border-radius: 17px;
+  background: var(--post-card-background);
+  background-image: none;
+  box-shadow: none;
+  animation: none;
+}
+
+.post-header {
+  margin: 0;
+  padding: 0.85rem 1rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-color) 10%, transparent);
+}
+
+.view-box > p {
+  color: var(--primary-blue);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.store-name-number h3 {
+  color: var(--text-color);
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
+}
+
+.store-address-box h6,
+.store-name-number h5 {
+  color: var(--text-color);
+  font-weight: 550;
+  opacity: 0.62;
+}
+
+.shared-post-context {
+  border: 1px solid #cbddea;
+  border-radius: 16px 16px 0 0;
+  background: #eaf6fd;
+}
+
+.brands-list {
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0.75rem 1rem 0.15rem;
+}
+
+.like-quantity-row {
+  padding: 0.65rem 1rem 0.3rem;
+}
+
+.activity-post-image-box {
+  width: calc(100% - 2rem);
+  margin: 0.35rem 1rem 0;
+}
+
+.image-aspect-wrapper {
+  border-radius: 12px;
+  background: #e8eef3;
+}
+
+.post-card img.post-image {
+  margin-bottom: 0;
+  border-radius: 12px;
+}
+
+.comment-button-container {
+  justify-content: flex-start;
+  padding: 0.6rem 1rem 0;
+}
+
+.comment-button-container button {
+  width: auto;
+  height: 2rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-blue) 10%, transparent);
+  color: var(--primary-blue);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.company-goal-banner,
+.gallo-goal-banner {
+  border-radius: 0;
+}
+
+@media (max-width: 600px) {
+  .card-border,
+  .post-card-container {
+    border-radius: 15px;
+  }
+
+  .post-header {
+    padding-inline: 0.85rem;
+  }
+
+  .activity-post-image-box {
+    width: calc(100% - 1.5rem);
+    margin-inline: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card-container,
+  .shared-unread-badge {
+    animation: none;
+  }
+}

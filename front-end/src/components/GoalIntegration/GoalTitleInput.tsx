@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "./GoalTitleInput.css";
+import "./goalTitleInput.css";
 
 const MAX_LENGTH = 70;
 const SOFT_LIMIT = 50;

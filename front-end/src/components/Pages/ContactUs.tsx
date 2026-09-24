@@ -1,5 +1,5 @@
 // import React from 'react';
-import "./ContactUs.css";
+import "./contactUs.css";
 import { ContactUsPageHelmet } from "../../utils/helmetConfigurations";
 import React, { useState } from "react";
 import { httpsCallable } from "@firebase/functions";

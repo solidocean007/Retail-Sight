@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from "react";
 import Modal from "@mui/material/Modal";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../utils/store";
-import "./CommentModal.css";
+import "./commentModal.css";
 import { onUserNameClick } from "../utils/PostLogic/onUserNameClick";
 import { CommentType, PostType } from "../utils/types";
 
