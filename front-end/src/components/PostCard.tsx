@@ -41,6 +41,7 @@ import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import LinkShareModal from "./LinkShareModal";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
+import { createPostComment } from "../utils/PostLogic/createPostComment";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
 import { FeedImageSet } from "./PostCardRenderer";
 import ExportDisplayCardButton from "./SocialShare/ExportDisplayCardButton";
@@ -260,6 +261,39 @@ const PostCard: React.FC<PostCardProps> = ({
     } catch (error) {
       console.error("Failed to delete comment:", error);
     }
+  };
+
+  const handleReplyComment = async (
+    parentComment: CommentType,
+    text: string,
+  ) => {
+    if (!user) return undefined;
+
+    const activePost = updatedPost || post;
+    const reply = await createPostComment({
+      post: activePost,
+      user,
+      text,
+      parentComment,
+    });
+    const nextPost = {
+      ...activePost,
+      commentCount: (activePost.commentCount || 0) + 1,
+    };
+
+    setComments((currentComments) => [...currentComments, reply]);
+    dispatch(updatePost(nextPost));
+
+    try {
+      await updatePostInIndexedDB(nextPost);
+      await updatePostWithNewTimestamp(post.id);
+    } catch (error) {
+      // The Firestore batch already succeeded, so keep the reply visible and
+      // let a later sync repair local cache/timestamp state.
+      console.error("Reply saved, but local post sync failed:", error);
+    }
+
+    return reply.commentId;
   };
 
   const handleLikeComment = async (
@@ -615,6 +649,7 @@ const PostCard: React.FC<PostCardProps> = ({
         comments={comments}
         onLikeComment={handleLikeComment}
         onDeleteComment={handleDeleteComment}
+        onReplyComment={handleReplyComment}
         focusCommentId={focusCommentId}
       />
       <ImageModal

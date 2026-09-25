@@ -1,0 +1,75 @@
+.comment-analytics-preview {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: var(--main-background);
+  color: var(--text-color);
+}
+
+.comment-analytics-preview > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1400px;
+  margin: 0 auto 1rem;
+}
+
+.comment-analytics-preview > header span {
+  color: var(--primary-blue, #3b82f6);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.comment-analytics-preview > header h1 {
+  margin: 0.25rem 0;
+  font-size: clamp(1.25rem, 3vw, 1.8rem);
+}
+
+.comment-analytics-preview > header p {
+  margin: 0;
+  color: var(--text-muted, #667085);
+}
+
+.comment-analytics-preview > .developer-messaging-card {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.comment-analytics-preview-theme {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.25));
+  border-radius: 999px;
+  background: var(--input-background);
+}
+
+.comment-analytics-preview-theme button {
+  min-height: 1.9rem;
+  padding: 0 0.75rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.comment-analytics-preview-theme button.active {
+  background: var(--primary-blue, #3b82f6);
+  color: white;
+}
+
+@media (max-width: 700px) {
+  .comment-analytics-preview {
+    padding: 0.75rem;
+  }
+
+  .comment-analytics-preview > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

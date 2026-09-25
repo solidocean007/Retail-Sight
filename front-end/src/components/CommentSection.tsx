@@ -2,15 +2,13 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../utils/store";
-import { CommentType, PostWithID } from "../utils/types";
-import { Timestamp, increment } from "firebase/firestore";
-import { doc, collection, addDoc, updateDoc } from "firebase/firestore";
-import { db } from "../utils/firebase";
+import { PostWithID } from "../utils/types";
 import "./commentSection.css";
 import { updatePost } from "../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
+import { createPostComment } from "../utils/PostLogic/createPostComment";
 
 interface CommentProps {
   post: PostWithID;
@@ -21,6 +19,9 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
   const user = useSelector((state: RootState) => state.user.currentUser);
   const userFullName = user ? `${user.firstName} ${user.lastName}` : "";
   const dispatch = useAppDispatch();
+  const storedPost = useSelector((state: RootState) =>
+    state.posts.posts.find((candidate) => candidate.id === post.id),
+  );
 
   const [newComment, setNewComment] = useState("");
 
@@ -28,62 +29,19 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
     if (!newComment.trim() || !user) return;
 
     try {
-      // 1️⃣ Build comment object
-      const commentToAdd: CommentType = {
-        text: newComment.trim(),
-        userName: userFullName,
-        userId: user.uid,
-        postId: post.id,
-        timestamp: Timestamp.now(),
-        likes: [],
-      };
-
-      // 2️⃣ Add comment → backend Cloud Function will auto-notify
-      const docRef = await addDoc(collection(db, "comments"), commentToAdd);
-
-      // 3️⃣ Store commentId
-      await updateDoc(docRef, { commentId: docRef.id });
-
-      // 2️⃣ Notify post owner via activityEvents
-      try {
-        const targetUserIds: string[] = [];
-
-        if (post.postUser?.uid && post.postUser.uid !== user.uid) {
-          targetUserIds.push(post.postUser.uid);
-        }
-
-        if (targetUserIds.length > 0) {
-          await addDoc(collection(db, "activityEvents"), {
-            type: "post.comment",
-            postId: post.id,
-            commentId: docRef.id,
-            actorUserId: user.uid,
-            actorName: userFullName,
-            commentText: newComment.trim(), // 👈 add this
-            targetUserIds,
-            createdAt: Timestamp.now(),
-          });
-        }
-      } catch (err) {
-        console.error("Failed writing comment activity event:", err);
-      }
-
-      // 4️⃣ Update post.commentCount
-      const postRef = doc(db, "posts", post.id);
-      await updateDoc(postRef, { commentCount: increment(1) });
+      const activePost = storedPost || post;
+      await createPostComment({ post: activePost, user, text: newComment });
 
       const updatedPost = {
-        ...post,
-        commentCount: post.commentCount + 1,
+        ...activePost,
+        commentCount: (activePost.commentCount || 0) + 1,
       };
 
       dispatch(updatePost(updatedPost));
       await updatePostInIndexedDB(updatedPost);
 
-      // 5️⃣ Update timestamp for feed ordering
       await updatePostWithNewTimestamp(post.id);
 
-      // 6️⃣ Reset form
       setNewComment("");
     } catch (error) {
       console.error("Failed to add comment:", error);
