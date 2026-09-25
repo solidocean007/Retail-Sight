@@ -46,10 +46,23 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <HelmetProvider>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </HelmetProvider>,
-);
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+const renderWithProviders = (content: React.ReactNode) =>
+  root.render(
+    <HelmetProvider>
+      <Provider store={store}>{content}</Provider>
+    </HelmetProvider>,
+  );
+
+if (
+  import.meta.env.DEV &&
+  window.location.pathname === "/__dev/comment-replies"
+) {
+  void import("./dev/CommentReplyPreview.tsx").then(
+    ({ default: CommentReplyPreview }) => {
+      renderWithProviders(<CommentReplyPreview />);
+    },
+  );
+} else {
+  renderWithProviders(<App />);
+}

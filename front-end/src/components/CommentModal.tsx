@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "@mui/material/Modal";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../utils/store";
@@ -13,6 +13,10 @@ interface CommentModalProps {
   comments: CommentType[];
   onLikeComment: (comment: CommentType, likes: string[] | undefined) => void;
   onDeleteComment: (commentId: string) => void;
+  onReplyComment: (
+    comment: CommentType,
+    text: string,
+  ) => Promise<string | undefined>;
   focusCommentId?: string | null;
 }
 
@@ -47,10 +51,14 @@ const CommentModal: React.FC<CommentModalProps> = ({
   comments,
   onLikeComment,
   onDeleteComment,
+  onReplyComment,
   focusCommentId = null,
 }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const commentRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -65,8 +73,39 @@ const CommentModal: React.FC<CommentModalProps> = ({
       });
   }, [comments]);
 
+  const commentThreads = useMemo(() => {
+    const visibleIds = new Set(
+      visibleComments.map((comment) => comment.commentId),
+    );
+    const repliesByRoot = new Map<string, CommentType[]>();
+    const roots: CommentType[] = [];
+
+    visibleComments.forEach((comment) => {
+      const rootId = comment.rootCommentId;
+
+      if (rootId && visibleIds.has(rootId)) {
+        const replies = repliesByRoot.get(rootId) || [];
+        replies.push(comment);
+        repliesByRoot.set(rootId, replies);
+        return;
+      }
+
+      // Legacy comments and replies whose parent was deleted remain visible.
+      roots.push(comment);
+    });
+
+    return roots.map((comment) => ({
+      comment,
+      replies: repliesByRoot.get(comment.commentId!) || [],
+    }));
+  }, [visibleComments]);
+
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setReplyTargetId(null);
+      setReplyText("");
+      return;
+    }
 
     const timeout = window.setTimeout(() => {
       if (focusCommentId && commentRefs.current[focusCommentId]) {
@@ -87,6 +126,163 @@ const CommentModal: React.FC<CommentModalProps> = ({
   }, [isOpen, focusCommentId, visibleComments.length]);
 
   if (!currentUser?.uid) return null;
+
+  const openReplyComposer = (comment: CommentType) => {
+    setReplyTargetId(comment.commentId || null);
+    setReplyText("");
+  };
+
+  const closeReplyComposer = () => {
+    setReplyTargetId(null);
+    setReplyText("");
+  };
+
+  const submitReply = async (comment: CommentType) => {
+    if (!replyText.trim() || isSubmittingReply) return;
+
+    try {
+      setIsSubmittingReply(true);
+      const replyId = await onReplyComment(comment, replyText);
+      closeReplyComposer();
+
+      if (replyId) {
+        window.setTimeout(() => {
+          commentRefs.current[replyId]?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Failed to reply to comment:", error);
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  const renderComment = (comment: CommentType, isReply = false) => {
+    const commentId = comment.commentId!;
+    const likedByUser = comment.likes?.includes(currentUser.uid);
+    const isOwnComment = currentUser.uid === comment.userId;
+    const isFocused = focusCommentId === commentId;
+    const isReplying = replyTargetId === commentId;
+
+    return (
+      <div
+        key={commentId}
+        className={`comment-entry ${isReply ? "comment-entry-reply" : ""}`}
+      >
+        <article
+          ref={(el) => {
+            commentRefs.current[commentId] = el;
+          }}
+          className={`comment-item ${isReply ? "comment-reply-item" : ""} ${
+            isFocused ? "comment-item-focused" : ""
+          }`}
+        >
+          <div className="comment-main">
+            {isReply && comment.replyToUserName && (
+              <small className="comment-replying-to">
+                Replying to {comment.replyToUserName}
+              </small>
+            )}
+
+            <p className="comment-copy">
+              <button
+                type="button"
+                className="comment-user-name"
+                onClick={() =>
+                  comment.userId && onUserNameClick(comment.userId, dispatch)
+                }
+              >
+                {comment.userName}
+              </button>
+
+              <span className="comment-text">{comment.text}</span>
+            </p>
+
+            <small className="comment-timestamp">
+              {formatCommentTime(comment.timestamp)}
+            </small>
+          </div>
+
+          <div className="comment-actions">
+            <button
+              type="button"
+              onClick={() => onLikeComment(comment, comment.likes)}
+              className={`comment-action-btn like-button ${
+                likedByUser ? "liked" : ""
+              }`}
+              aria-label={likedByUser ? "Unlike comment" : "Like comment"}
+            >
+              <span>{likedByUser ? "❤️" : "🤍"}</span>
+              <span>{comment.likes?.length || 0}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openReplyComposer(comment)}
+              className="comment-action-btn reply-button"
+              aria-label={`Reply to ${comment.userName}`}
+            >
+              Reply
+            </button>
+
+            {isOwnComment && (
+              <button
+                type="button"
+                onClick={() => onDeleteComment(commentId)}
+                className="comment-action-btn delete-button"
+                aria-label="Delete comment"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+        </article>
+
+        {isReplying && (
+          <form
+            className="comment-reply-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitReply(comment);
+            }}
+          >
+            <label htmlFor={`reply-${commentId}`}>
+              Reply to {comment.userName}
+            </label>
+            <div className="comment-reply-controls">
+              <input
+                id={`reply-${commentId}`}
+                type="text"
+                value={replyText}
+                onChange={(event) => setReplyText(event.target.value)}
+                placeholder="Write a reply..."
+                autoFocus
+                maxLength={1000}
+              />
+              <button
+                type="button"
+                className="comment-reply-cancel"
+                onClick={closeReplyComposer}
+                disabled={isSubmittingReply}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="comment-reply-submit"
+                disabled={!replyText.trim() || isSubmittingReply}
+              >
+                {isSubmittingReply ? "Sending..." : "Reply"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Modal
@@ -122,70 +318,20 @@ const CommentModal: React.FC<CommentModalProps> = ({
               <p>No comments yet.</p>
             </div>
           ) : (
-            visibleComments.map((comment) => {
-              const commentId = comment.commentId!;
-              const likedByUser = comment.likes?.includes(currentUser.uid);
-              const isOwnComment = currentUser.uid === comment.userId;
-              const isFocused = focusCommentId === commentId;
+            commentThreads.map(({ comment, replies }) => (
+              <section className="comment-thread" key={comment.commentId}>
+                {renderComment(comment)}
 
-              return (
-                <article
-                  key={commentId}
-                  ref={(el) => {
-                    commentRefs.current[commentId] = el;
-                  }}
-                  className={`comment-item ${isFocused ? "comment-item-focused" : ""}`}
-                >
-                  <div className="comment-main">
-                    <p className="comment-copy">
-                      <button
-                        type="button"
-                        className="comment-user-name"
-                        onClick={() =>
-                          comment.userId &&
-                          onUserNameClick(comment.userId, dispatch)
-                        }
-                      >
-                        {comment.userName}
-                      </button>
-
-                      <span className="comment-text">{comment.text}</span>
-                    </p>
-
-                    <small className="comment-timestamp">
-                      {formatCommentTime(comment.timestamp)}
-                    </small>
+                {replies.length > 0 && (
+                  <div
+                    className="comment-replies"
+                    aria-label={`Replies to ${comment.userName}`}
+                  >
+                    {replies.map((reply) => renderComment(reply, true))}
                   </div>
-
-                  <div className="comment-actions">
-                    <button
-                      type="button"
-                      onClick={() => onLikeComment(comment, comment.likes)}
-                      className={`comment-action-btn like-button ${
-                        likedByUser ? "liked" : ""
-                      }`}
-                      aria-label={
-                        likedByUser ? "Unlike comment" : "Like comment"
-                      }
-                    >
-                      <span>{likedByUser ? "❤️" : "🤍"}</span>
-                      <span>{comment.likes?.length || 0}</span>
-                    </button>
-
-                    {isOwnComment && (
-                      <button
-                        type="button"
-                        onClick={() => onDeleteComment(commentId)}
-                        className="comment-action-btn delete-button"
-                        aria-label="Delete comment"
-                      >
-                        🗑️
-                      </button>
-                    )}
-                  </div>
-                </article>
-              );
-            })
+                )}
+              </section>
+            ))
           )}
         </div>
       </section>

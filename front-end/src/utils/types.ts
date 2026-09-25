@@ -617,6 +617,12 @@ export interface CommentType {
   postId: string;
   timestamp: Timestamp | undefined;
   likes: string[];
+  /** Direct comment this reply targets. Missing for legacy/top-level comments. */
+  parentCommentId?: string;
+  /** Top-level comment used to render a flat, readable reply thread. */
+  rootCommentId?: string;
+  replyToUserId?: string;
+  replyToUserName?: string;
 }
 
 export interface LocationOptions {

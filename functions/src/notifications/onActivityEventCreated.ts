@@ -9,6 +9,7 @@ const APP_ORIGIN = "https://displaygram.com";
 type ActivityEventType =
   | "post.like"
   | "post.comment"
+  | "post.commentReply"
   | "post.commentLike"
   | "post.mention"
   | "goal.assignment"
@@ -137,6 +138,13 @@ export const onActivityEventCreated = onDocumentCreated(
         message = data.commentText
           ? String(data.commentText).slice(0, 120)
           : "Tap to view the comment.";
+        break;
+
+      case "post.commentReply":
+        title = `${safeActorName} replied to your comment`;
+        message = data.commentText
+          ? String(data.commentText).slice(0, 120)
+          : "Tap to view the reply.";
         break;
 
       case "post.commentLike":
@@ -298,7 +306,8 @@ export const onActivityEventCreated = onDocumentCreated(
     if (postContext) {
       const isPlaceholder =
         message === "Tap to view the post." ||
-        message === "Tap to view the comment.";
+        message === "Tap to view the comment." ||
+        message === "Tap to view the reply.";
       message = isPlaceholder ? postContext : `${message} — ${postContext}`;
     }
 
@@ -349,7 +358,7 @@ export const onActivityEventCreated = onDocumentCreated(
     // -----------------------------
     // Email delivery for comments
     // -----------------------------
-    if (type === "post.comment") {
+    if (type === "post.comment" || type === "post.commentReply") {
       const emailRecipients = await getUsersWithEmailSettingEnabled(
         cleanedTargetUserIds,
         "emailComments"
