@@ -80,6 +80,7 @@ const UserHomePage = () => {
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
   const [activeFeedType, setActiveFeedType] =
     useState<"company" | "shared">("company");
+  const [showFeedContext, setShowFeedContext] = useState(true);
   const [activeCompanyPostSet, setActiveCompanyPostSet] = useState<
     "posts" | "filteredPosts"
   >("posts");
@@ -131,6 +132,21 @@ const displayFetchedAt =
 
   const displayCount =
     activeFeedType === "shared" ? filteredSharedPostCount : filteredCount;
+
+  const feedContextLabel =
+    activeFeedType === "shared"
+      ? "Posts shared with your company"
+      : "Posts created by your company";
+
+  useEffect(() => {
+    setShowFeedContext(true);
+
+    const timer = window.setTimeout(() => {
+      setShowFeedContext(false);
+    }, 4000);
+
+    return () => window.clearTimeout(timer);
+  }, [activeFeedType]);
 
   useEffect(() => {
     const flag = localStorage.getItem("showOnboardingModal");
@@ -442,14 +458,23 @@ const displayFetchedAt =
           <div className="activity-feed-container">
             <div className="feed-introduction">
               <div>
-                <p className="feed-introduction-eyebrow">Field activity</p>
                 <h1>Recent displays</h1>
                 <p>See what your team is building across the market.</p>
               </div>
               <span className="feed-live-indicator">Live workspace</span>
             </div>
             {sharedPosts.length > 0 && (
-              <div className="feed-toolbar">{renderFeedToggle()}</div>
+              <div className="feed-toolbar">
+                <span
+                  className={`feed-context-message ${
+                    showFeedContext ? "visible" : ""
+                  }`}
+                  aria-live="polite"
+                >
+                  {feedContextLabel}
+                </span>
+                {renderFeedToggle()}
+              </div>
             )}
             {activeFeedType === "shared" ? (
               <SharedFeed
