@@ -3,6 +3,8 @@ import * as admin from "firebase-admin";
 import { onRequest } from "firebase-functions/https";
 
 const db = admin.firestore();
+const APP_ORIGIN = "https://displaygram.com";
+const DEFAULT_NOTIFICATION_LINK = `${APP_ORIGIN}/notifications`;
 
 type SendEmailNotificationInput = {
   title: string;
@@ -10,6 +12,17 @@ type SendEmailNotificationInput = {
   link?: string | null;
   notificationId: string;
   recipientUserIds: string[];
+};
+
+const getSafeAppRedirect = (value: unknown): string | null => {
+  if (typeof value !== "string" || !value) return null;
+
+  try {
+    const parsed = new URL(value);
+    return parsed.origin === APP_ORIGIN ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -73,12 +86,16 @@ export async function sendEmailNotificationCore(
     emailedUserIds.push(uid);
 
     // Trackable redirect link
+    const safeFallbackLink = getSafeAppRedirect(link);
     const trackingUrl =
       "https://us-central1-retail-sight.cloudfunctions.net/trackEmailClick" +
       "?notificationId=" +
       encodeURIComponent(notificationId) +
       "&uid=" +
-      encodeURIComponent(uid);
+      encodeURIComponent(uid) +
+      (safeFallbackLink
+        ? "&redirect=" + encodeURIComponent(safeFallbackLink)
+        : "");
 
     // ALWAYS include the tracked link — without it, email click
     // analytics are impossible. trackEmailClick redirects to the
@@ -148,13 +165,16 @@ export async function sendEmailNotificationCore(
  */
 export const trackEmailClick = onRequest(async (req, res) => {
   try {
-    const { notificationId, uid } = req.query as {
+    const { notificationId, uid, redirect } = req.query as {
       notificationId?: string;
       uid?: string;
+      redirect?: string;
     };
+    const fallbackLink =
+      getSafeAppRedirect(redirect) ?? DEFAULT_NOTIFICATION_LINK;
 
     if (!notificationId || !uid) {
-      return res.redirect("https://displaygram.com/notifications");
+      return res.redirect(fallbackLink);
     }
 
     const perUserId = `${notificationId}_${uid}`;
@@ -164,7 +184,7 @@ export const trackEmailClick = onRequest(async (req, res) => {
 
     const snap = await notifRef.get();
     if (!snap.exists) {
-      return res.redirect("https://displaygram.com/notifications");
+      return res.redirect(fallbackLink);
     }
 
     const data = snap.data();
@@ -194,9 +214,9 @@ export const trackEmailClick = onRequest(async (req, res) => {
 
     const link = data?.link;
 
-    return res.redirect(link || "https://displaygram.com/notifications");
+    return res.redirect(link || fallbackLink);
   } catch (err) {
     console.error("trackEmailClick error:", err);
-    return res.redirect("https://displaygram.com/notifications");
+    return res.redirect(DEFAULT_NOTIFICATION_LINK);
   }
 });

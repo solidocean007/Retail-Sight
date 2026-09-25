@@ -46,10 +46,28 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <HelmetProvider>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </HelmetProvider>,
-);
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+const renderWithProviders = (content: React.ReactNode) =>
+  root.render(
+    <HelmetProvider>
+      <Provider store={store}>{content}</Provider>
+    </HelmetProvider>,
+  );
+
+if (import.meta.env.DEV && window.location.pathname.startsWith("/__dev/")) {
+  if (window.location.pathname === "/__dev/comment-analytics") {
+    void import("./dev/CommentAnalyticsPreview.tsx").then(
+      ({ default: CommentAnalyticsPreview }) => {
+        renderWithProviders(<CommentAnalyticsPreview />);
+      },
+    );
+  } else {
+    void import("./dev/CommentReplyPreview.tsx").then(
+      ({ default: CommentReplyPreview }) => {
+        renderWithProviders(<CommentReplyPreview />);
+      },
+    );
+  }
+} else {
+  renderWithProviders(<App />);
+}

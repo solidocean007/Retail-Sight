@@ -5,6 +5,7 @@ import DeveloperNotificationForm from "./DeveloperNotificationForm";
 import { selectCompaniesWithUsers } from "../../Slices/allCompaniesSlice";
 import { selectUser } from "../../Slices/userSlice";
 import DeveloperNotificationsTable from "./DeveloperNotificationsTable";
+import CommentEngagementAnalytics from "./CommentEngagementAnalytics";
 import "./developerMessaging.css";
 
 const DeveloperMessaging = () => {
@@ -35,6 +36,10 @@ const DeveloperMessaging = () => {
           />
         </section>
       </div>
+
+      <section className="developer-messaging-card developer-comment-analytics-card">
+        <CommentEngagementAnalytics />
+      </section>
     </section>
   );
 };
