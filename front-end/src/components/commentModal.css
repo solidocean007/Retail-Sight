@@ -500,7 +500,7 @@
   }
 
   .comment-actions {
-    justify-content: start;
+    justify-content: end;
   }
 
   .comment-reply-form {
