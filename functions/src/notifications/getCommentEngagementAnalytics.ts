@@ -5,8 +5,12 @@ if (!admin.apps.length) admin.initializeApp();
 
 const db = admin.firestore();
 const COMMENT_SCAN_LIMIT = 10000;
+const DETAIL_LIMIT = 100;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const ALLOWED_WINDOWS = new Set([30, 90, 365]);
+const DETAIL_KINDS = new Set(["comment", "like", "reply"]);
+
+type EngagementDetailKind = "comment" | "like" | "reply";
 
 type UserEngagement = {
   commentsAuthored: number;
@@ -47,6 +51,9 @@ const toMillis = (value: unknown): number | null => {
 
   return null;
 };
+
+const toStringValue = (value: unknown): string =>
+  typeof value === "string" ? value.trim() : "";
 
 /**
  * Developer-only adoption report for recent comment activity.
@@ -235,5 +242,141 @@ export const getCommentEngagementAnalytics = onCall(
     });
 
     return data;
+  }
+);
+
+/**
+ * Developer-only drill-down for one user's recent comment engagement.
+ *
+ * Like records are current-state only. They identify the comment that is
+ * currently liked, but legacy comment documents do not contain a like time.
+ */
+export const getUserCommentEngagementDetails = onCall(
+  { cors: true },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Auth required");
+    }
+
+    const callerSnap = await db.doc(`users/${request.auth.uid}`).get();
+    const callerRole = callerSnap.data()?.role;
+
+    if (!["developer", "super-admin"].includes(callerRole)) {
+      throw new HttpsError("permission-denied", "Not allowed");
+    }
+
+    const targetUid = toStringValue(request.data?.uid);
+    if (!targetUid || targetUid.length > 128) {
+      throw new HttpsError("invalid-argument", "A valid user id is required");
+    }
+
+    const requestedDays = Number(request.data?.days ?? 90);
+    const days = ALLOWED_WINDOWS.has(requestedDays) ? requestedDays : 90;
+    const requestedKind = toStringValue(request.data?.kind);
+    const kind: EngagementDetailKind = DETAIL_KINDS.has(requestedKind)
+      ? (requestedKind as EngagementDetailKind)
+      : "comment";
+    const since = admin.firestore.Timestamp.fromMillis(
+      Date.now() - days * 24 * 60 * 60 * 1000
+    );
+
+    const commentsSnap = await db
+      .collection("comments")
+      .where("timestamp", ">=", since)
+      .orderBy("timestamp", "desc")
+      .limit(COMMENT_SCAN_LIMIT)
+      .select(
+        "userId",
+        "userName",
+        "text",
+        "postId",
+        "timestamp",
+        "parentCommentId",
+        "rootCommentId",
+        "replyToUserName",
+        "likes"
+      )
+      .get();
+
+    const matches = commentsSnap.docs.filter((commentSnap) => {
+      const comment = commentSnap.data();
+      const isReply = Boolean(comment.parentCommentId || comment.rootCommentId);
+
+      if (kind === "like") {
+        return (
+          Array.isArray(comment.likes) && comment.likes.includes(targetUid)
+        );
+      }
+
+      const isTargetAuthor = toStringValue(comment.userId) === targetUid;
+      return kind === "reply"
+        ? isTargetAuthor && isReply
+        : isTargetAuthor && !isReply;
+    });
+
+    const selectedComments = matches.slice(0, DETAIL_LIMIT);
+    const postIds = Array.from(
+      new Set(
+        selectedComments
+          .map((commentSnap) => toStringValue(commentSnap.data().postId))
+          .filter(Boolean)
+      )
+    );
+    const postSnaps = await Promise.all(
+      postIds.map((postId) => db.doc(`posts/${postId}`).get())
+    );
+    const postsById = new Map(
+      postSnaps.map((postSnap) => [postSnap.id, postSnap.data()])
+    );
+
+    const details = selectedComments.map((commentSnap) => {
+      const comment = commentSnap.data();
+      const postId = toStringValue(comment.postId);
+      const post = postsById.get(postId);
+      const postAccount = post?.account as Record<string, unknown> | undefined;
+      const commentCreatedAt = toMillis(comment.timestamp);
+      const accountName =
+        toStringValue(post?.accountName) ||
+        toStringValue(postAccount?.accountName);
+      const accountAddress =
+        toStringValue(post?.accountAddress) ||
+        toStringValue(post?.streetAddress) ||
+        toStringValue(postAccount?.accountAddress) ||
+        toStringValue(postAccount?.streetAddress);
+      const postAuthorName =
+        toStringValue(post?.postUserFullName) ||
+        [post?.postUserFirstName, post?.postUserLastName]
+          .map(toStringValue)
+          .filter(Boolean)
+          .join(" ");
+
+      return {
+        kind,
+        commentId: commentSnap.id,
+        postId,
+        text: toStringValue(comment.text),
+        commentAuthorName: toStringValue(comment.userName),
+        replyToUserName: toStringValue(comment.replyToUserName),
+        commentCreatedAt,
+        activityAt: kind === "like" ? null : commentCreatedAt,
+        accountName,
+        accountAddress,
+        postDescription: toStringValue(post?.description),
+        postAuthorName,
+        postAvailable: Boolean(post),
+      };
+    });
+
+    return {
+      uid: targetUid,
+      kind,
+      days,
+      scannedComments: commentsSnap.size,
+      totalMatched: matches.length,
+      truncated:
+        matches.length > selectedComments.length ||
+        commentsSnap.size === COMMENT_SCAN_LIMIT,
+      details,
+    };
   }
 );

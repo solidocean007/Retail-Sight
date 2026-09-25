@@ -42,13 +42,18 @@ Developer Dashboard → Messaging now includes a developer-only adoption report:
 - active commenters, current comment likers, and repliers;
 - a default “Needs outreach” user list with name, company, role, and email;
 - 30-day, 90-day, and 12-month windows;
-- user/company/email search and engaged/outreach filters.
+- user/company/email search and engaged/outreach filters;
+- clickable comment, like, and reply totals with a developer-only detail drawer
+  showing the comment text, reply target, post/store context, and a focused
+  “Open post” action.
 
 The callable scans at most 10,000 comments in the selected window and caches a
 result for five minutes per warm function instance. Internal developer,
 pending, inactive, and deleted accounts are excluded from outreach counts.
 Because legacy comment likes do not have their own timestamps, “Likes” means
-current likes on comments created inside the selected window.
+current likes on comments created inside the selected window. The detail view
+shows the comment creation time for these likes and explicitly avoids presenting
+it as the time the user liked the comment.
 
 ## Firestore integrity
 
