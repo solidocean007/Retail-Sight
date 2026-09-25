@@ -208,7 +208,7 @@
 
 .comment-actions {
   display: grid;
-  grid-template-columns: 2.7rem 1.85rem;
+  grid-template-columns: 3rem 1.85rem;
   grid-template-areas:
     "like delete"
     "reply reply";
@@ -239,6 +239,12 @@
 
 .comment-actions .like-button {
   grid-area: like;
+  width: 100%;
+  padding: 0 0.45rem;
+  border: 1px solid
+    color-mix(in srgb, var(--text-color) 22%, transparent);
+  justify-content: center;
+  gap: 0.3rem;
 }
 
 .reply-button {
@@ -278,6 +284,40 @@
   border-color: #93c5fd;
   background: #1d4ed8;
   color: #ffffff;
+}
+
+[data-theme="dark"] .comment-item {
+  border-color: #334155;
+  background: #263244;
+}
+
+[data-theme="dark"] .comment-reply-item {
+  border-color: #315077;
+  background: #243b57;
+}
+
+[data-theme="dark"] .comment-user-name {
+  color: #7dd3fc;
+}
+
+[data-theme="dark"] .comment-replying-to {
+  color: #93c5fd;
+  opacity: 1;
+}
+
+[data-theme="dark"] .comment-actions .like-button {
+  border-color: #526278;
+  background: #344258;
+}
+
+[data-theme="dark"] .comment-actions .like-button:hover {
+  border-color: #71839c;
+  background: #41516a;
+}
+
+[data-theme="dark"] .comment-actions .like-button.liked {
+  border-color: #be5b76;
+  background: #532b3a;
 }
 
 .comment-action-btn:hover {
