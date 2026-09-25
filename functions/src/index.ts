@@ -89,7 +89,10 @@ import { createDeveloperNotification } from "./notifications/createDeveloperNoti
 import { processScheduledDeveloperNotifications } from "./notifications/processScheduledDeveloperNotifications";
 import { updateSystemNotificationSchedule } from "./notifications/updateSystemNotificationSchedule";
 import { getNotificationAnalytics } from "./notifications/getNotificationAnalytics";
-import { getCommentEngagementAnalytics } from "./notifications/getCommentEngagementAnalytics";
+import {
+  getCommentEngagementAnalytics,
+  getUserCommentEngagementDetails,
+} from "./notifications/getCommentEngagementAnalytics";
 import { trackEmailClick } from "./notifications/sendEmailNotificationCore";
 
 import { backfillSupplierGoalPosts } from "./backFillISupplierGoalPosts";
@@ -200,6 +203,7 @@ export {
   updateSystemNotificationSchedule,
   getNotificationAnalytics,
   getCommentEngagementAnalytics,
+  getUserCommentEngagementDetails,
   trackEmailClick,
   markNotificationReadCallable,
   trackNotificationClickCallable,

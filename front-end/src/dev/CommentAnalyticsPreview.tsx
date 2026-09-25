@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CommentEngagementAnalytics, {
+  CommentEngagementDetail,
   CommentEngagementResponse,
 } from "../components/Notifications/CommentEngagementAnalytics";
 import "./commentAnalyticsPreview.css";
@@ -144,6 +145,89 @@ const previewData: CommentEngagementResponse = {
   ],
 };
 
+const previewDetails: CommentEngagementDetail[] = [
+  {
+    previewUserId: "preview-1",
+    kind: "comment",
+    commentId: "preview-comment-1",
+    postId: "preview-post-1",
+    text: "This endcap looks great. Can we use the same shelf strips next week?",
+    commentAuthorName: "Maya Chen",
+    replyToUserName: "",
+    commentCreatedAt: now - 2 * 24 * 60 * 60 * 1000,
+    activityAt: now - 2 * 24 * 60 * 60 * 1000,
+    accountName: "Market Street Store #214",
+    accountAddress: "1180 Market Street",
+    postDescription: "Fall display reset with the new promotional shelf strips.",
+    postAuthorName: "Alex Rivera",
+    postAvailable: true,
+  },
+  {
+    previewUserId: "preview-1",
+    kind: "reply",
+    commentId: "preview-reply-1",
+    postId: "preview-post-2",
+    text: "Yes, that layout should work. I will send the measurements today.",
+    commentAuthorName: "Maya Chen",
+    replyToUserName: "Jordan Lee",
+    commentCreatedAt: now - 4 * 24 * 60 * 60 * 1000,
+    activityAt: now - 4 * 24 * 60 * 60 * 1000,
+    accountName: "Harris Teeter #393",
+    accountAddress: "8600 University City Boulevard",
+    postDescription: "Updated cooler placement after the weekend reset.",
+    postAuthorName: "Jordan Lee",
+    postAvailable: true,
+  },
+  {
+    previewUserId: "preview-1",
+    kind: "like",
+    commentId: "preview-like-1",
+    postId: "preview-post-3",
+    text: "The new signage is much easier to see from the main aisle.",
+    commentAuthorName: "Clinton Williams",
+    replyToUserName: "",
+    commentCreatedAt: now - 7 * 24 * 60 * 60 * 1000,
+    activityAt: null,
+    accountName: "Fresh Market #72",
+    accountAddress: "412 South Boulevard",
+    postDescription: "Front aisle display using the September campaign assets.",
+    postAuthorName: "Rob Basile",
+    postAvailable: true,
+  },
+  {
+    previewUserId: "preview-2",
+    kind: "comment",
+    commentId: "preview-comment-2",
+    postId: "preview-post-4",
+    text: "Do we have a wider photo showing the full aisle?",
+    commentAuthorName: "Jordan Lee",
+    replyToUserName: "",
+    commentCreatedAt: now - 6 * 24 * 60 * 60 * 1000,
+    activityAt: now - 6 * 24 * 60 * 60 * 1000,
+    accountName: "Uptown Market #18",
+    accountAddress: "211 North Tryon Street",
+    postDescription: "New display installed near the front entrance.",
+    postAuthorName: "Alex Rivera",
+    postAvailable: true,
+  },
+  {
+    previewUserId: "preview-4",
+    kind: "like",
+    commentId: "preview-like-2",
+    postId: "preview-post-5",
+    text: "Really clean execution. The facings look consistent across the shelf.",
+    commentAuthorName: "Sam Wilson",
+    replyToUserName: "",
+    commentCreatedAt: now - 10 * 24 * 60 * 60 * 1000,
+    activityAt: null,
+    accountName: "Pioneer Grocery #41",
+    accountAddress: "900 Central Avenue",
+    postDescription: "Weekly account visit and shelf-condition review.",
+    postAuthorName: "Riley Morgan",
+    postAvailable: true,
+  },
+];
+
 const CommentAnalyticsPreview = () => {
   const [theme, setTheme] = useState<"light" | "dark">(() =>
     document.body.getAttribute("data-theme") === "dark" ? "dark" : "light",
@@ -181,7 +265,10 @@ const CommentAnalyticsPreview = () => {
       </header>
 
       <section className="developer-messaging-card">
-        <CommentEngagementAnalytics previewData={previewData} />
+        <CommentEngagementAnalytics
+          previewData={previewData}
+          previewDetails={previewDetails}
+        />
       </section>
     </main>
   );

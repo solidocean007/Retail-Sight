@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { httpsCallable } from "firebase/functions";
+import { CircularProgress, Drawer, IconButton } from "@mui/material";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import { useSelector } from "react-redux";
 import { functions } from "../../utils/firebase";
+import { selectUser } from "../../Slices/userSlice";
+import PostViewerModal from "../PostViewerModal";
 import "./commentEngagementAnalytics.css";
 
 type RangeDays = 30 | 90 | 365;
 type AdoptionFilter = "all" | "engaged" | "outreach";
+export type EngagementDetailKind = "comment" | "like" | "reply";
 
 type EngagementUser = {
   uid: string;
@@ -39,6 +46,35 @@ export type CommentEngagementResponse = {
   users: EngagementUser[];
 };
 
+export type CommentEngagementDetail = {
+  kind: EngagementDetailKind;
+  commentId: string;
+  postId: string;
+  text: string;
+  commentAuthorName: string;
+  replyToUserName: string;
+  commentCreatedAt: number | null;
+  activityAt: number | null;
+  accountName: string;
+  accountAddress: string;
+  postDescription: string;
+  postAuthorName: string;
+  postAvailable: boolean;
+  previewUserId?: string;
+};
+
+type CommentEngagementDetailsResponse = {
+  uid: string;
+  kind: EngagementDetailKind;
+  days: RangeDays;
+  scannedComments: number;
+  totalMatched: number;
+  truncated: boolean;
+  details: CommentEngagementDetail[];
+};
+
+const EMPTY_PREVIEW_DETAILS: CommentEngagementDetail[] = [];
+
 const emptyAnalytics: CommentEngagementResponse = {
   days: 90,
   since: "",
@@ -61,6 +97,11 @@ const getCommentEngagement = httpsCallable<
   CommentEngagementResponse
 >(functions, "getCommentEngagementAnalytics");
 
+const getUserCommentEngagementDetails = httpsCallable<
+  { uid: string; days: RangeDays; kind: EngagementDetailKind },
+  CommentEngagementDetailsResponse
+>(functions, "getUserCommentEngagementDetails");
+
 const formatDate = (timestamp: number | null) => {
   if (!timestamp) return "No authored activity";
 
@@ -71,13 +112,28 @@ const formatDate = (timestamp: number | null) => {
   });
 };
 
+const formatDateTime = (timestamp: number | null) => {
+  if (!timestamp) return "Time unavailable";
+
+  return new Date(timestamp).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
 type CommentEngagementAnalyticsProps = {
   previewData?: CommentEngagementResponse;
+  previewDetails?: CommentEngagementDetail[];
 };
 
 const CommentEngagementAnalytics = ({
   previewData,
+  previewDetails = EMPTY_PREVIEW_DETAILS,
 }: CommentEngagementAnalyticsProps) => {
+  const dashboardUser = useSelector(selectUser);
   const [days, setDays] = useState<RangeDays>(90);
   const [analytics, setAnalytics] = useState<CommentEngagementResponse>(
     previewData ?? emptyAnalytics,
@@ -87,6 +143,16 @@ const CommentEngagementAnalytics = ({
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [detailUser, setDetailUser] = useState<EngagementUser | null>(null);
+  const [detailKind, setDetailKind] = useState<EngagementDetailKind>("comment");
+  const [detailItems, setDetailItems] = useState<CommentEngagementDetail[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [detailTruncated, setDetailTruncated] = useState(false);
+  const [postViewerTarget, setPostViewerTarget] = useState<{
+    postId: string;
+    commentId: string;
+  } | null>(null);
 
   const loadAnalytics = useCallback(
     async (force = false) => {
@@ -124,6 +190,60 @@ const CommentEngagementAnalytics = ({
   useEffect(() => {
     void loadAnalytics();
   }, [loadAnalytics]);
+
+  const loadDetails = useCallback(
+    async (user: EngagementUser, kind: EngagementDetailKind) => {
+      setDetailLoading(true);
+      setDetailError(null);
+      setDetailItems([]);
+      setDetailTruncated(false);
+
+      if (previewData) {
+        setDetailItems(
+          previewDetails.filter(
+            (detail) =>
+              detail.previewUserId === user.uid && detail.kind === kind,
+          ),
+        );
+        setDetailLoading(false);
+        return;
+      }
+
+      try {
+        const response = await getUserCommentEngagementDetails({
+          uid: user.uid,
+          days,
+          kind,
+        });
+        setDetailItems(response.data.details);
+        setDetailTruncated(response.data.truncated);
+      } catch (loadError) {
+        console.error("Comment engagement details failed:", loadError);
+        setDetailError("Unable to load this user's engagement details.");
+      } finally {
+        setDetailLoading(false);
+      }
+    },
+    [days, previewData, previewDetails],
+  );
+
+  useEffect(() => {
+    if (detailUser) void loadDetails(detailUser, detailKind);
+  }, [detailKind, detailUser, loadDetails]);
+
+  const openDetails = (
+    user: EngagementUser,
+    kind: EngagementDetailKind,
+  ) => {
+    setDetailUser(user);
+    setDetailKind(kind);
+  };
+
+  const closeDetails = () => {
+    setDetailUser(null);
+    setDetailItems([]);
+    setDetailError(null);
+  };
 
   const visibleUsers = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -290,9 +410,48 @@ const CommentEngagementAnalytics = ({
                     <span>{user.companyName || "—"}</span>
                     <small>{user.role || "—"}</small>
                   </td>
-                  <td>{user.commentsAuthored}</td>
-                  <td>{user.commentLikesGiven}</td>
-                  <td>{user.repliesAuthored}</td>
+                  <td>
+                    {user.commentsAuthored > 0 ? (
+                      <button
+                        type="button"
+                        className="comment-engagement-count-button"
+                        onClick={() => openDetails(user, "comment")}
+                        aria-label={`View ${user.commentsAuthored} comments from ${user.firstName} ${user.lastName}`}
+                      >
+                        {user.commentsAuthored}
+                      </button>
+                    ) : (
+                      <span className="comment-engagement-zero">0</span>
+                    )}
+                  </td>
+                  <td>
+                    {user.commentLikesGiven > 0 ? (
+                      <button
+                        type="button"
+                        className="comment-engagement-count-button"
+                        onClick={() => openDetails(user, "like")}
+                        aria-label={`View ${user.commentLikesGiven} current comment likes from ${user.firstName} ${user.lastName}`}
+                      >
+                        {user.commentLikesGiven}
+                      </button>
+                    ) : (
+                      <span className="comment-engagement-zero">0</span>
+                    )}
+                  </td>
+                  <td>
+                    {user.repliesAuthored > 0 ? (
+                      <button
+                        type="button"
+                        className="comment-engagement-count-button"
+                        onClick={() => openDetails(user, "reply")}
+                        aria-label={`View ${user.repliesAuthored} replies from ${user.firstName} ${user.lastName}`}
+                      >
+                        {user.repliesAuthored}
+                      </button>
+                    ) : (
+                      <span className="comment-engagement-zero">0</span>
+                    )}
+                  </td>
                   <td>{formatDate(user.lastActivityAt)}</td>
                   <td>
                     <span
@@ -332,6 +491,163 @@ const CommentEngagementAnalytics = ({
           </strong>
         )}
       </footer>
+
+      <Drawer
+        anchor="right"
+        open={Boolean(detailUser)}
+        onClose={closeDetails}
+        PaperProps={{ className: "comment-engagement-drawer" }}
+      >
+        {detailUser && (
+          <div className="comment-engagement-drawer-content">
+            <header className="comment-engagement-drawer-header">
+              <div>
+                <span className="comment-engagement-eyebrow">User activity</span>
+                <h2>
+                  {`${detailUser.firstName} ${detailUser.lastName}`.trim() ||
+                    "Unnamed user"}
+                </h2>
+                <p>
+                  {detailUser.companyName || "No company"} · Last {days} days
+                </p>
+              </div>
+              <IconButton onClick={closeDetails} aria-label="Close activity details">
+                <CloseRoundedIcon />
+              </IconButton>
+            </header>
+
+            <nav
+              className="comment-engagement-detail-tabs"
+              aria-label="Engagement type"
+            >
+              {(
+                [
+                  ["comment", "Comments", detailUser.commentsAuthored],
+                  ["like", "Likes", detailUser.commentLikesGiven],
+                  ["reply", "Replies", detailUser.repliesAuthored],
+                ] as const
+              ).map(([kind, label, count]) => (
+                <button
+                  type="button"
+                  key={kind}
+                  className={detailKind === kind ? "active" : ""}
+                  onClick={() => setDetailKind(kind)}
+                  disabled={count === 0}
+                  aria-pressed={detailKind === kind}
+                >
+                  <span>{label}</span>
+                  <strong>{count}</strong>
+                </button>
+              ))}
+            </nav>
+
+            {detailKind === "like" && (
+              <div className="comment-engagement-like-note">
+                These are comments the user currently likes. The exact time of
+                older likes is not available.
+              </div>
+            )}
+
+            <div className="comment-engagement-detail-list" aria-busy={detailLoading}>
+              {detailLoading && (
+                <div className="comment-engagement-detail-loading">
+                  <CircularProgress size={24} />
+                  <span>Loading activity…</span>
+                </div>
+              )}
+
+              {!detailLoading && detailError && (
+                <div className="comment-engagement-error">{detailError}</div>
+              )}
+
+              {!detailLoading && !detailError && detailItems.length === 0 && (
+                <div className="comment-engagement-detail-empty">
+                  No matching activity was found in this window.
+                </div>
+              )}
+
+              {!detailLoading &&
+                detailItems.map((detail) => (
+                  <article
+                    className="comment-engagement-detail-card"
+                    key={`${detail.kind}-${detail.commentId}`}
+                  >
+                    <div className="comment-engagement-detail-card-topline">
+                      <span className={`kind-${detail.kind}`}>
+                        {detail.kind === "comment"
+                          ? "Comment"
+                          : detail.kind === "reply"
+                            ? "Reply"
+                            : "Current like"}
+                      </span>
+                      <time>
+                        {detail.kind === "like"
+                          ? `Comment posted ${formatDateTime(detail.commentCreatedAt)}`
+                          : formatDateTime(detail.activityAt)}
+                      </time>
+                    </div>
+
+                    {detail.kind === "reply" && detail.replyToUserName && (
+                      <small className="comment-engagement-reply-context">
+                        Replying to {detail.replyToUserName}
+                      </small>
+                    )}
+
+                    {detail.kind === "like" && detail.commentAuthorName && (
+                      <small className="comment-engagement-reply-context">
+                        Comment by {detail.commentAuthorName}
+                      </small>
+                    )}
+
+                    <blockquote>
+                      {detail.text || "Comment text is unavailable."}
+                    </blockquote>
+
+                    <div className="comment-engagement-post-context">
+                      <strong>{detail.accountName || "Post context"}</strong>
+                      {detail.accountAddress && <span>{detail.accountAddress}</span>}
+                      {detail.postDescription && <p>{detail.postDescription}</p>}
+                      {detail.postAuthorName && (
+                        <small>Post by {detail.postAuthorName}</small>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="comment-engagement-open-post"
+                      disabled={!detail.postAvailable || Boolean(previewData)}
+                      onClick={() =>
+                        setPostViewerTarget({
+                          postId: detail.postId,
+                          commentId: detail.commentId,
+                        })
+                      }
+                    >
+                      <OpenInNewRoundedIcon fontSize="small" />
+                      {previewData ? "Post preview unavailable" : "Open post"}
+                    </button>
+                  </article>
+                ))}
+            </div>
+
+            {detailTruncated && (
+              <footer className="comment-engagement-detail-limit">
+                Showing the 100 most recent matches. Narrow the activity window
+                to review older activity.
+              </footer>
+            )}
+          </div>
+        )}
+      </Drawer>
+
+      <PostViewerModal
+        postId={postViewerTarget?.postId ?? null}
+        open={Boolean(postViewerTarget)}
+        onClose={() => setPostViewerTarget(null)}
+        currentUserUid={dashboardUser?.uid}
+        initialOpenComments
+        focusCommentId={postViewerTarget?.commentId ?? null}
+      />
     </section>
   );
 };
