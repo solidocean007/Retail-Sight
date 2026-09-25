@@ -54,15 +54,20 @@ const renderWithProviders = (content: React.ReactNode) =>
     </HelmetProvider>,
   );
 
-if (
-  import.meta.env.DEV &&
-  window.location.pathname === "/__dev/comment-replies"
-) {
-  void import("./dev/CommentReplyPreview.tsx").then(
-    ({ default: CommentReplyPreview }) => {
-      renderWithProviders(<CommentReplyPreview />);
-    },
-  );
+if (import.meta.env.DEV && window.location.pathname.startsWith("/__dev/")) {
+  if (window.location.pathname === "/__dev/comment-analytics") {
+    void import("./dev/CommentAnalyticsPreview.tsx").then(
+      ({ default: CommentAnalyticsPreview }) => {
+        renderWithProviders(<CommentAnalyticsPreview />);
+      },
+    );
+  } else {
+    void import("./dev/CommentReplyPreview.tsx").then(
+      ({ default: CommentReplyPreview }) => {
+        renderWithProviders(<CommentReplyPreview />);
+      },
+    );
+  }
 } else {
   renderWithProviders(<App />);
 }

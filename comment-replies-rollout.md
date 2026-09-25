@@ -27,8 +27,28 @@ mobile threads.
 - When another participant replies, the post owner also receives the existing
   “commented on your post” event unless that would duplicate the reply event.
 - Reply notifications use the existing comment email preference.
+- The `comments` setting now controls in-app and push delivery for both
+  comments and replies. `emailComments` remains independent, so a user may
+  choose email-only or app-only delivery.
+- Existing `likes` and `commentLikes` settings now also control their
+  matching in-app and push activity.
 - Deploy Functions before Hosting so `post.commentReply` is recognized before
   the UI can emit it.
+
+## Developer comment adoption analytics
+
+Developer Dashboard → Messaging now includes a developer-only adoption report:
+
+- active commenters, current comment likers, and repliers;
+- a default “Needs outreach” user list with name, company, role, and email;
+- 30-day, 90-day, and 12-month windows;
+- user/company/email search and engaged/outreach filters.
+
+The callable scans at most 10,000 comments in the selected window and caches a
+result for five minutes per warm function instance. Internal developer,
+pending, inactive, and deleted accounts are excluded from outreach counts.
+Because legacy comment likes do not have their own timestamps, “Likes” means
+current likes on comments created inside the selected window.
 
 ## Firestore integrity
 

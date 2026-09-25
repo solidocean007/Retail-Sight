@@ -18,14 +18,19 @@ type ActivityEventType =
 const db = admin.firestore();
 
 /**
- * Returns users whose email notification setting is enabled.
+ * Returns users whose notification setting is enabled.
  *
  * Defaults to enabled when the setting is missing so older users
- * receive important notification emails unless they opt out.
+ * receive existing notification behavior unless they explicitly opt out.
  */
-async function getUsersWithEmailSettingEnabled(
+async function getUsersWithSettingEnabled(
   userIds: string[],
-  settingKey: "emailComments" | "emailGoalAssignments"
+  settingKey:
+    | "likes"
+    | "comments"
+    | "commentLikes"
+    | "emailComments"
+    | "emailGoalAssignments"
 ): Promise<string[]> {
   const enabledUserIds: string[] = [];
 
@@ -108,6 +113,11 @@ export const onActivityEventCreated = onDocumentCreated(
       goalTitle?: string;
     };
 
+    if (!Array.isArray(targetUserIds) || targetUserIds.length === 0) {
+      console.warn("ActivityEvent missing targetUserIds[]:", data);
+      return;
+    }
+
     const cleanedTargetUserIds = targetUserIds.filter(
       (uid) => uid && uid !== actorUserId
     );
@@ -117,10 +127,17 @@ export const onActivityEventCreated = onDocumentCreated(
       return;
     }
 
-    if (!Array.isArray(targetUserIds) || targetUserIds.length === 0) {
-      console.warn("ActivityEvent missing targetUserIds[]:", data);
-      return;
-    }
+    const inAppSettingKey =
+      type === "post.like"
+        ? "likes"
+        : type === "post.comment" || type === "post.commentReply"
+          ? "comments"
+          : type === "post.commentLike"
+            ? "commentLikes"
+            : null;
+    const inAppTargetUserIds = inAppSettingKey
+      ? await getUsersWithSettingEnabled(cleanedTargetUserIds, inAppSettingKey)
+      : cleanedTargetUserIds;
 
     const safeActorName = actorName || "Someone";
 
@@ -320,7 +337,7 @@ export const onActivityEventCreated = onDocumentCreated(
     // -----------------------------
     // Fan out in-app notifications
     // -----------------------------
-    const writes = cleanedTargetUserIds.map((uid: string) => {
+    const writes = inAppTargetUserIds.map((uid: string) => {
       const notificationId = `${event.id}_${uid}`;
       const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
 
@@ -359,7 +376,7 @@ export const onActivityEventCreated = onDocumentCreated(
     // Email delivery for comments
     // -----------------------------
     if (type === "post.comment" || type === "post.commentReply") {
-      const emailRecipients = await getUsersWithEmailSettingEnabled(
+      const emailRecipients = await getUsersWithSettingEnabled(
         cleanedTargetUserIds,
         "emailComments"
       );
@@ -377,19 +394,23 @@ export const onActivityEventCreated = onDocumentCreated(
           recipientUserIds: emailRecipients,
         });
 
-        await Promise.all(
-          emailRecipients.map((uid) => {
-            const notificationId = `${event.id}_${uid}`;
+        const inAppRecipientSet = new Set(inAppTargetUserIds);
 
-            return db.doc(`users/${uid}/notifications/${notificationId}`).set(
-              {
-                deliveredVia: {
-                  email: admin.firestore.FieldValue.serverTimestamp(),
+        await Promise.all(
+          emailRecipients
+            .filter((uid) => inAppRecipientSet.has(uid))
+            .map((uid) => {
+              const notificationId = `${event.id}_${uid}`;
+
+              return db.doc(`users/${uid}/notifications/${notificationId}`).set(
+                {
+                  deliveredVia: {
+                    email: admin.firestore.FieldValue.serverTimestamp(),
+                  },
                 },
-              },
-              { merge: true }
-            );
-          })
+                { merge: true }
+              );
+            })
         );
       }
     }
