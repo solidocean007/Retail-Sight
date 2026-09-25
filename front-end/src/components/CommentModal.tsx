@@ -5,6 +5,7 @@ import { RootState } from "../utils/store";
 import "./CommentModal.css";
 import { onUserNameClick } from "../utils/PostLogic/onUserNameClick";
 import { CommentType, PostType } from "../utils/types";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
 interface CommentModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface CommentModalProps {
     comment: CommentType,
     text: string,
   ) => Promise<string | undefined>;
+  headerAccessory?: React.ReactNode;
   focusCommentId?: string | null;
 }
 
@@ -52,6 +54,7 @@ const CommentModal: React.FC<CommentModalProps> = ({
   onLikeComment,
   onDeleteComment,
   onReplyComment,
+  headerAccessory,
   focusCommentId = null,
 }) => {
   const dispatch = useDispatch();
@@ -301,14 +304,17 @@ const CommentModal: React.FC<CommentModalProps> = ({
             </p>
           </div>
 
-          <button
-            type="button"
-            className="comment-modal-close"
-            onClick={onClose}
-            aria-label="Close comments"
-          >
-            ✕
-          </button>
+          <div className="comment-modal-header-actions">
+            {headerAccessory}
+            <button
+              type="button"
+              className="comment-modal-close"
+              onClick={onClose}
+              aria-label="Close comments"
+            >
+              <CloseRoundedIcon aria-hidden="true" />
+            </button>
+          </div>
         </header>
 
         <div ref={scrollContainerRef} className="comment-modal-content">

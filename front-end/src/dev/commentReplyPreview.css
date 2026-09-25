@@ -50,3 +50,44 @@
   font-weight: 750;
   cursor: pointer;
 }
+
+.comment-preview-theme-toggle {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.16));
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--input-background) 82%,
+    transparent
+  );
+}
+
+.comment-preview-theme-toggle button {
+  min-width: 3.25rem;
+  height: 1.85rem;
+  padding: 0 0.65rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  cursor: pointer;
+  opacity: 0.68;
+}
+
+.comment-preview-theme-toggle button.active {
+  background: var(--primary-blue, #3b82f6);
+  color: white;
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.26);
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .comment-preview-theme-toggle button {
+    min-width: 2.85rem;
+    padding: 0 0.5rem;
+  }
+}

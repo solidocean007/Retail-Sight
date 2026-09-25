@@ -64,10 +64,17 @@ const CommentReplyPreview = () => {
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(true);
   const [comments, setComments] = useState(initialComments);
+  const [previewTheme, setPreviewTheme] = useState<"light" | "dark">(() =>
+    document.body.getAttribute("data-theme") === "dark" ? "dark" : "light",
+  );
 
   useEffect(() => {
     dispatch(setUser(previewUser));
   }, [dispatch]);
+
+  useEffect(() => {
+    document.body.setAttribute("data-theme", previewTheme);
+  }, [previewTheme]);
 
   const handleLike = (comment: CommentType) => {
     setComments((current) =>
@@ -135,6 +142,26 @@ const CommentReplyPreview = () => {
         onLikeComment={handleLike}
         onDeleteComment={handleDelete}
         onReplyComment={handleReply}
+        headerAccessory={
+          <div className="comment-preview-theme-toggle" aria-label="Preview theme">
+            <button
+              type="button"
+              className={previewTheme === "light" ? "active" : ""}
+              onClick={() => setPreviewTheme("light")}
+              aria-pressed={previewTheme === "light"}
+            >
+              Light
+            </button>
+            <button
+              type="button"
+              className={previewTheme === "dark" ? "active" : ""}
+              onClick={() => setPreviewTheme("dark")}
+              aria-pressed={previewTheme === "dark"}
+            >
+              Dark
+            </button>
+          </div>
+        }
       />
     </main>
   );

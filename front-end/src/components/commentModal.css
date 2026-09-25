@@ -41,18 +41,35 @@
   opacity: 0.75;
 }
 
+.comment-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .comment-modal-close {
+  flex: 0 0 2.25rem;
   width: 2.25rem;
   height: 2.25rem;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
   border: none;
   border-radius: 999px;
   background: var(--input-background);
   color: var(--text-color);
+  line-height: 0;
   cursor: pointer;
   transition:
     transform 150ms ease,
     background-color 150ms ease,
     opacity 150ms ease;
+}
+
+.comment-modal-close svg {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .comment-modal-close:hover {
