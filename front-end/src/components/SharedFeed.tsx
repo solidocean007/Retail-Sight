@@ -26,6 +26,7 @@ import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVaria
 // import { resolvePostImage } from "../utils/PostLogic/derivePostImageVariants";
 
 const POSTS_BATCH_SIZE = 5;
+const STARTUP_LOADER_MS = 4000;
 
 interface SharedFeedProps {
   virtuosoRef?: React.RefObject<VirtuosoHandle>;
@@ -50,7 +51,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [lastVisible, setLastVisible] = useState<string | null>(null);
-  const [showLoader, setShowLoader] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
@@ -107,8 +108,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
 
   // Start-up animation
   useEffect(() => {
-    setShowLoader(true);
-    const t = setTimeout(() => setShowLoader(false), 1000);
+    const t = setTimeout(() => setShowLoader(false), STARTUP_LOADER_MS);
     return () => clearTimeout(t);
   }, []);
 
@@ -151,7 +151,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
           }}
         >
           <BeerCaseStackAnimation
-            minDuration={4000}
+            minDuration={STARTUP_LOADER_MS}
             maxStagger={2200}
             dropMs={900}
             loop
@@ -236,6 +236,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                     maxStagger={1800}
                     dropMs={800}
                     loop={false}
+                    size="compact"
                   />
                 </div>
               ) : !hasMore ? (

@@ -456,13 +456,6 @@ const displayFetchedAt =
 
         <div className="home-page-content">
           <div className="activity-feed-container">
-            <div className="feed-introduction">
-              <div>
-                <h1>Recent displays</h1>
-                <p>See what your team is building across the market.</p>
-              </div>
-              <span className="feed-live-indicator">Live workspace</span>
-            </div>
             {sharedPosts.length > 0 && (
               <div className="feed-toolbar">
                 <span

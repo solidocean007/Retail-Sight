@@ -858,6 +858,13 @@
   }
 }
 
+@media (min-width: 900px) {
+  .memoized-post-card {
+    width: min(100%, 520px);
+    margin-inline: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .post-card-container,
   .shared-unread-badge,
