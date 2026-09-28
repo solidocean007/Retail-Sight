@@ -29,6 +29,7 @@ async function getUsersWithSettingEnabled(
     | "likes"
     | "comments"
     | "commentLikes"
+    | "goalAssignmentPush"
     | "emailComments"
     | "emailGoalAssignments"
 ): Promise<string[]> {
@@ -134,7 +135,9 @@ export const onActivityEventCreated = onDocumentCreated(
           ? "comments"
           : type === "post.commentLike"
             ? "commentLikes"
-            : null;
+            : type === "goal.assignment"
+              ? "goalAssignmentPush"
+              : null;
     const inAppTargetUserIds = inAppSettingKey
       ? await getUsersWithSettingEnabled(cleanedTargetUserIds, inAppSettingKey)
       : cleanedTargetUserIds;

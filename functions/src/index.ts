@@ -30,6 +30,7 @@ import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
 import { markNotificationReadCallable } from "./notifications/markNotificationReadCallable";
+import { markAllNotificationsReadCallable } from "./notifications/markAllNotificationsReadCallable";
 import { trackNotificationClickCallable } from "./notifications/trackNotificationClickCallable";
 import { dailyGoalReportDigest } from "./notifications/dailyGoalReportDigest";
 import { resolveReportsOnSubmission } from "./notifications/resolveReportsOnSubmission";
@@ -103,6 +104,8 @@ import { uploadCompanyProducts } from "./products/uploadCompanyProducts";
 import { syncCompanyBrandCatalog } from "./products/syncCompanyBrandCatalog";
 import { createConnectionRequest } from "./createConnectionRequest";
 import { getConnectedDistributorStores } from "./getConnectedDistributorStores";
+import { getPartnerGoals } from "./goals/getPartnerGoals";
+import { onCompanyGoalCreated } from "./goals/onCompanyGoalCreated";
 import { onCompanyConnectionRequestCreated } from "./onCompanyConnectionRequestCreated";
 import { removeCompanyFromSharedWithPosts } from "./removeCompanyFromSharedWithPosts";
 import { acceptTeamInvite } from "./acceptTeamInvite";
@@ -177,6 +180,8 @@ export {
   removeCompanyFromSharedWithPosts,
   createConnectionRequest,
   getConnectedDistributorStores,
+  getPartnerGoals,
+  onCompanyGoalCreated,
   onCompanyConnectionRequestCreated,
   createInviteAndDraftConnection,
   onConnectionBrandsUpdated,
@@ -206,6 +211,7 @@ export {
   getUserCommentEngagementDetails,
   trackEmailClick,
   markNotificationReadCallable,
+  markAllNotificationsReadCallable,
   trackNotificationClickCallable,
   dailyGoalReportDigest,
   resolveReportsOnSubmission,
