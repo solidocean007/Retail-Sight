@@ -8,7 +8,6 @@ import {
 } from "../../utils/types";
 import "./goalAssignmentsSection.css";
 import { Typography } from "@mui/material";
-import { read } from "fs";
 
 interface Props {
   readyForCreation: boolean;
@@ -41,16 +40,10 @@ const GoalAssignmentsSectionContent: React.FC<Props> = ({
   assigneeType,
 }) => {
   const uniqueAccountsCount = new Set(
-    goalAssignments.map((g) => g.accountNumber)
+    goalAssignments.map((g) => g.accountNumber),
   ).size;
   const uniqueUsersCount = new Set(goalAssignments.map((g) => g.uid)).size;
   const [showAdvancedSelector, setShowAdvancedSelector] = useState(false);
-
-  const handleRemoveAssignment = (accountNumber: string, uid: string) => { // unused?
-    setGoalAssignments((prev) =>
-      prev.filter((g) => !(g.uid === uid && g.accountNumber === accountNumber))
-    );
-  };
 
   return (
     <div className="goal-assignments-section">
@@ -98,13 +91,13 @@ const GoalAssignmentsSectionContent: React.FC<Props> = ({
               allAccounts={filteredAccounts}
               selectedAccounts={accounts.filter((acc) =>
                 goalAssignments.some(
-                  (g) => g.accountNumber === acc.accountNumber.toString()
-                )
+                  (g) => g.accountNumber === acc.accountNumber.toString(),
+                ),
               )}
               setSelectedAccounts={(updated) => {
                 const newAssignments = updated.flatMap((acc) =>
                   goalAssignments.some(
-                    (g) => g.accountNumber === acc.accountNumber.toString()
+                    (g) => g.accountNumber === acc.accountNumber.toString(),
                   )
                     ? []
                     : [
@@ -112,7 +105,7 @@ const GoalAssignmentsSectionContent: React.FC<Props> = ({
                           accountNumber: acc.accountNumber.toString(),
                           uid: "",
                         },
-                      ]
+                      ],
                 );
                 setGoalAssignments([...goalAssignments, ...newAssignments]);
               }}

@@ -1,169 +1,190 @@
 .archived-goals-container {
-  margin-top: 2rem;
-  max-width: 1000px;
+  display: grid;
+  margin-top: 0.35rem;
+  gap: 0.7rem;
+}
+
+.archived-goals-heading {
+  display: grid;
+  padding: 0.1rem 0.2rem 0.25rem;
+  align-items: center;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 0.65rem;
+}
+
+.archived-goals-heading__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--goals-line);
+  border-radius: 10px;
+  background: var(--goals-surface);
+  color: var(--goals-muted);
+}
+
+.archived-goals-heading__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.archived-goals-heading h2 {
+  margin: 0;
+  color: var(--goals-text);
+  font-size: 0.88rem;
+}
+
+.archived-goals-heading p {
+  margin: 0.18rem 0 0;
+  color: var(--goals-muted);
+  font-size: 0.64rem;
+}
+
+.archived-goals-heading__count {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--goals-line);
+  border-radius: 9px;
+  color: var(--goals-muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+}
+
+.archived-goals-years {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .archived-year-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  box-shadow: var(--card-shadow);
-  cursor: pointer;
-  transition: background 0.3s ease;
+  overflow: hidden;
+  border: 1px solid var(--goals-line);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--goals-surface) 94%, transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--goals-shadow) 72%, transparent);
 }
 
-.archived-year-card:hover {
-  background: var(--hover-bg);
+.archived-year-card--expanded {
+  border-color: var(--goals-line-strong);
 }
 
 .archived-year-header {
   display: flex;
-  justify-content: space-between;
+  width: 100%;
+  min-height: 58px;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: 0;
+  background: transparent;
+  color: var(--goals-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
-.arrow {
-  font-size: 1.2rem;
-  transition: transform 0.3s ease;
+.archived-year-header:hover {
+  background: color-mix(in srgb, var(--primary-blue) 6%, transparent);
 }
 
-.arrow.up {
+.archived-year-header > span {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.archived-year-header strong {
+  font-size: 0.9rem;
+}
+
+.archived-year-header small {
+  color: var(--goals-muted);
+  font-size: 0.64rem;
+  font-weight: 650;
+}
+
+.archived-year-header > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--goals-muted);
+  transition: transform 180ms ease;
+}
+
+.archived-year-card--expanded .archived-year-header > svg {
   transform: rotate(180deg);
+}
+
+.archived-year-content {
+  padding: 0.8rem;
+  border-top: 1px solid var(--goals-line);
 }
 
 .archived-months-row {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: start;
-  gap: 0.5rem;
-  margin: 0.75rem 0 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  gap: 0.42rem;
+  scrollbar-width: thin;
 }
 
 .archived-month-chip {
-  border-radius: 16px;
-  padding: 0.25rem 0.75rem;
-  background-color: var(--chip-bg);
-  color: var(--chip-text);
-  box-shadow: var(--chip-shadow);
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 34px;
+  margin: 0;
+  padding: 0.42rem 0.55rem 0.42rem 0.7rem;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 999px;
+  background: var(--goals-surface-muted);
+  color: var(--goals-muted);
   cursor: pointer;
-  transition: all 0.25s ease;
+  font-size: 0.65rem;
+  font-weight: 750;
 }
 
-.archived-month-chip:hover {
-  background-color: var(--chip-hover-bg);
+.archived-month-chip strong {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 0.25rem;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--goals-text) 8%, transparent);
+  font-size: 0.6rem;
 }
 
-.archived-month-container {
-  /* width: 100%; */
-  margin-bottom: 1rem;
-}
-
-.archived-goal-cards {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  border-top: 1px solid var(--card-outline);
-}
-
-.archived-month-chip.active {
-  background-color: var(--chip-active-bg);
-  color: var(--chip-active-text);
-  box-shadow: var(--chip-active-shadow);
+.archived-month-chip:hover,
+.archived-month-chip--active {
+  border-color: var(--goals-line-strong);
+  background: color-mix(in srgb, var(--primary-blue) 11%, transparent);
+  color: var(--primary-blue);
 }
 
 .archived-goal-cards {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding-left: 1rem; /* Indent under chip */
+  display: grid;
+  margin-top: 0.8rem;
+  gap: 0.7rem;
 }
 
-/* ✨ Smooth slide + fade for expanded month goals */
-.fade-slide-in {
-  animation: fadeSlideIn 0.45s ease forwards;
-  opacity: 0;
-  transform: translateY(-8px);
-}
+@media (max-width: 520px) {
+  .archived-goals-heading p {
+    display: none;
+  }
 
-@keyframes fadeSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  50% {
-    opacity: 0.6;
-    transform: translateY(2px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
+  .archived-year-header > span {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.12rem;
   }
 }
 
-/* Optional: subtle fade-out if you like symmetry */
-.MuiCollapse-wrapperInner {
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-/* subtle fade + slide */
-@keyframes slideInFromRight {
-  0% {
-    opacity: 0;
-    transform: translateX(200px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
+@media (prefers-reduced-motion: reduce) {
+  .archived-year-header > svg {
+    transition: none;
   }
 }
-
-@keyframes slideInFromLeft {
-  0% {
-    opacity: 0;
-    transform: translateX(-200px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.slide-right {
-  animation: slideInFromRight 0.45s ease forwards;
-}
-
-.slide-left {
-  animation: slideInFromLeft 0.45s ease forwards;
-}
-
-@keyframes slideEnterFromRight {
-  0% { opacity: 0; transform: translateX(200px); }
-  100% { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slideEnterFromLeft {
-  0% { opacity: 0; transform: translateX(-200px); }
-  100% { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slideExitToRight {
-  0% { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(200px); }
-}
-
-@keyframes slideExitToLeft {
-  0% { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(-200px); }
-}
-
-/* Apply classes based on direction + phase */
-.slide-right.slide-enter { animation: slideEnterFromRight 0.4s ease forwards; }
-.slide-left.slide-enter  { animation: slideEnterFromLeft 0.4s ease forwards; }
-.slide-right.slide-exit  { animation: slideExitToLeft 0.3s ease forwards; }
-.slide-left.slide-exit   { animation: slideExitToRight 0.3s ease forwards; }
-

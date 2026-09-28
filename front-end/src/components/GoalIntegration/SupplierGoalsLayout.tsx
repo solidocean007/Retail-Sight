@@ -2,7 +2,10 @@
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
-import { useAvailableGoals } from "../../hooks/useAvailableGoals";
+import {
+  PartnerGoalOption,
+  useAvailableGoals,
+} from "../../hooks/useAvailableGoals";
 import { RootState } from "../../utils/store";
 import "./supplier-goals-layout.css";
 import SupplierGoalCard from "./SupplierGoalCard";
@@ -15,11 +18,7 @@ interface SupplierGoalsLayoutProps {
 type GoalStatusFilter = "current" | "past" | "future" | "all";
 
 type GoalSortMode =
-  | "endingSoon"
-  | "newest"
-  | "oldest"
-  | "distributor"
-  | "title";
+  "endingSoon" | "newest" | "oldest" | "distributor" | "title";
 
 const todayString = new Date().toISOString().split("T")[0];
 
@@ -36,7 +35,9 @@ const normalizeGoalDate = (value?: string | null) => {
   return parsed.toISOString().split("T")[0];
 };
 
-const getGoalStatus = (goal: any): Exclude<GoalStatusFilter, "all"> => {
+const getGoalStatus = (
+  goal: PartnerGoalOption,
+): Exclude<GoalStatusFilter, "all"> => {
   const start = normalizeGoalDate(goal.goalStartDate);
   const end = normalizeGoalDate(goal.goalEndDate);
 
@@ -57,7 +58,10 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
 
   const resolvedCompanyId = companyId || fallbackCompanyId;
 
-  const { goals, loading } = useAvailableGoals(isSupplier, resolvedCompanyId);
+  const { goals, loading, error, reload } = useAvailableGoals(
+    isSupplier,
+    resolvedCompanyId,
+  );
 
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
@@ -71,13 +75,11 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
   const distributorOptions = useMemo(() => {
     const map = new Map<string, string>();
 
-    goals.forEach((goal: any) => {
-      if (!goal.companyId) return;
+    goals.forEach((goal) => {
+      const distributorId = goal.distributorCompanyId || goal.companyId;
+      if (!distributorId) return;
 
-      map.set(
-        goal.companyId,
-        goal.originCompanyName || "Connected Distributor",
-      );
+      map.set(distributorId, goal.originCompanyName || "Connected Distributor");
     });
 
     return Array.from(map.entries())
@@ -89,10 +91,11 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
     const normalizedSearch = searchText.trim().toLowerCase();
 
     return [...goals]
-      .filter((goal: any) => {
+      .filter((goal) => {
+        const distributorId = goal.distributorCompanyId || goal.companyId;
         if (
           selectedDistributor !== "all" &&
-          goal.companyId !== selectedDistributor
+          distributorId !== selectedDistributor
         ) {
           return false;
         }
@@ -103,20 +106,16 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
 
         return true;
       })
-      .filter((goal: any) => {
+      .filter((goal) => {
         if (!normalizedSearch) return true;
 
-        return [
-          goal.goalTitle,
-          goal.goalDescription,
-          goal.originCompanyName,
-        ]
+        return [goal.goalTitle, goal.goalDescription, goal.originCompanyName]
           .filter(Boolean)
           .some((value) =>
             String(value).toLowerCase().includes(normalizedSearch),
           );
       })
-      .sort((a: any, b: any) => {
+      .sort((a, b) => {
         const aStart = normalizeGoalDate(a.goalStartDate);
         const bStart = normalizeGoalDate(b.goalStartDate);
         const aEnd = normalizeGoalDate(a.goalEndDate) || "9999-12-31";
@@ -137,13 +136,12 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
   }, [goals, selectedDistributor, statusFilter, sortMode, searchText]);
 
   const currentGoalCount = useMemo(() => {
-    return goals.filter((goal: any) => getGoalStatus(goal) === "current")
-      .length;
+    return goals.filter((goal) => getGoalStatus(goal) === "current").length;
   }, [goals]);
 
   const totalSubmissionCount = useMemo(() => {
-    return goals.reduce((sum: number, goal: any) => {
-      return sum + (goal.submittedPosts?.length || 0);
+    return goals.reduce((sum, goal) => {
+      return sum + (goal.submissionCount ?? goal.submittedPosts?.length ?? 0);
     }, 0);
   }, [goals]);
 
@@ -168,16 +166,28 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
   };
 
   if (loading) {
-    return <div className="goal-section-empty">Loading supplier goals...</div>;
+    return <div className="goal-section-empty">Loading partner goals…</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="goal-section-empty goal-section-empty--error">
+        <h3>Partner goals are unavailable</h3>
+        <p>{error}</p>
+        <button type="button" className="btn-outline" onClick={reload}>
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (!goals.length) {
     return (
       <div className="goal-section-empty">
-        <h3>No supplier goals yet</h3>
+        <h3>No partner goals yet</h3>
         <p>
-          When a connected distributor creates a goal tied to your company, it
-          will appear here and can be used in your Shared feed filters.
+          Distributor goals intentionally shared with your company will appear
+          here with their progress and submitted displays.
         </p>
       </div>
     );
@@ -187,18 +197,18 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
     <section className="supplier-goals-layout">
       <header className="supplier-goals-header">
         <div>
-          <h3>Distributor Goals Featuring Your Company</h3>
+          <h2>Distributor programs</h2>
           <p>
-            These goals were created by connected distributors and are tied to
-            posts visible in your Shared feed.
+            Read-only visibility into goals that connected distributors have
+            associated with your company.
           </p>
         </div>
 
         <div className="supplier-goals-stats">
-          <span>{goals.length} total goals</span>
+          <span>{goals.length} total</span>
           <span>{currentGoalCount} current</span>
           <span>{totalSubmissionCount} submissions</span>
-          <span>{distributorOptions.length} distributors</span>
+          <span>{distributorOptions.length} partners</span>
         </div>
       </header>
 
@@ -254,11 +264,11 @@ const SupplierGoalsLayout: React.FC<SupplierGoalsLayoutProps> = ({
 
       {!filteredGoals.length ? (
         <div className="goal-section-empty">
-          No supplier goals match these filters.
+          No partner goals match these filters.
         </div>
       ) : (
         <div className="supplier-goals-list">
-          {filteredGoals.map((goal: any) => (
+          {filteredGoals.map((goal) => (
             <SupplierGoalCard
               key={goal.id}
               goal={goal}

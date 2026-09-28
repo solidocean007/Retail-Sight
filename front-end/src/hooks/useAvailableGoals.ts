@@ -1,126 +1,108 @@
-// hooks/useAvailableGoals.ts
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
 import { useSelector } from "react-redux";
-import { db } from "../utils/firebase";
+
 import { RootState } from "../utils/store";
 import { CompanyGoalWithIdType } from "../utils/types";
 
-type GoalOption = CompanyGoalWithIdType & {
+export type PartnerGoalSubmission = {
+  postId: string;
+  submittedAt?: unknown;
+  account?: {
+    accountName?: string;
+    accountAddress?: string;
+  };
+  submittedBy?: {
+    firstName?: string;
+    lastName?: string;
+  };
+};
+
+export type PartnerGoalOption = {
+  id: string;
+  companyId?: string;
+  distributorCompanyId?: string;
   originCompanyName?: string;
+  goalTitle: string;
+  goalDescription: string;
+  goalMetric: string;
+  goalValueMin: number;
+  goalStartDate: string;
+  goalEndDate: string;
+  createdAt?: string;
+  perUserQuota?: number | null;
+  submissionCount?: number;
+  submittedPosts?: PartnerGoalSubmission[];
+};
+
+type PartnerGoalsResponse = {
+  goals: PartnerGoalOption[];
 };
 
 export const useAvailableGoals = (
   isSupplier: boolean,
-  companyId: string | undefined
+  companyId: string | undefined,
 ) => {
   const ownCompanyGoals = useSelector(
-    (state: RootState) => state.companyGoals.goals
+    (state: RootState) => state.companyGoals.goals,
   ) as CompanyGoalWithIdType[];
 
-  const connections = useSelector(
-    (state: RootState) => state.companyConnections.connections || []
-  );
-
-  const [supplierGoals, setSupplierGoals] = useState<GoalOption[]>([]);
+  const [partnerGoals, setPartnerGoals] = useState<PartnerGoalOption[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const connectedCompanyMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    if (!companyId) return map;
-
-    connections.forEach((conn: any) => {
-      if (conn.status !== "approved") return;
-
-      const isFrom = conn.requestFromCompanyId === companyId;
-      const isTo = conn.requestToCompanyId === companyId;
-
-      if (!isFrom && !isTo) return;
-
-      const otherCompanyId = isFrom
-        ? conn.requestToCompanyId
-        : conn.requestFromCompanyId;
-
-      const otherCompanyName = isFrom
-        ? conn.requestToCompanyName
-        : conn.requestFromCompanyName;
-
-      if (!otherCompanyId || otherCompanyId === companyId) return;
-
-      map.set(otherCompanyId, otherCompanyName || "Connected Company");
-    });
-
-    return map;
-  }, [connections, companyId]);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
     if (!isSupplier || !companyId) {
-      setSupplierGoals([]);
+      setPartnerGoals([]);
+      setError(null);
       return;
     }
 
     let cancelled = false;
 
-    const loadSupplierGoals = async () => {
+    const loadPartnerGoals = async () => {
       setLoading(true);
+      setError(null);
 
       try {
-        const q = query(
-          collection(db, "companyGoals"),
-          where("supplierIdForGoal", "==", companyId)
+        const callable = httpsCallable<undefined, PartnerGoalsResponse>(
+          getFunctions(),
+          "getPartnerGoals",
         );
-
-        const snap = await getDocs(q);
-
-        const goals = snap.docs
-          .map((docSnap) => {
-            const data = docSnap.data() as CompanyGoalWithIdType;
-
-            return {
-              ...data,
-              id: docSnap.id,
-              originCompanyName: connectedCompanyMap.get(data.companyId),
-            };
-          })
-          .filter((goal) => {
-            if (!goal.companyId) return false;
-
-            // only show goals from approved connected companies
-            return connectedCompanyMap.has(goal.companyId);
-          })
-          .sort((a, b) =>
-            (a.goalTitle || "").localeCompare(b.goalTitle || "")
-          );
-
-        if (!cancelled) setSupplierGoals(goals);
-      } catch (err) {
-        console.error("[useAvailableGoals] Failed to load supplier goals:", err);
-        if (!cancelled) setSupplierGoals([]);
+        const result = await callable();
+        if (!cancelled) setPartnerGoals(result.data.goals ?? []);
+      } catch (loadError) {
+        console.error(
+          "[useAvailableGoals] Failed to load partner goals:",
+          loadError,
+        );
+        if (!cancelled) {
+          setPartnerGoals([]);
+          setError("Partner goals could not be loaded. Please try again.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
-    loadSupplierGoals();
+    void loadPartnerGoals();
 
     return () => {
       cancelled = true;
     };
-  }, [isSupplier, companyId, connectedCompanyMap]);
+  }, [companyId, isSupplier, refreshToken]);
 
   const goals = useMemo(() => {
     if (!companyId) return [];
-
-    if (isSupplier) {
-      return supplierGoals;
-    }
-
-    return ownCompanyGoals.filter((g) => g.companyId === companyId);
-  }, [ownCompanyGoals, supplierGoals, isSupplier, companyId]);
+    if (isSupplier) return partnerGoals;
+    return ownCompanyGoals.filter((goal) => goal.companyId === companyId);
+  }, [companyId, isSupplier, ownCompanyGoals, partnerGoals]);
 
   return {
     goals,
     loading,
+    error,
+    reload: () => setRefreshToken((current) => current + 1),
   };
 };

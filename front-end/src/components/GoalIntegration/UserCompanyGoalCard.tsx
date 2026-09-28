@@ -1,16 +1,20 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+import { Button, Collapse, Tooltip } from "@mui/material";
+import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
+import ExpandMoreOutlinedIcon from "@mui/icons-material/ExpandMoreOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import { Timestamp } from "firebase/firestore";
 import { useSelector } from "react-redux";
-import { Tooltip, Typography, Button, Collapse, Box } from "@mui/material";
-import InfoIcon from "@mui/icons-material/Info";
-import { Timestamp, updateDoc } from "firebase/firestore";
-import { CompanyGoalWithIdType } from "../../utils/types";
+
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectUser } from "../../Slices/userSlice";
-import "./companyGoalCard.css";
-import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
-import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
 import { useGoalAccountReports } from "../../hooks/useGoalAccountReports";
+import { CompanyGoalWithIdType } from "../../utils/types";
 import { isAssignmentActive } from "../../utils/goalReports/goalAccountRemoval";
+import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
+
+import "./userCompanyGoalCard.css";
 
 interface Props {
   goal: CompanyGoalWithIdType;
@@ -21,50 +25,48 @@ interface Props {
   onViewPostModal: (postId: string, ref?: HTMLElement) => void;
 }
 
-const UserCompanyGoalCard: React.FC<Props> = ({
+const formatDate = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(year, month - 1, day));
+};
+
+const UserCompanyGoalCard = ({
   goal,
-  salesRouteNum,
   mobile,
   expanded,
   onToggleExpand,
   onViewPostModal,
-}) => {
+}: Props) => {
   const user = useSelector(selectUser);
   const allAccounts = useSelector(selectAllCompanyAccounts);
   const userSalesRoute = user?.salesRouteNum;
   const userUid = user?.uid;
-  
-  // Live for this goal, only while expanded — one listener per open card,
-  // never one per account row.
   const { reports } = useGoalAccountReports(goal.id, expanded);
 
-  // --- Determine which accounts apply to this goal ---
   const accountNumbersForThisGoal = useMemo(() => {
     if (goal.goalAssignments?.length) {
-      return (
-        goal.goalAssignments
-          .filter((g) => g.uid === userUid)
-          // Accounts an admin accepted off the goal drop out of the rep's list
-          // entirely — that visible disappearance IS the answer to their
-          // report, and it keeps the quota percentage honest about what's
-          // still in play. isAssignmentActive treats absent status as active,
-          // so goals created before this feature are unaffected.
-          .filter(isAssignmentActive)
-          .map((g) => g.accountNumber.toString())
-      );
+      return goal.goalAssignments
+        .filter((assignment) => assignment.uid === userUid)
+        .filter(isAssignmentActive)
+        .map((assignment) => assignment.accountNumber.toString());
     }
     return goal.accountNumbersForThisGoal || [];
-  }, [goal.goalAssignments, goal.accountNumbersForThisGoal, userUid]);
+  }, [goal.accountNumbersForThisGoal, goal.goalAssignments, userUid]);
 
   const userAccounts = useMemo(() => {
-    const scoped = allAccounts.filter((acc) =>
-      accountNumbersForThisGoal.includes(acc.accountNumber.toString()),
+    const scoped = allAccounts.filter((account) =>
+      accountNumbersForThisGoal.includes(account.accountNumber.toString()),
     );
 
-    // legacy fallback
     if (!goal.goalAssignments?.length && userSalesRoute) {
-      return scoped.filter((acc) =>
-        (acc.salesRouteNums || []).includes(userSalesRoute),
+      return scoped.filter((account) =>
+        (account.salesRouteNums || []).includes(userSalesRoute),
       );
     }
 
@@ -72,27 +74,24 @@ const UserCompanyGoalCard: React.FC<Props> = ({
   }, [
     allAccounts,
     accountNumbersForThisGoal,
-    userSalesRoute,
     goal.goalAssignments,
+    userSalesRoute,
   ]);
 
-  const totalAccounts = userAccounts.length;
-
-  // --- Submissions for this user ---
   const userSubmissions = useMemo(() => {
     if (!goal.submittedPosts) return [];
 
-    return goal.submittedPosts.filter((p) => {
-      const postUid = p.submittedBy?.uid;
-      const acctNum = p.account?.accountNumber?.toString();
+    return goal.submittedPosts.filter((post) => {
+      const accountNumber = post.account?.accountNumber?.toString();
       return (
-        postUid === userUid &&
-        acctNum &&
-        accountNumbersForThisGoal.includes(acctNum)
+        post.submittedBy?.uid === userUid &&
+        accountNumber &&
+        accountNumbersForThisGoal.includes(accountNumber)
       );
     });
-  }, [goal.submittedPosts, accountNumbersForThisGoal, userUid]);
+  }, [accountNumbersForThisGoal, goal.submittedPosts, userUid]);
 
+  const totalAccounts = userAccounts.length;
   const submittedCount = userSubmissions.length;
   const percentage =
     goal.perUserQuota && goal.perUserQuota > 0
@@ -100,12 +99,15 @@ const UserCompanyGoalCard: React.FC<Props> = ({
       : totalAccounts > 0
         ? Math.round((submittedCount / totalAccounts) * 100)
         : 0;
+  const progressTone =
+    percentage >= 100 ? "complete" : percentage >= 50 ? "steady" : "starting";
 
   const unsubmittedAccounts = userAccounts.filter(
-    (a) =>
+    (account) =>
       !userSubmissions.some(
-        (s) =>
-          s.account?.accountNumber?.toString() === a.accountNumber.toString(),
+        (submission) =>
+          submission.account?.accountNumber?.toString() ===
+          account.accountNumber.toString(),
       ),
   );
 
@@ -114,111 +116,130 @@ const UserCompanyGoalCard: React.FC<Props> = ({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     isInactive: (user?.status ?? "active") !== "active",
-    submissions: userSubmissions.map((p) => ({
-      postId: p.postId,
-      storeName: p.account?.accountName || "Unknown Store",
+    submissions: userSubmissions.map((post) => ({
+      postId: post.postId,
+      storeName: post.account?.accountName || "Unknown Store",
       submittedAt:
-        p.submittedAt instanceof Timestamp
-          ? p.submittedAt.toDate().toISOString()
-          : typeof p.submittedAt === "string"
-            ? p.submittedAt
+        post.submittedAt instanceof Timestamp
+          ? post.submittedAt.toDate().toISOString()
+          : typeof post.submittedAt === "string"
+            ? post.submittedAt
             : "",
     })),
     userCompletionPercentage: percentage,
-    unsubmittedAccounts: unsubmittedAccounts.map((a) => ({
-      accountName: a.accountName,
-      accountAddress: a.accountAddress || "",
-      accountNumber: a.accountNumber.toString(),
+    unsubmittedAccounts: unsubmittedAccounts.map((account) => ({
+      accountName: account.accountName,
+      accountAddress: account.accountAddress || "",
+      accountNumber: account.accountNumber.toString(),
     })),
   };
 
+  const createdBy =
+    `${goal.createdByFirstName ?? ""} ${goal.createdByLastName ?? ""}`.trim();
+
   return (
-    <div className="info-box-company-goal">
-      <div className="goal-content" onClick={() => onToggleExpand(goal.id)}>
-        <div className="goal-badge">{goal.targetRole}</div>
-        <div className="company-goal-card-start-end">
-          <h3>Starts: {goal.goalStartDate}</h3>
-          <h3>Ends: {goal.goalEndDate}</h3>
+    <article
+      className={`user-goal-card ${expanded ? "user-goal-card--expanded" : ""} ${
+        mobile ? "user-goal-card--mobile" : ""
+      }`}
+    >
+      <div className="user-goal-card__topline">
+        <div className="user-goal-card__badges">
+          <span className="user-goal-card__status">Active</span>
+          <span className="user-goal-card__role">
+            {goal.targetRole === "supervisor" ? "Supervisor" : "Sales"}
+          </span>
         </div>
-        <div className="info-title-row">
-          <div className="info-title">{goal.goalTitle}</div>
-          <div className="info-title">{goal.id}</div>
+        <span className="user-goal-card__dates">
+          <CalendarMonthOutlinedIcon />
+          {formatDate(goal.goalStartDate)} – {formatDate(goal.goalEndDate)}
+        </span>
+      </div>
+
+      <div className="user-goal-card__body">
+        <div className="user-goal-card__copy">
+          <h3>{goal.goalTitle}</h3>
+          {createdBy && <span className="user-goal-card__creator">Created by {createdBy}</span>}
+          <p>{goal.goalDescription}</p>
+          {goal.perUserQuota && goal.perUserQuota > 0 && (
+            <span className="user-goal-card__requirement">
+              Requirement: {goal.perUserQuota} submission
+              {goal.perUserQuota === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
 
-        <div className="info-layout-row">
-          <div className="info-description">
-            <p>
-              Created by: {goal.createdByFirstName} {goal.createdByLastName}
-            </p>
-
-            {goal.goalDescription}
-            {goal.perUserQuota && (
-              <div className="info-quota">
-                Requirement: at least {goal.perUserQuota} submission
-                {goal.perUserQuota > 1 ? "s" : ""}.
-              </div>
-            )}
+        <div className="user-goal-card__progress" aria-label={`${percentage}% complete`}>
+          <div className="user-goal-card__progress-heading">
+            <span>Your progress</span>
+            <strong className={`user-goal-card__percentage user-goal-card__percentage--${progressTone}`}>
+              {percentage}%
+            </strong>
           </div>
-
-          <div className="goal-progress-section">
-            <Typography variant="caption">Your Progress</Typography>
-            <div className="goal-progress-numbers">
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                }}
+          <div className="user-goal-card__progress-track" aria-hidden="true">
+            <span
+              className={`user-goal-card__progress-fill user-goal-card__progress-fill--${progressTone}`}
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+          <div className="user-goal-card__metrics">
+            <span>
+              <strong>{submittedCount}</strong> submitted
+            </span>
+            <span>
+              <strong>{totalAccounts}</strong> stores
+              <Tooltip
+                title={
+                  goal.perUserQuota
+                    ? `${submittedCount} submissions toward a quota of ${goal.perUserQuota}`
+                    : `${submittedCount} of ${totalAccounts} assigned stores submitted`
+                }
               >
-                <span>{submittedCount} Submissions</span>
-                <Tooltip
-                  title={`${submittedCount} of ${totalAccounts} submitted`}
-                >
-                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
-                </Tooltip>
-              </div>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span className={getCompletionClass(percentage)}>
-                  {percentage}% Completed
-                </span>
-                <Tooltip
-                  title={
-                    goal.perUserQuota
-                      ? `${percentage}% of required submissions`
-                      : `${percentage}% of assigned accounts submitted`
-                  }
-                >
-                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
-                </Tooltip>
-              </div>
-            </div>
+                <InfoOutlinedIcon aria-label="Progress calculation" />
+              </Tooltip>
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* <Box display="flex" justifyContent="flex-end" mt={1}>
+      {totalAccounts === 0 && (
+        <div className="user-goal-card__account-note">
+          <StorefrontOutlinedIcon />
+          <span>
+            This goal is visible to your role, but no stores are directly assigned to your profile.
+          </span>
+        </div>
+      )}
+
+      <div className="user-goal-card__actions">
         <Button
-          variant="outlined"
+          className="user-goal-card__toggle"
           size="small"
+          endIcon={<ExpandMoreOutlinedIcon />}
           onClick={() => onToggleExpand(goal.id)}
+          aria-expanded={expanded}
+          aria-controls={`goal-details-${goal.id}`}
         >
-          {expanded ? "Hide details" : "Show details"}
+          {expanded ? "Hide account details" : "View account details"}
         </Button>
-      </Box> */}
       </div>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Account Progress
-        </Typography>
-        <UserTableForGoals
-          users={[userRow]}
-          goal={goal}
-          onViewPostModal={onViewPostModal}
-          enableReporting
-          reports={reports}
-        />
+        <div className="user-goal-card__details" id={`goal-details-${goal.id}`}>
+          <div className="user-goal-card__details-heading">
+            <span>Account progress</span>
+            <small>{totalAccounts} assigned stores</small>
+          </div>
+          <UserTableForGoals
+            users={[userRow]}
+            goal={goal}
+            onViewPostModal={onViewPostModal}
+            enableReporting
+            reports={reports}
+          />
+        </div>
       </Collapse>
-    </div>
+    </article>
   );
 };
 

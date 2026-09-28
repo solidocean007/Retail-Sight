@@ -1,85 +1,147 @@
-/* allGoalsLayout.css */
-
 .all-goals {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 1rem;
 }
 
-/* ================= SOURCE SWITCHER ================= */
-
-.goal-source-switcher {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  background: var(--dashboard-card);
-  padding: 6px;
-  border-radius: 12px;
-  /* margin: 0 24px; */
+.goal-create-dialog .MuiBackdrop-root {
+  background: rgba(3, 10, 19, 0.74);
+  backdrop-filter: blur(5px);
 }
 
-.source-btn {
-  border: 1px solid white;
-  background: transparent;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--text-muted);
-  box-shadow: none;
+.goal-create-dialog__paper {
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  border: 1px solid var(--card-outline);
+  border-radius: 18px !important;
+  background: var(--dashboard-card) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.4) !important;
 }
 
-.source-btn.active {
-  background: var(--tab-background-selected);
-  color: var(--color-selected);
-  box-shadow: var(--button-shadow);
-}
-
-.source-btn.external {
+.goal-create-dialog__title {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-/* ================= BADGE ================= */
-
-.external-badge {
-  font-size: 0.65rem;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(236, 189, 59, 0.798);
-  color: rgb(68, 64, 63);
-  text-transform: uppercase;
-}
-
-/* ================= VIEW ================= */
-
-.goals-view {
-  border-radius: 12px;
-  /* padding: 8px; */
-  width: 100%
-}
-
-.goals-view.gallo {
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.02),
-    rgba(255, 255, 255, 0.01)
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1.2rem !important;
+  border-bottom: 1px solid var(--card-outline);
+  background: color-mix(
+    in srgb,
+    var(--dashboard-card) 92%,
+    var(--accent-color) 8%
   );
 }
 
-/* ================= MOBILE ================= */
+.goal-create-dialog__title > div {
+  display: flex;
+  flex-direction: column;
+}
 
-@media (max-width: 600px) {
-  .goal-source-switcher {
-    flex-direction: column;
+.goal-create-dialog__title span {
+  color: var(--text-color);
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.goal-create-dialog__title small {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.goal-create-dialog__title .MuiIconButton-root {
+  color: var(--text-muted);
+}
+
+.goal-create-dialog__content {
+  padding: 0 !important;
+  overflow-x: hidden;
+}
+
+.goal-create-source-switcher {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--card-outline);
+  background: color-mix(in srgb, var(--dashboard-card) 90%, transparent);
+}
+
+.goal-create-source-btn {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--card-outline);
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.goal-create-source-btn > svg,
+.goal-create-source-btn__icons svg {
+  width: 18px;
+  height: 18px;
+}
+
+.goal-create-source-btn__icons {
+  display: inline-flex;
+  align-items: center;
+}
+
+.goal-create-source-btn__icons svg + svg {
+  margin-left: -0.35rem;
+  transform: translateY(0.16rem);
+}
+
+.goal-create-source-btn.active {
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 16%, transparent);
+  color: var(--text-color);
+  box-shadow: 0 5px 16px
+    color-mix(in srgb, var(--accent-color) 16%, transparent);
+}
+
+.external-badge {
+  padding: 0.18rem 0.38rem;
+  border-radius: 999px;
+  background: rgba(236, 189, 59, 0.8);
+  color: #403d37;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+}
+
+.goals-view {
+  min-width: 0;
+  width: 100%;
+}
+
+.goals-view.gallo {
+  min-height: 460px;
+  background: transparent;
+}
+
+@media (max-width: 720px) {
+  .goal-create-dialog__paper {
     width: 100%;
-    justify-content: space-between;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0 !important;
+    border-radius: 0 !important;
   }
 
-  .source-btn {
+  .goal-create-source-switcher {
+    align-items: stretch;
+  }
+
+  .goal-create-source-btn {
     flex: 1;
-    text-align: center;
   }
 }

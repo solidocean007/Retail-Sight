@@ -2,7 +2,6 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Container,
   TextField,
   Button,
   Typography,
@@ -24,24 +23,14 @@ import {
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-} from "@firebase/firestore";
+import { doc, getDoc } from "@firebase/firestore";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import TrackChangesIcon from "@mui/icons-material/TrackChanges"; // MUI's target icon
 
 import dayjs from "dayjs";
 import "./createCompanyGoalView.css";
 import GoalTitleInput from "./GoalTitleInput";
-import ConfirmGoalModal from "./ConfirmGoalModal";
 import {
   selectAllCompanyAccounts,
   setAllAccounts,
@@ -63,7 +52,24 @@ const defaultCustomerTypes: string[] = [
   "OTHER",
 ];
 
-const CreateCompanyGoalView = () => {
+const wizardSteps = [
+  "Details",
+  "Measure",
+  "Schedule",
+  "Audience",
+  "Accounts",
+  "Review",
+];
+
+type CreateCompanyGoalViewProps = {
+  onCancel: () => void;
+  onCreated: () => void;
+};
+
+const CreateCompanyGoalView = ({
+  onCancel,
+  onCreated,
+}: CreateCompanyGoalViewProps) => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const companyId = currentUser?.companyId;
@@ -74,12 +80,11 @@ const CreateCompanyGoalView = () => {
       (companyUsers ?? []).filter((u) => (u.status ?? "active") === "active"),
     [companyUsers],
   );
-  const [draftGoal, setDraftGoal] = useState<CompanyGoalType | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
   const [emailOnCreate, setEmailOnCreate] = useState(true);
   const [goalAssignments, setGoalAssignments] = useState<GoalAssignmentType[]>(
     [],
   );
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [supplierMap, setSupplierMap] = useState<Record<string, string>>({});
   const [supplierIdForGoal, setSupplierIdForGoal] = useState<string | null>(
     null,
@@ -92,10 +97,11 @@ const CreateCompanyGoalView = () => {
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
   const [perUserQuota, setPerUserQuota] = useState<number | string>("1");
-  const [_isSaving, setIsSaving] = useState(false); // 'isSaving' is declared but its value is never read.
+  const [isSaving, setIsSaving] = useState(false);
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-  const [_accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsLoading, setAccountsLoading] = useState(true);
 
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
@@ -132,15 +138,22 @@ const CreateCompanyGoalView = () => {
 
     return connections
       .filter((c) => c.status === "approved")
-      .map((c) => {
+      .flatMap((c) => {
         const isRequester = c.requestFromCompanyId === companyId;
+        const connectedCompanyType = isRequester
+          ? c.requestToCompanyType
+          : c.requestFromCompanyType;
 
-        return {
-          companyId: isRequester
-            ? c.requestToCompanyId
-            : c.requestFromCompanyId,
-          connectionId: c.id,
-        };
+        if (connectedCompanyType !== "supplier") return [];
+
+        return [
+          {
+            companyId: isRequester
+              ? c.requestToCompanyId
+              : c.requestFromCompanyId,
+            connectionId: c.id,
+          },
+        ];
       });
   }, [connections, companyId]);
 
@@ -236,7 +249,7 @@ const CreateCompanyGoalView = () => {
       salesRouteNum: user.salesRouteNum || "",
       reportsTo: user.reportsTo || "",
     }));
-  }, [companyUsers]);
+  }, [activeCompanyUsers]);
 
   const reportsToMap = useMemo(() => {
     const map = new Map<string, string>(); // repUid -> supervisorUid
@@ -313,11 +326,14 @@ const CreateCompanyGoalView = () => {
     normalizedCompanyUsers,
   ]);
 
-  const readyForCreation =
+  const detailsComplete =
     !!goalTitle.trim() &&
     !!goalDescription.trim() &&
     !!goalMetric.trim() &&
-    goalValueMin > 0;
+    goalValueMin > 0 &&
+    Boolean(goalStartDate) &&
+    Boolean(goalEndDate) &&
+    goalEndDate >= goalStartDate;
 
   useEffect(() => {
     const stored = localStorage.getItem("displaygram_filter_sets");
@@ -348,63 +364,6 @@ const CreateCompanyGoalView = () => {
       });
   }, [companyId]);
 
-  const numberOfAffectedUsers = new Set(goalAssignments.map((a) => a.uid)).size;
-
-  const handleCreateGoal = async () => {
-    if (isSupplierGoal && !supplierIdForGoal) {
-      dispatch(showMessage("Please select a supplier."));
-      return;
-    }
-    const cleanSupplierId = supplierIdForGoal || null;
-    if (!readyForCreation) {
-      alert("Please fill out all required fields.");
-      return;
-    }
-    if (!companyId) {
-      alert("Missing companyId. Cannot create goal.");
-      return;
-    }
-
-    // 🚀 Always use the unified assignment builder
-    const finalAssignments = buildAssignments({
-      accounts,
-      filteredAccounts,
-      normalizedUsers: normalizedCompanyUsers,
-      assigneeType,
-      accountScope,
-    });
-
-    const newGoal: CompanyGoalType & {
-      notifications?: {
-        emailOnCreate: boolean;
-      };
-    } = {
-      companyId,
-      goalTitle,
-      ...(cleanSupplierId ? { supplierIdForGoal: cleanSupplierId } : {}),
-      targetRole: assigneeType,
-      goalDescription,
-      goalMetric,
-      goalValueMin: Number(goalValueMin),
-      goalStartDate,
-      goalEndDate,
-      createdAt: new Date().toISOString(),
-      deleted: false,
-      goalAssignments: finalAssignments,
-
-      notifications: {
-        emailOnCreate,
-      },
-
-      ...(enforcePerUserQuota && perUserQuota
-        ? { perUserQuota: Number(perUserQuota) }
-        : {}),
-    };
-
-    setDraftGoal(newGoal);
-    setShowConfirmModal(true);
-  };
-
   // ✅ Keep goalAssignments in sync with current filtered view
   useEffect(() => {
     if (accountScope !== "selected") return;
@@ -424,47 +383,132 @@ const CreateCompanyGoalView = () => {
     setGoalEndDate(dayjs().endOf("month").format("YYYY-MM-DD"));
   }, []);
 
-  const hasSummary = goalTitle.length > 1 && goalDescription.length > 1;
+  const validAssignments = goalAssignments.filter(
+    (assignment) => assignment.uid && assignment.accountNumber,
+  );
+  const affectedAccountsCount = new Set(
+    validAssignments.map((assignment) => assignment.accountNumber),
+  ).size;
+  const numberOfAffectedUsers = new Set(
+    validAssignments.map((assignment) => assignment.uid),
+  ).size;
+  const audienceLabel =
+    assigneeType === "sales"
+      ? numberOfAffectedUsers === 1
+        ? "sales representative"
+        : "sales representatives"
+      : numberOfAffectedUsers === 1
+        ? "supervisor"
+        : "supervisors";
+  const accountLabel = affectedAccountsCount === 1 ? "account" : "accounts";
+  const metricLabel =
+    Number(goalValueMin) === 1 ? goalMetric.replace(/s$/, "") : goalMetric;
+  const basicsComplete =
+    goalTitle.trim().length > 1 && goalDescription.trim().length > 1;
+  const measureComplete =
+    Boolean(goalMetric) &&
+    Number(goalValueMin) > 0 &&
+    (!enforcePerUserQuota || Number(perUserQuota) > 0);
+  const scheduleComplete =
+    Boolean(goalStartDate) &&
+    Boolean(goalEndDate) &&
+    goalEndDate >= goalStartDate &&
+    (!isSupplierGoal || Boolean(supplierIdForGoal));
+  const stepReady = [
+    basicsComplete,
+    measureComplete,
+    scheduleComplete,
+    true,
+    !accountsLoading && validAssignments.length > 0,
+    detailsComplete && scheduleComplete && validAssignments.length > 0,
+  ];
+
+  const stepGuidance = [
+    "Add a title and a short description before continuing.",
+    "Choose a positive target and, when enabled, a positive per-user quota.",
+    isSupplierGoal && !supplierIdForGoal
+      ? "Choose the supplier that should see this goal."
+      : "Choose a valid start and end date.",
+    "Choose who owns the work and whether it covers all or selected accounts.",
+    accountsLoading
+      ? "Accounts are still loading."
+      : "At least one account must map to an active assigned user.",
+    "Review the goal before creating it.",
+  ];
+
+  const resetForm = () => {
+    setCurrentStep(0);
+    setGoalTitle("");
+    setGoalDescription("");
+    setGoalMetric("cases");
+    setGoalValueMin(1);
+    setGoalStartDate(dayjs().format("YYYY-MM-DD"));
+    setGoalEndDate(dayjs().endOf("month").format("YYYY-MM-DD"));
+    setAssigneeType("sales");
+    setAccountScope("all");
+    setIsSupplierGoal(false);
+    setSupplierIdForGoal(null);
+    setEnforcePerUserQuota(false);
+    setPerUserQuota("1");
+    setEmailOnCreate(true);
+    setReviewConfirmed(false);
+    setFilters({
+      chains: [],
+      chainType: "",
+      typeOfAccounts: [],
+      userIds: [],
+      supervisorIds: [],
+    });
+  };
+
+  const goToNextStep = () => {
+    if (!stepReady[currentStep]) return;
+    if (currentStep === wizardSteps.length - 2) setReviewConfirmed(false);
+    setCurrentStep((step) => Math.min(step + 1, wizardSteps.length - 1));
+  };
 
   const confirmGoalCreation = async () => {
-    if (!draftGoal || !currentUser) return;
+    if (!currentUser || !companyId) {
+      dispatch(
+        showMessage({
+          text: "Your company could not be identified.",
+          severity: "error",
+        }),
+      );
+      return;
+    }
+
+    if (!stepReady[5] || !reviewConfirmed) return;
+
+    const cleanSupplierId = supplierIdForGoal || null;
+    const newGoal: CompanyGoalType & {
+      notifications?: { emailOnCreate: boolean };
+    } = {
+      companyId,
+      goalTitle: goalTitle.trim(),
+      ...(cleanSupplierId ? { supplierIdForGoal: cleanSupplierId } : {}),
+      targetRole: assigneeType,
+      goalDescription: goalDescription.trim(),
+      goalMetric,
+      goalValueMin: Number(goalValueMin),
+      goalStartDate,
+      goalEndDate,
+      createdAt: new Date().toISOString(),
+      deleted: false,
+      goalAssignments: validAssignments,
+      notifications: { emailOnCreate },
+      ...(enforcePerUserQuota && perUserQuota
+        ? { perUserQuota: Number(perUserQuota) }
+        : {}),
+    };
 
     setIsSaving(true);
     try {
       const result = await dispatch(
-        createCompanyGoalInFirestore({ goal: draftGoal, currentUser }),
+        createCompanyGoalInFirestore({ goal: newGoal, currentUser }),
       );
 
       if (createCompanyGoalInFirestore.fulfilled.match(result)) {
-        const createdGoal = result.payload as CompanyGoalType;
-
-        // ---------------------------------------------
-        // 🔥 Send goal.assignment events to each assignee
-        // ---------------------------------------------
-        if (
-          createdGoal.goalAssignments &&
-          createdGoal.goalAssignments?.length > 0
-        ) {
-          const targetUserIds = Array.from(
-            new Set(createdGoal.goalAssignments.map((a) => a.uid)),
-          );
-
-          for (const uid of targetUserIds) {
-            await addDoc(collection(db, "activityEvents"), {
-              type: "goal.assignment",
-              goalId: createdGoal.id, // Property 'id' does not exist on type 'CompanyGoalType'
-              actorUserId: currentUser.uid,
-              actorName: `${currentUser.firstName} ${currentUser.lastName}`,
-              targetUserIds: [uid],
-
-              goalTitle: createdGoal.goalTitle,
-              goalDescription: createdGoal.goalDescription,
-
-              createdAt: serverTimestamp(),
-            });
-          }
-        }
-
         dispatch(
           showMessage({
             text: "Goal created successfully",
@@ -472,13 +516,8 @@ const CreateCompanyGoalView = () => {
           }),
         );
 
-        setGoalTitle("");
-        setGoalDescription("");
-        setGoalMetric("");
-        setGoalValueMin(1);
-        setGoalStartDate("");
-        setGoalEndDate("");
-        // setSelectedAccounts([]);
+        resetForm();
+        onCreated();
       } else {
         dispatch(
           showMessage({
@@ -499,188 +538,146 @@ const CreateCompanyGoalView = () => {
       );
     } finally {
       setIsSaving(false);
-      setShowConfirmModal(false);
-      setDraftGoal(null);
-      setEmailOnCreate(true);
     }
   };
 
-  // 🔹 Compute counts for confirmation modal
-  // 🔹 Confirmation modal data – now using the unified assignment builder
-  const confirmAssignments = draftGoal?.goalAssignments ?? [];
-
-  const affectedAccountsCount = new Set(
-    confirmAssignments.map((a) => a.accountNumber),
-  ).size;
-
-  const affectedUsersCount = new Set(confirmAssignments.map((a) => a.uid)).size;
-
-  // Sales or supervisor counts (optional, depends on target)
-  const affectedSalesCount = assigneeType === "sales" ? affectedUsersCount : 0;
-
-  const affectedSupervisorsCount =
-    assigneeType === "supervisor" ? affectedUsersCount : 0;
-
-  // useEffect(() => {
-  //   if (accountScope === "selected") {
-  //     setGoalAssignments([]); // Clear everything until user filters
-  //   }
-  // }, [accountScope]);
-
   return (
-    <Container>
-      <Box mb={4}>
-        <Typography variant="h5" gutterBottom>
-          Create a New Goal
-        </Typography>
-        <div className="goal-create-layout">
-          <Box display="flex" flexDirection="column" gap={3}>
+    <div className="goal-wizard">
+      <nav className="goal-wizard__steps" aria-label="Goal creation progress">
+        {wizardSteps.map((label, index) => (
+          <button
+            key={label}
+            type="button"
+            className={`${index === currentStep ? "is-current" : ""} ${
+              index < currentStep && stepReady[index] ? "is-complete" : ""
+            }`}
+            aria-current={index === currentStep ? "step" : undefined}
+            onClick={() => {
+              if (index === wizardSteps.length - 1) {
+                setReviewConfirmed(false);
+              }
+              setCurrentStep(index);
+            }}
+          >
+            <span>
+              {index < currentStep && stepReady[index] ? "✓" : index + 1}
+            </span>
+            <small>{label}</small>
+          </button>
+        ))}
+      </nav>
+
+      <div className="goal-wizard__progress" aria-hidden="true">
+        <span
+          style={{
+            width: `${((currentStep + 1) / wizardSteps.length) * 100}%`,
+          }}
+        />
+      </div>
+
+      <section className="goal-wizard__stage">
+        <header className="goal-wizard__stage-header">
+          <span>
+            Step {currentStep + 1} of {wizardSteps.length}
+          </span>
+          <h2>{wizardSteps[currentStep]}</h2>
+          <p>
+            {currentStep === 0 &&
+              "Give the team a clear name and a short definition of success."}
+            {currentStep === 1 &&
+              "Set the measurable result without adding unnecessary complexity."}
+            {currentStep === 2 &&
+              "Choose when the goal runs and whether a supplier can follow it."}
+            {currentStep === 3 &&
+              "Choose the people responsible and the breadth of the account scope."}
+            {currentStep === 4 &&
+              "Confirm the accounts and people who will receive this goal."}
+            {currentStep === 5 &&
+              "Check the final scope and notification choice before creating the goal."}
+          </p>
+        </header>
+
+        {currentStep === 0 && (
+          <div className="goal-wizard__fields goal-wizard__fields--narrow">
+            <GoalTitleInput value={goalTitle} setValue={setGoalTitle} />
+
             <div className="goal-form-group">
-              <GoalTitleInput value={goalTitle} setValue={setGoalTitle} />
-            </div>
-            <div className="incentive-box">
-              <div className="incentive-check-box">
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isSupplierGoal}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-
-                        setIsSupplierGoal(checked);
-
-                        if (!checked) {
-                          setSupplierIdForGoal(null); // clear supplier on uncheck
-                        }
-                      }}
-                    />
-                  }
-                  label="Share this goal with a supplier"
-                />
-              </div>
-
-              {isSupplierGoal && (
-                <div className="select-supplier-for-incentive">
-                  <Select
-                    value={supplierIdForGoal || ""}
-                    onChange={(e) =>
-                      setSupplierIdForGoal(e.target.value || null)
-                    }
-                    displayEmpty
-                    size="small"
-                    sx={{ minWidth: 250 }}
-                  >
-                    <MenuItem value="">-- Select Supplier --</MenuItem>
-
-                    {supplierOptions.map((s) => (
-                      <MenuItem key={s.companyId} value={s.companyId}>
-                        {supplierMap[s.companyId] || "Loading..."}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </div>
-              )}
-            </div>
-
-            <div className="goal-form-group">
-              <label htmlFor="goalDescription">Goal Description</label>
+              <label htmlFor="goalDescription">What should happen?</label>
               <textarea
                 id="goalDescription"
                 value={goalDescription}
-                onChange={(e) => setGoalDescription(e.target.value)}
+                onChange={(event) => setGoalDescription(event.target.value)}
                 className="custom-textarea"
-                rows={4}
-                placeholder="Describe what success looks like for this goal..."
+                rows={5}
+                placeholder="Describe the display outcome and what counts as success."
+                autoFocus={false}
               />
+              <small>
+                Keep this practical—the assigned team will see this description.
+              </small>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 1 && (
+          <div className="goal-wizard__fields goal-wizard__fields--narrow">
+            <div className="goal-wizard__field-card">
+              <Typography variant="subtitle1" fontWeight={700}>
+                What are you measuring?
+              </Typography>
+              <ToggleButtonGroup
+                value={goalMetric}
+                exclusive
+                onChange={(_event, value) => value && setGoalMetric(value)}
+                aria-label="Goal metric"
+                fullWidth
+              >
+                <ToggleButton value="cases">Cases</ToggleButton>
+                <ToggleButton value="bottles">Bottles</ToggleButton>
+              </ToggleButtonGroup>
             </div>
 
-            <Box display="flex" gap={2}>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <Box display="flex" gap={3} justifyContent="start">
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                  >
-                    <TextField
-                      type="date"
-                      label="Start Date"
-                      value={goalStartDate}
-                      onChange={(e) => setGoalStartDate(e.target.value)}
-                      size="small"
-                      sx={{ width: 160 }}
-                      inputProps={{ min: "2023-01-01" }}
-                    />
-                  </Box>
-
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                  >
-                    <TextField
-                      type="date"
-                      label="End Date"
-                      value={goalEndDate}
-                      onChange={(e) => setGoalEndDate(e.target.value)}
-                      size="small"
-                      sx={{ width: 160 }}
-                      inputProps={{ min: goalStartDate }}
-                    />
-                  </Box>
-                </Box>
-              </LocalizationProvider>
-            </Box>
-
-            <Box display="flex" justifyContent="flex-start">
-              <Box sx={{ width: 200 }}>
-                <Typography variant="h6">Goal Metric</Typography>
-                <ToggleButtonGroup
-                  value={goalMetric}
-                  exclusive
-                  onChange={(_e, val) => val && setGoalMetric(val)}
-                  aria-label="Goal Metric"
+            <div className="goal-wizard__field-card">
+              <Typography variant="subtitle1" fontWeight={700}>
+                Minimum display quantity
+              </Typography>
+              <Box className="goal-wizard__quantity">
+                <Button
+                  variant="outlined"
+                  aria-label="Decrease minimum quantity"
+                  onClick={() =>
+                    setGoalValueMin((previous) => Math.max(1, previous - 1))
+                  }
                 >
-                  <ToggleButton value="cases">Cases</ToggleButton>
-                  <ToggleButton value="bottles">Bottles</ToggleButton>
-                </ToggleButtonGroup>
+                  −
+                </Button>
+                <TextField
+                  type="number"
+                  value={goalValueMin}
+                  onChange={(event) =>
+                    setGoalValueMin(Math.max(1, Number(event.target.value)))
+                  }
+                  size="small"
+                  inputProps={{ min: 1, "aria-label": "Minimum quantity" }}
+                />
+                <Button
+                  variant="outlined"
+                  aria-label="Increase minimum quantity"
+                  onClick={() => setGoalValueMin((previous) => previous + 1)}
+                >
+                  +
+                </Button>
               </Box>
-              <Box>
-                <Typography variant="h6">Minimum Value</Typography>
-                <Box display="flex" alignItems="center">
-                  <Button
-                    variant="outlined"
-                    onClick={() =>
-                      setGoalValueMin((prev) => Math.max(1, prev - 1))
-                    }
-                  >
-                    -
-                  </Button>
-                  <TextField
-                    type="number"
-                    value={goalValueMin}
-                    onChange={(e) =>
-                      setGoalValueMin(Math.max(1, Number(e.target.value)))
-                    }
-                    size="medium"
-                    sx={{ width: 100, mx: 1 }}
-                    inputProps={{ min: 1 }} // 'inputProps' is deprecated.
-                  />
-                  <Button
-                    variant="outlined"
-                    onClick={() => setGoalValueMin((prev) => prev + 1)}
-                  >
-                    +
-                  </Button>
-                </Box>
-              </Box>
-            </Box>
-            <Box display="flex" justifyContent="flex-start">
+            </div>
+
+            <div className="goal-wizard__option-card">
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={enforcePerUserQuota}
-                    onChange={(e) => setEnforcePerUserQuota(e.target.checked)}
+                    onChange={(event) =>
+                      setEnforcePerUserQuota(event.target.checked)
+                    }
                   />
                 }
                 label="Require a minimum number of submissions per user"
@@ -688,191 +685,331 @@ const CreateCompanyGoalView = () => {
 
               {enforcePerUserQuota && (
                 <TextField
-                  label="Per User Quota"
+                  label="Submissions per user"
                   type="number"
+                  size="small"
                   value={perUserQuota}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "") {
-                      setPerUserQuota(""); // Allow blank state
-                    } else {
-                      const numericValue = Number(value);
-                      setPerUserQuota(isNaN(numericValue) ? 0 : numericValue);
-                    }
-                  }}
-                  helperText="Example: Require 3 submissions per user"
-                  sx={{ mt: 1 }}
+                  onChange={(event) => setPerUserQuota(event.target.value)}
+                  inputProps={{ min: 1 }}
+                  helperText="This requirement applies to every assigned user."
                 />
               )}
-            </Box>
-            {readyForCreation && (
-              <div className="target-accounts-and-roles">
-                <FormControl component="fieldset">
-                  <Typography variant="subtitle1">Target Accounts</Typography>
-                  <RadioGroup
-                    value={accountScope}
-                    onChange={(e) =>
-                      setAccountScope(e.target.value as "all" | "selected")
-                    }
-                    row
-                  >
-                    <FormControlLabel
-                      value="all"
-                      control={<Radio />}
-                      label="All Accounts"
-                    />
-                    <FormControlLabel
-                      value="selected"
-                      control={<Radio />}
-                      label="Selected Accounts"
-                    />
-                  </RadioGroup>
-                </FormControl>
-                <FormControl component="fieldset">
-                  <Typography variant="subtitle1">Assign To</Typography>
-                  <RadioGroup
-                    value={assigneeType}
-                    onChange={(e) =>
-                      setAssigneeType(e.target.value as "sales" | "supervisor")
-                    }
-                    row
-                  >
-                    <FormControlLabel
-                      value="sales"
-                      control={<Radio />}
-                      label="Sales Reps"
-                    />
-                    <FormControlLabel
-                      value="supervisor"
-                      control={<Radio />}
-                      label="Supervisors"
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </div>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div className="goal-wizard__fields goal-wizard__fields--narrow">
+            <div className="goal-wizard__date-grid">
+              <TextField
+                type="date"
+                label="Start date"
+                value={goalStartDate}
+                onChange={(event) => setGoalStartDate(event.target.value)}
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: "2023-01-01" }}
+              />
+              <TextField
+                type="date"
+                label="End date"
+                value={goalEndDate}
+                onChange={(event) => setGoalEndDate(event.target.value)}
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: goalStartDate }}
+              />
+            </div>
+
+            {goalStartDate && goalEndDate && goalEndDate < goalStartDate && (
+              <p className="goal-wizard__error">
+                The end date must be on or after the start date.
+              </p>
             )}
 
-            {accountScope === "selected" && readyForCreation && (
+            <div className="goal-wizard__option-card">
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isSupplierGoal}
+                    onChange={(event) => {
+                      setIsSupplierGoal(event.target.checked);
+                      if (!event.target.checked) setSupplierIdForGoal(null);
+                    }}
+                  />
+                }
+                label="Let a connected supplier follow this goal"
+              />
+              <small>
+                Suppliers receive read-only progress visibility. They cannot
+                edit or assign the goal.
+              </small>
+
+              {isSupplierGoal && (
+                <Select
+                  value={supplierIdForGoal || ""}
+                  onChange={(event) =>
+                    setSupplierIdForGoal(event.target.value || null)
+                  }
+                  displayEmpty
+                  size="small"
+                  fullWidth
+                >
+                  <MenuItem value="">Select a supplier</MenuItem>
+                  {supplierOptions.map((supplier) => (
+                    <MenuItem
+                      key={supplier.companyId}
+                      value={supplier.companyId}
+                    >
+                      {supplierMap[supplier.companyId] || "Loading…"}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+
+              {isSupplierGoal && supplierOptions.length === 0 && (
+                <p className="goal-wizard__error">
+                  No approved supplier connections are available.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {currentStep === 3 && (
+          <div className="goal-wizard__choice-grid">
+            <FormControl component="fieldset" className="goal-wizard__choice">
+              <Typography variant="subtitle1" fontWeight={700}>
+                Assign the work to
+              </Typography>
+              <RadioGroup
+                value={assigneeType}
+                onChange={(event) =>
+                  setAssigneeType(event.target.value as "sales" | "supervisor")
+                }
+              >
+                <FormControlLabel
+                  value="sales"
+                  control={<Radio />}
+                  label="Sales representatives"
+                />
+                <FormControlLabel
+                  value="supervisor"
+                  control={<Radio />}
+                  label="Supervisors"
+                />
+              </RadioGroup>
+              <small>
+                Accounts are matched through routes and reporting relationships.
+              </small>
+            </FormControl>
+
+            <FormControl component="fieldset" className="goal-wizard__choice">
+              <Typography variant="subtitle1" fontWeight={700}>
+                Account scope
+              </Typography>
+              <RadioGroup
+                value={accountScope}
+                onChange={(event) =>
+                  setAccountScope(event.target.value as "all" | "selected")
+                }
+              >
+                <FormControlLabel
+                  value="all"
+                  control={<Radio />}
+                  label="All company accounts"
+                />
+                <FormControlLabel
+                  value="selected"
+                  control={<Radio />}
+                  label="A filtered account group"
+                />
+              </RadioGroup>
+              <small>
+                You can inspect and adjust the resulting assignments next.
+              </small>
+            </FormControl>
+          </div>
+        )}
+
+        {currentStep === 4 && (
+          <div className="goal-wizard__assignment-step">
+            {accountsLoading ? (
+              <div className="goal-wizard__loading">
+                Loading company accounts…
+              </div>
+            ) : (
               <>
-                <GoalFiltersPanel
-                  filters={filters}
-                  setFilters={setFilters}
-                  chains={chainNames}
-                  customerTypes={customerTypes}
-                  normalizedCompanyUsers={normalizedCompanyUsers}
-                  savedFilterSets={savedFilterSets}
-                  setSavedFilterSets={setSavedFilterSets}
-                  filterSetName={filterSetName}
-                  setFilterSetName={setFilterSetName}
-                  filteredAccounts={filteredAccounts} // ✅ added
+                {accountScope === "selected" && (
+                  <GoalFiltersPanel
+                    filters={filters}
+                    setFilters={setFilters}
+                    chains={chainNames}
+                    customerTypes={customerTypes}
+                    normalizedCompanyUsers={normalizedCompanyUsers}
+                    savedFilterSets={savedFilterSets}
+                    setSavedFilterSets={setSavedFilterSets}
+                    filterSetName={filterSetName}
+                    setFilterSetName={setFilterSetName}
+                    filteredAccounts={filteredAccounts}
+                    assigneeType={assigneeType}
+                    allAccounts={accounts}
+                  />
+                )}
+
+                <div className="goal-wizard__assignment-summary">
+                  <div>
+                    <strong>{affectedAccountsCount}</strong>
+                    <span>accounts</span>
+                  </div>
+                  <div>
+                    <strong>{numberOfAffectedUsers}</strong>
+                    <span>
+                      {assigneeType === "sales" ? "sales reps" : "supervisors"}
+                    </span>
+                  </div>
+                </div>
+
+                <GoalAssignmentsSection
+                  readyForCreation
+                  accountScope={accountScope}
+                  goalAssignments={goalAssignments}
+                  setGoalAssignments={setGoalAssignments}
+                  accounts={accounts}
+                  filteredAccounts={filteredAccounts}
+                  companyUsers={normalizedCompanyUsers}
                   assigneeType={assigneeType}
-                  allAccounts={accounts}
                 />
               </>
             )}
+          </div>
+        )}
 
-            <GoalAssignmentsSection
-              readyForCreation={readyForCreation}
-              accountScope={accountScope}
-              goalAssignments={goalAssignments}
-              setGoalAssignments={setGoalAssignments}
-              accounts={accounts}
-              filteredAccounts={filteredAccounts}
-              companyUsers={normalizedCompanyUsers}
-              assigneeType={assigneeType}
-            />
-          </Box>
-          {hasSummary && (
-            <aside className="goal-summary-panel">
-              <Box
-                p={1}
-                border="1px solid #555"
-                borderRadius="12px"
-                bgcolor="background.paper"
-                boxShadow={3}
-                sx={{
-                  textAlign: "left",
-                  lineHeight: 1.6,
-                  fontSize: "0.95rem",
-                  width: "100%",
-                  maxWidth: "800px",
-                  marginX: "auto",
-                  position: "relative",
-                }}
-              >
-                <Box display="flex" alignItems="center" gap={1} mb={1}>
-                  <TrackChangesIcon sx={{ color: "primary.main" }} />
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Summary
-                  </Typography>
-                </Box>
-
-                <Typography variant="body2">
-                  You are about to create a goal titled{" "}
-                  <strong>"{goalTitle}"</strong>, described as "
-                  {goalDescription}
-                  ". This goal requires each assigned user to contribute a
-                  minimum of <strong>{goalValueMin}</strong> {goalMetric}, and
-                  will be active from <strong>{goalStartDate}</strong> to{" "}
-                  <strong>{goalEndDate}</strong>. This goal will be assigned to{" "}
-                  <strong>{numberOfAffectedUsers}</strong> user
-                  {numberOfAffectedUsers !== 1 ? "s" : ""} across{" "}
-                  {accountScope === "all"
-                    ? `${accounts.length} account${
-                        accounts.length !== 1 ? "s" : ""
-                      }`
-                    : `${
-                        new Set(goalAssignments.map((g) => g.accountNumber))
-                          .size
-                      } selected account${
-                        goalAssignments.length !== 1 ? "s" : ""
-                      }`}
-                </Typography>
-
+        {currentStep === 5 && (
+          <div className="goal-wizard__review">
+            <div className="goal-wizard__review-hero">
+              <span>Natural-language review</span>
+              <h3>{goalTitle.trim() || "Untitled goal"}</h3>
+              <div className="goal-wizard__review-copy">
+                <p>
+                  This goal asks <strong>{numberOfAffectedUsers}</strong>{" "}
+                  <strong>{audienceLabel}</strong> to complete qualifying
+                  displays across <strong>{affectedAccountsCount}</strong>{" "}
+                  <strong>{accountLabel}</strong> from{" "}
+                  <strong>{goalStartDate || "the selected start date"}</strong>{" "}
+                  through{" "}
+                  <strong>{goalEndDate || "the selected end date"}</strong>.
+                </p>
+                <p>
+                  A qualifying display must include at least{" "}
+                  <strong>{goalValueMin || 0}</strong>{" "}
+                  <strong>{metricLabel || "units"}</strong>. The team’s
+                  objective is: “
+                  {goalDescription.trim() || "No description has been entered."}
+                  ”
+                </p>
                 {enforcePerUserQuota && (
-                  <Typography variant="body2" mt={1}>
-                    Each user must complete at least{" "}
-                    <strong>{perUserQuota}</strong> submission
-                    {Number(perUserQuota) > 1 ? "s" : ""} during the goal
+                  <p>
+                    Each assigned user must submit at least{" "}
+                    <strong>{perUserQuota || 0}</strong> qualifying display
+                    {Number(perUserQuota) === 1 ? "" : "s"} during the goal
                     period.
-                  </Typography>
+                  </p>
                 )}
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={emailOnCreate}
-                      onChange={(e) => setEmailOnCreate(e.target.checked)}
-                    />
-                  }
-                  label="Email assigned users about this goal"
-                />
+                {isSupplierGoal && supplierIdForGoal && (
+                  <p>
+                    Progress will also be visible, read-only, to{" "}
+                    <strong>
+                      {supplierMap[supplierIdForGoal] ||
+                        "the connected supplier"}
+                    </strong>
+                    .
+                  </p>
+                )}
+              </div>
+            </div>
 
-                <Typography variant="caption" color="textSecondary">
-                  Required operational email. Users cannot opt out.
-                </Typography>
+            <div className="goal-wizard__notification-choice">
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={emailOnCreate}
+                    onChange={(event) => setEmailOnCreate(event.target.checked)}
+                  />
+                }
+                label="Email assigned users when the goal is created"
+              />
+              <small>
+                An in-app assignment notification is always created. Email is
+                optional.
+              </small>
+            </div>
 
-                <Box display="flex" justifyContent="flex-end" mt={2}>
-                  <button className="button-primary" onClick={handleCreateGoal}>
-                    Review Goal
-                  </button>
-                </Box>
-              </Box>
-            </aside>
-          )}
-        </div>
-      </Box>
-      <ConfirmGoalModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        goal={draftGoal}
-        onConfirm={confirmGoalCreation}
-        affectedAccountsCount={affectedAccountsCount}
-        affectedSalesCount={affectedSalesCount}
-        affectedSupervisorsCount={affectedSupervisorsCount}
-        emailOnCreate={emailOnCreate}
-        setEmailOnCreate={setEmailOnCreate}
-      />
-    </Container>
+            <div className="goal-wizard__review-confirmation">
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={reviewConfirmed}
+                    onChange={(event) =>
+                      setReviewConfirmed(event.target.checked)
+                    }
+                    disabled={!stepReady[5]}
+                  />
+                }
+                label="I reviewed this summary and the assignments are correct"
+              />
+              {!stepReady[5] && (
+                <small>
+                  This preview is available for observation, but the goal is not
+                  complete enough to create.
+                </small>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!stepReady[currentStep] && currentStep < 5 && (
+          <p className="goal-wizard__guidance" role="status">
+            {stepGuidance[currentStep]}
+          </p>
+        )}
+      </section>
+
+      <footer className="goal-wizard__actions">
+        <button
+          type="button"
+          className="goal-wizard__back"
+          onClick={() =>
+            currentStep === 0
+              ? onCancel()
+              : setCurrentStep((step) => Math.max(0, step - 1))
+          }
+          disabled={isSaving}
+        >
+          {currentStep === 0 ? "Cancel" : "Back"}
+        </button>
+
+        {currentStep < wizardSteps.length - 1 ? (
+          <button
+            type="button"
+            className="goal-wizard__next"
+            onClick={goToNextStep}
+            disabled={!stepReady[currentStep]}
+          >
+            Continue
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="goal-wizard__next"
+            onClick={confirmGoalCreation}
+            disabled={isSaving || !stepReady[5] || !reviewConfirmed}
+          >
+            {isSaving ? "Creating goal…" : "Confirm and create goal"}
+          </button>
+        )}
+      </footer>
+    </div>
   );
 };
 
