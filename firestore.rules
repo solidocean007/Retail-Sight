@@ -18,6 +18,14 @@ service cloud.firestore {
     function isOwnCompany(companyId) {
       return isAdmin() && isInCompany(companyId);
     }
+    function isDirectSupervisorOf(userId, companyId) {
+      let reportUser = get(/databases/$(database)/documents/users/$(userId));
+      return request.auth != null &&
+             role() == "supervisor" &&
+             isInCompany(companyId) &&
+             reportUser.data.companyId == companyId &&
+             reportUser.data.reportsTo == request.auth.uid;
+    }
     function isPostOwner() {
       return request.auth.uid == resource.data.postUserId;
     }
@@ -90,8 +98,21 @@ service cloud.firestore {
     match /users/{userId}/notificationSettings/{settingsId} {
       // READ: Only the owner can read their settings
       allow get, list: if request.auth.uid == userId;
-      // CREATE/UPDATE: The user can create or update their own settings
-      allow create, update: if request.auth.uid == userId;
+      // CREATE/UPDATE: owner-only and limited to supported preference fields
+      allow create: if request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly([
+          "likes", "comments", "commentLikes", "goalAssignmentPush",
+          "supervisorDisplayAlerts", "developerAnnouncements",
+          "emailComments", "emailGoalAssignments", "emailWeeklySummary",
+          "quietHours", "createdAt", "updatedAt"
+        ]);
+      allow update: if request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "likes", "comments", "commentLikes", "goalAssignmentPush",
+          "supervisorDisplayAlerts", "developerAnnouncements",
+          "emailComments", "emailGoalAssignments", "emailWeeklySummary",
+          "quietHours", "updatedAt"
+        ]);
       // DELETE: optional, but allow user to remove settings if needed
       allow delete: if request.auth.uid == userId;
     }
@@ -108,10 +129,18 @@ service cloud.firestore {
     match /users/{userId} {
       // READ: Only themselves
       allow read: if request.auth.uid == userId;
-      // UPDATE: User can update self, but not role or companyId
+      // UPDATE: Users may only change their own presentation fields. Using
+      // changedKeys keeps immutable identity/access fields present in the
+      // document without accidentally treating them as edits.
       allow update: if request.auth.uid == userId &&
-                    !("role" in request.resource.data) &&
-                    !("companyId" in request.resource.data);
+                    request.resource.data.diff(resource.data).changedKeys().hasOnly([
+                      "firstName",
+                      "lastName",
+                      "phone",
+                      "profileUrlOriginal",
+                      "profileUrlThumbnail",
+                      "updatedAt"
+                    ]);
       // UPDATE: Admins can soft-delete users (status only)
       allow update: if isAdmin() &&
                     isOwnCompany(get(/databases/$(database)/documents/users/$(userId)).data.companyId) &&
@@ -229,27 +258,119 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // 🔹 Company Goals
+    // ==========================================================
+    // Distributor-owned execution records. Suppliers receive a sanitized
+    // projection through getPartnerGoals and never read these raw documents.
+    match /companyGoals/{goalId} {
+      allow read: if request.auth != null &&
+                  isInCompany(resource.data.companyId);
+
+      allow create: if request.auth != null &&
+                    (isAdmin() || isDeveloper()) &&
+                    isInCompany(request.resource.data.companyId) &&
+                    request.resource.data.createdByUserId == request.auth.uid;
+
+      allow update: if request.auth != null &&
+                    isInCompany(resource.data.companyId) &&
+                    request.resource.data.companyId == resource.data.companyId &&
+                    (
+                      isAdmin() ||
+                      isDeveloper() ||
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                        "submittedPosts"
+                      ])
+                    );
+
+      allow delete: if request.auth != null &&
+                    isInCompany(resource.data.companyId) &&
+                    (isAdmin() || isDeveloper());
+    }
+
+    // ==========================================================
     // 🔹 Goal Account Reports (rep feedback on goal execution)
     // ==========================================================
     // Contains candid commentary about accounts and possibly named buyers,
     // so it must NOT fall through to the catch-all below — that would expose
     // every company's reports to any authenticated user.
     match /goalAccountReports/{reportId} {
-      // READ: same company only
-      allow read: if isInCompany(resource.data.companyId);
+      // Candid account feedback is visible only to its author, that rep's
+      // direct supervisor, and company admins/developers.
+      allow read: if request.auth != null &&
+                  (resource.data.userId == request.auth.uid ||
+                   isOwnCompany(resource.data.companyId) ||
+                   (isDeveloper() && isInCompany(resource.data.companyId)) ||
+                   isDirectSupervisorOf(resource.data.userId, resource.data.companyId));
 
       // CREATE: only as yourself, only into your own company
       allow create: if request.auth != null &&
                     request.resource.data.userId == request.auth.uid &&
-                    isInCompany(request.resource.data.companyId);
+                    isInCompany(request.resource.data.companyId) &&
+                    request.resource.data.id == reportId &&
+                    request.resource.data.keys().hasAll([
+                      "id", "companyId", "goalKind", "goalId", "userId",
+                      "reasonKeys", "createdAt", "updatedAt"
+                    ]) &&
+                    request.resource.data.keys().hasOnly([
+                      "id", "companyId", "goalKind", "goalId", "goalTitle",
+                      "accountNumber", "oppId", "accountName", "userId",
+                      "userFirstName", "userLastName", "salesRouteNum",
+                      "reasonKeys", "helpKeys", "declinedBy", "note",
+                      "resolvedAt", "resolvedBy", "resolution", "createdAt",
+                      "updatedAt", "serverUpdatedAt"
+                    ]) &&
+                    request.resource.data.resolvedAt == null &&
+                    request.resource.data.resolvedBy == null &&
+                    request.resource.data.resolution == null;
 
-      // UPDATE: the author (editing their own report) or a company admin
-      // (resolving it)
-      allow update: if resource.data.userId == request.auth.uid ||
-                    isOwnCompany(resource.data.companyId);
+      // UPDATE: authors may revise report details, direct supervisors may
+      // record only their follow-up decision, and admins may resolve reports.
+      allow update: if request.auth != null &&
+                    request.resource.data.userId == resource.data.userId &&
+                    request.resource.data.companyId == resource.data.companyId &&
+                    (
+                      (
+                        resource.data.userId == request.auth.uid &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          "goalTitle", "accountName", "userFirstName", "userLastName",
+                          "salesRouteNum", "reasonKeys", "helpKeys", "declinedBy", "note",
+                          "resolvedAt", "resolvedBy", "resolution", "updatedAt", "serverUpdatedAt"
+                        ]) &&
+                        request.resource.data.resolvedAt == null &&
+                        request.resource.data.resolvedBy == null &&
+                        request.resource.data.resolution == null
+                      ) ||
+                      (
+                        isDirectSupervisorOf(resource.data.userId, resource.data.companyId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          "supervisorConfirmedAt", "supervisorConfirmedBy", "supervisorNote",
+                          "resolvedAt", "resolvedBy", "resolution", "adminDigestAt", "serverUpdatedAt"
+                        ]) &&
+                        (
+                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(["supervisorConfirmedBy"]) ||
+                          request.resource.data.supervisorConfirmedBy == request.auth.uid
+                        ) &&
+                        (
+                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(["resolvedBy"]) ||
+                          request.resource.data.resolvedBy == request.auth.uid
+                        ) &&
+                        (request.resource.data.resolution == null ||
+                         request.resource.data.resolution == "keep_working")
+                      ) ||
+                      (
+                        (isOwnCompany(resource.data.companyId) ||
+                         (isDeveloper() && isInCompany(resource.data.companyId))) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          "resolvedAt", "resolvedBy", "resolution", "resolutionNote", "serverUpdatedAt"
+                        ])
+                      )
+                    );
 
-      // DELETE: admins only
-      allow delete: if isOwnCompany(resource.data.companyId);
+      // Reps can withdraw their own report; admins can remove a report.
+      allow delete: if request.auth != null &&
+                    (resource.data.userId == request.auth.uid ||
+                     isOwnCompany(resource.data.companyId) ||
+                     (isDeveloper() && isInCompany(resource.data.companyId)));
     }
 
     // ==========================================================
@@ -275,7 +396,9 @@ service cloud.firestore {
         topLevelCollection != "accessRequestRateLimits" &&
         topLevelCollection != "pendingInvites" &&
         topLevelCollection != "mail" &&
-        topLevelCollection != "plans";
+        topLevelCollection != "plans" &&
+        topLevelCollection != "companyGoals" &&
+        topLevelCollection != "goalAccountReports";
     }
     }
 }
