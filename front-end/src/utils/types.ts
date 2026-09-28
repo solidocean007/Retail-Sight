@@ -2,12 +2,7 @@ import { serverTimestamp, Timestamp } from "firebase/firestore";
 export type NotificationAudienceType = "user" | "company" | "role" | "global";
 
 export type NotificationCategory =
-  | "like"
-  | "comment"
-  | "system"
-  | "reminder"
-  | "goal"
-  | "announcement";
+  "like" | "comment" | "system" | "reminder" | "goal" | "announcement";
 
 export type PriorityType = "high" | "normal";
 
