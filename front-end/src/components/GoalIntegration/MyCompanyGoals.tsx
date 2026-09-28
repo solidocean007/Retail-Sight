@@ -1,183 +1,227 @@
-import { useState, useMemo } from "react";
-import { useSelector } from "react-redux";
+import { useMemo, useState } from "react";
 import {
-  Typography,
-  CircularProgress,
-  useMediaQuery,
   Box,
   Button,
+  CircularProgress,
   Menu,
   MenuItem,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { selectUser } from "../../Slices/userSlice";
+import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
+import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
+import { useSelector } from "react-redux";
+import { useMediaQuery, useTheme } from "@mui/material";
+
 import {
   makeSelectUsersCompanyGoals,
   selectCompanyGoalsIsLoading,
 } from "../../Slices/companyGoalsSlice";
-import CompanyGoalCard from "./CompanyGoalCard";
-import "./myCompanyGoals.css";
+import { selectUser } from "../../Slices/userSlice";
 import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
 import PostViewerModal from "../PostViewerModal";
-import { RootState } from "../../utils/store";
 import UserCompanyGoalCard from "./UserCompanyGoalCard";
 
-const MyCompanyGoals: React.FC = () => {
+import "./myCompanyGoals.css";
+
+type SortOrder = "newest" | "oldest" | "title";
+
+const SORT_LABELS: Record<SortOrder, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  title: "Title A–Z",
+};
+
+const getLocalDateKey = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const MyCompanyGoals = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const user = useSelector(selectUser);
   const loading = useSelector(selectCompanyGoalsIsLoading);
-  const allGoals = useSelector((state: RootState) => state.companyGoals.goals);
-  // Right after getting the selector value
-  const userCompanyGoals = useSelector(
-    makeSelectUsersCompanyGoals(user?.salesRouteNum, user?.uid, user?.role),
+
+  const userGoalsSelector = useMemo(
+    () =>
+      makeSelectUsersCompanyGoals(
+        user?.salesRouteNum,
+        user?.uid,
+        user?.role,
+      ),
+    [user?.role, user?.salesRouteNum, user?.uid],
   );
+  const userCompanyGoals = useSelector(userGoalsSelector);
 
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
+  const [sortAnchor, setSortAnchor] = useState<null | HTMLElement>(null);
+  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+
+  const sortedGoals = useMemo(() => {
+    const sort = (goals: typeof userCompanyGoals) =>
+      [...goals].sort((a, b) => {
+        if (sortOrder === "newest") {
+          return b.goalStartDate.localeCompare(a.goalStartDate);
+        }
+        if (sortOrder === "oldest") {
+          return a.goalStartDate.localeCompare(b.goalStartDate);
+        }
+        return a.goalTitle.localeCompare(b.goalTitle);
+      });
+
+    const today = getLocalDateKey();
+
+    return {
+      current: sort(
+        userCompanyGoals.filter(
+          (goal) => goal.goalStartDate <= today && goal.goalEndDate >= today,
+        ),
+      ),
+      upcoming: sort(
+        userCompanyGoals.filter((goal) => goal.goalStartDate > today),
+      ),
+      archived: sort(
+        userCompanyGoals.filter((goal) => goal.goalEndDate < today),
+      ),
+    };
+  }, [sortOrder, userCompanyGoals]);
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
     setPostViewerOpen(true);
   };
 
-  const closePostViewer = () => {
-    setPostViewerOpen(false);
-  };
-
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "title">(
-    "newest",
-  );
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  // 🆕 Manage expanded card
-  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
-
-  const handleToggleExpand = (goalId: string) => {
-    setExpandedGoalId((prev) => (prev === goalId ? null : goalId));
-  };
-
-  const today = new Date();
-
-  const sortedGoals = useMemo(() => {
-    const sortGoals = (goals: typeof userCompanyGoals) => {
-      return [...goals].sort((a, b) => {
-        if (sortOrder === "newest") {
-          return b.goalStartDate.localeCompare(a.goalStartDate);
-        } else if (sortOrder === "oldest") {
-          return a.goalStartDate.localeCompare(b.goalStartDate);
-        } else if (sortOrder === "title") {
-          return a.goalTitle.localeCompare(b.goalTitle);
-        }
-        return 0;
-      });
-    };
-
-    const todayStr = new Date().toISOString().split("T")[0];
-
-    const current = userCompanyGoals.filter(
-      (goal) => goal.goalStartDate <= todayStr && goal.goalEndDate >= todayStr,
-    );
-    const upcoming = userCompanyGoals.filter(
-      (goal) => goal.goalStartDate > todayStr,
-    );
-    const past = userCompanyGoals.filter((goal) => goal.goalEndDate < todayStr);
-
-    return {
-      currentGoals: sortGoals(current),
-      upcomingGoals: sortGoals(upcoming),
-      pastGoals: sortGoals(past),
-    };
-  }, [userCompanyGoals, sortOrder, today]);
-
-  const archivedGoals = sortedGoals.pastGoals;
-
-  const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleSortSelect = (order: "newest" | "oldest" | "title") => {
-    setSortOrder(order);
-    setAnchorEl(null);
-  };
-
-  const renderSection = (title: string, goals: typeof userCompanyGoals) => (
-    <Box mb={3}>
-      <Typography variant="h5" className="goals-section-header">
-        {title}
-      </Typography>
-      {goals.map((goal) => (
-        <UserCompanyGoalCard
-          key={goal.id}
-          goal={goal}
-          salesRouteNum={user?.salesRouteNum}
-          mobile={isMobile}
-          expanded={expandedGoalId === goal.id}
-          onToggleExpand={handleToggleExpand}
-          onViewPostModal={openPostViewer} // ✅ Use the actual function
-        />
-      ))}
-    </Box>
+  const renderSection = (
+    sectionId: string,
+    title: string,
+    description: string,
+    goals: typeof userCompanyGoals,
+  ) => (
+    <section className="user-goals-section" aria-labelledby={`goal-section-${sectionId}`}>
+      <div className="user-goals-section__heading">
+        <div>
+          <h2 id={`goal-section-${sectionId}`}>{title}</h2>
+          <p>{description}</p>
+        </div>
+        <span>{goals.length}</span>
+      </div>
+      <div className="user-goals-list">
+        {goals.map((goal) => (
+          <UserCompanyGoalCard
+            key={goal.id}
+            goal={goal}
+            salesRouteNum={user?.salesRouteNum}
+            mobile={isMobile}
+            expanded={expandedGoalId === goal.id}
+            onToggleExpand={(goalId) =>
+              setExpandedGoalId((current) =>
+                current === goalId ? null : goalId,
+              )
+            }
+            onViewPostModal={openPostViewer}
+          />
+        ))}
+      </div>
+    </section>
   );
 
   return (
     <div className="my-company-goals-container">
-      {/* Sort Button */}
-      <Button
-        onClick={handleSortClick}
-        variant="outlined"
-        size="small"
-        sx={{ mt: 2, mb: 2 }}
-      >
-        Sort:{" "}
-        {sortOrder === "newest"
-          ? "Newest First"
-          : sortOrder === "oldest"
-            ? "Oldest First"
-            : "Title A-Z"}
-      </Button>
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={() => setAnchorEl(null)}
-      >
-        <MenuItem onClick={() => handleSortSelect("newest")}>
-          Newest First
-        </MenuItem>
-        <MenuItem onClick={() => handleSortSelect("oldest")}>
-          Oldest First
-        </MenuItem>
-        <MenuItem onClick={() => handleSortSelect("title")}>Title A-Z</MenuItem>
-      </Menu>
+      {!loading && userCompanyGoals.length > 0 && (
+        <div className="user-goals-toolbar">
+          <div className="user-goals-toolbar__summary">
+            <strong>{sortedGoals.current.length}</strong>
+            <span>active</span>
+            <i aria-hidden="true" />
+            <strong>{sortedGoals.upcoming.length}</strong>
+            <span>upcoming</span>
+          </div>
+
+          <Button
+            className="user-goals-sort-button"
+            onClick={(event) => setSortAnchor(event.currentTarget)}
+            variant="outlined"
+            size="small"
+            startIcon={<SortOutlinedIcon />}
+            aria-haspopup="menu"
+            aria-expanded={Boolean(sortAnchor)}
+          >
+            {SORT_LABELS[sortOrder]}
+          </Button>
+          <Menu
+            anchorEl={sortAnchor}
+            open={Boolean(sortAnchor)}
+            onClose={() => setSortAnchor(null)}
+          >
+            {(Object.keys(SORT_LABELS) as SortOrder[]).map((order) => (
+              <MenuItem
+                key={order}
+                selected={sortOrder === order}
+                onClick={() => {
+                  setSortOrder(order);
+                  setSortAnchor(null);
+                }}
+              >
+                {SORT_LABELS[order]}
+              </MenuItem>
+            ))}
+          </Menu>
+        </div>
+      )}
 
       {loading ? (
-        <CircularProgress />
+        <div className="user-goals-state" role="status">
+          <CircularProgress size={30} />
+          <strong>Loading your goals</strong>
+          <span>Gathering your current assignments and progress.</span>
+        </div>
       ) : userCompanyGoals.length === 0 ? (
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          No company goals found for you.
-        </Typography>
+        <div className="user-goals-state user-goals-state--empty">
+          <span className="user-goals-state__icon" aria-hidden="true">
+            <AssignmentOutlinedIcon />
+          </span>
+          <strong>No company goals assigned</strong>
+          <span>New assignments will appear here when your company publishes them.</span>
+        </div>
       ) : (
         <>
-          {sortedGoals.currentGoals.length > 0 &&
-            renderSection("Current Goals", sortedGoals.currentGoals)}
-          {sortedGoals.upcomingGoals.length > 0 &&
-            renderSection("Upcoming Goals", sortedGoals.upcomingGoals)}
+          {sortedGoals.current.length > 0 &&
+            renderSection(
+              "current",
+              "Current goals",
+              "Work that is active now.",
+              sortedGoals.current,
+            )}
+          {sortedGoals.upcoming.length > 0 &&
+            renderSection(
+              "upcoming",
+              "Upcoming goals",
+              "Assignments you can prepare for next.",
+              sortedGoals.upcoming,
+            )}
 
-          {archivedGoals.length > 0 && (
-            <ArchivedGoalsLayout
-              archivedGoals={archivedGoals}
-              isMobile={isMobile}
-              salesRouteNum={user?.salesRouteNum}
-              onViewPostModal={openPostViewer}
-            />
+          {sortedGoals.archived.length > 0 && (
+            <Box className="user-goals-archive">
+              <ArchivedGoalsLayout
+                archivedGoals={sortedGoals.archived}
+                isMobile={isMobile}
+                salesRouteNum={user?.salesRouteNum}
+                onViewPostModal={openPostViewer}
+              />
+            </Box>
           )}
         </>
       )}
+
       <PostViewerModal
         key={postIdToView}
         postId={postIdToView || ""}
         open={postViewerOpen}
-        onClose={closePostViewer}
+        onClose={() => setPostViewerOpen(false)}
         currentUserUid={user?.uid}
       />
     </div>
