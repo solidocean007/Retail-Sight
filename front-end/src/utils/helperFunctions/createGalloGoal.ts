@@ -38,6 +38,9 @@ export const createGalloGoal = async (
 
   // 📝 Fetch existing goal (if it exists)
   const snapshot = await getDoc(goalDocRef);
+  const existingGoal = snapshot.exists()
+    ? (snapshot.data() as FireStoreGalloGoalDocType)
+    : undefined;
 
   const selectedIds = new Set(
     selectedAccounts.map((a) => String(a.distributorAcctId)),
@@ -59,9 +62,7 @@ export const createGalloGoal = async (
     }),
   );
 
-  if (snapshot.exists()) {
-    const existingGoal = snapshot.data() as FireStoreGalloGoalDocType;
-
+  if (existingGoal) {
     mergedAccounts = [
       ...existingGoal.accounts,
       ...mergedAccounts.filter(
@@ -103,28 +104,36 @@ export const createGalloGoal = async (
   // existing program) doesn't reassign ownership — otherwise the person who
   // gets the feedback notifications would silently change hands.
   const existingCreator = snapshot.exists()
-    ? (snapshot.data() as FireStoreGalloGoalDocType).createdByUserId
+    ? existingGoal?.createdByUserId
     : undefined;
 
   if (existingCreator) {
     savedGoal.createdByUserId = existingCreator;
+    savedGoal.createdByFirstName = existingGoal?.createdByFirstName;
+    savedGoal.createdByLastName = existingGoal?.createdByLastName;
   } else if (createdBy?.uid) {
     savedGoal.createdByUserId = createdBy.uid;
     savedGoal.createdByFirstName = createdBy.firstName ?? "";
     savedGoal.createdByLastName = createdBy.lastName ?? "";
   }
 
+  // Only new imports receive this audit timestamp. Giving a legacy or
+  // re-imported goal today's timestamp would create a false import history.
+  if (!existingGoal) {
+    savedGoal.importedAt = Timestamp.now();
+  } else if (existingGoal.importedAt) {
+    savedGoal.importedAt = existingGoal.importedAt;
+  }
+
   console.log("📝 Prepared goal to save:", savedGoal);
 
-  if (snapshot.exists()) {
-    const existing = snapshot.data() as FireStoreGalloGoalDocType;
-
-    const isExistingProd = existing.goalDetails.goalEnv === "prod";
+  if (existingGoal) {
+    const isExistingProd = existingGoal.goalDetails.goalEnv === "prod";
     const isIncomingDev = goalEnv === "dev";
 
     if (isExistingProd && isIncomingDev) {
       // 🚫 do NOT update lifecycleStatus or env
-      savedGoal.lifeCycleStatus = existing.lifeCycleStatus;
+      savedGoal.lifeCycleStatus = existingGoal.lifeCycleStatus;
       savedGoal.goalDetails.goalEnv = "prod";
     }
   }

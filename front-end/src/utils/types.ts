@@ -729,11 +729,14 @@ export type GalloProgramType = {
 
 export type FirestoreGalloProgramType = GalloProgramType & {
   status: "active" | "expired";
+  /** First time Retail-Sight received this program from Axis. */
+  firstAvailableAt?: Timestamp;
   updatedAt: Timestamp;
 };
 
 // UI-level enriched type
 export type DisplayGalloProgram = FirestoreGalloProgramType & {
+  firstAvailableAtMs?: number;
   updatedAtMs: number;
   hasGoals: boolean;
 };
@@ -895,6 +898,9 @@ export interface FireStoreGalloGoalDocType {
   createdByUserId?: string;
   createdByFirstName?: string;
   createdByLastName?: string;
+
+  /** First import only. Legacy imported goals may not have this value. */
+  importedAt?: Timestamp | string;
 }
 
 export type CompanyAccountType = {

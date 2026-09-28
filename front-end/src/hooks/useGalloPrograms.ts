@@ -13,6 +13,21 @@ import {
   DisplayGalloProgram,
 } from "../utils/types";
 
+const toMillis = (value: unknown): number | undefined => {
+  if (!value) return undefined;
+
+  if (
+    typeof value === "object" &&
+    "toMillis" in value &&
+    typeof (value as { toMillis?: unknown }).toMillis === "function"
+  ) {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+
+  const parsed = Date.parse(String(value));
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 export function useGalloPrograms(companyId?: string) {
   const [programs, setPrograms] = useState<DisplayGalloProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +84,8 @@ export function useGalloPrograms(companyId?: string) {
             (p) => ({
               ...p,
               hasGoals: programIdsWithGoals.has(p.programId),
-              updatedAtMs: p.updatedAt.toMillis(),
+              firstAvailableAtMs: toMillis(p.firstAvailableAt),
+              updatedAtMs: toMillis(p.updatedAt) ?? 0,
             })
           );
 

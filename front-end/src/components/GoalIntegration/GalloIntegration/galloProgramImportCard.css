@@ -77,6 +77,33 @@
   color: var(--text-secondary);
 }
 
+.gallo-program-audit {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 12px;
+  border: 1px solid var(--chip-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card-bg) 88%, var(--accent-color) 12%);
+}
+
+.gallo-program-audit dt {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gallo-program-audit dd {
+  margin: 3px 0 0;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
 /* -----------------------------
    Debug toggle + panel
 --------------------------------*/
@@ -165,6 +192,10 @@
 @media (max-width: 600px) {
   .gallo-program-header {
     flex-direction: column;
+  }
+
+  .gallo-program-audit {
+    grid-template-columns: 1fr;
   }
 }
 

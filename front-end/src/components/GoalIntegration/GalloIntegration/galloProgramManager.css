@@ -71,6 +71,40 @@
   margin-top: 4px;
 }
 
+.program-audit {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+  border-radius: 10px;
+  background: color-mix(
+    in srgb,
+    var(--surface-elevated, #fff) 88%,
+    var(--primary, #3b82f6) 12%
+  );
+}
+
+.program-audit > div {
+  min-width: 0;
+}
+
+.program-audit dt {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.program-audit dd {
+  margin: 2px 0 0;
+  color: var(--text-primary, var(--text-color, #111827));
+  font-size: 0.76rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 /* ---------- Badges ---------- */
 
 .badge {
@@ -239,6 +273,10 @@
   .program-title {
     font-size: 0.9rem;
   }
+
+  .program-audit {
+    margin-top: 0;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -249,6 +287,12 @@
 
   .program-card {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr auto;
+    grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr) minmax(140px, 1fr) minmax(250px, 1.25fr);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .program-audit {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

@@ -23,6 +23,7 @@ import "./galloGoalImporter.css";
 import {
   CompanyAccountType,
   EnrichedGalloAccountType,
+  DisplayGalloProgram,
   GalloAccountType,
   GalloGoalType,
   GalloProgramType,
@@ -38,7 +39,9 @@ import {
 } from "../../../Slices/galloGoalsSlice";
 import GalloScheduledImportPanel from "./GalloScheduledImportPanel";
 import { selectUser } from "../../../Slices/userSlice";
-import GalloProgramManager from "./GalloProgramManager";
+import GalloProgramManager, {
+  GalloProgramImportAudit,
+} from "./GalloProgramManager";
 import { useGalloPrograms } from "../../../hooks/useGalloPrograms";
 import ManualGalloProgramImport from "../ManualGalloProgramImport";
 import { showMessage } from "../../../Slices/snackbarSlice";
@@ -59,6 +62,24 @@ export type EnrichedGalloProgram = GalloProgramType & {
     endDateUnix?: number;
     rawKeys: string[];
   };
+};
+
+const toAuditMillis = (value: unknown): number | undefined => {
+  if (!value) return undefined;
+
+  if (
+    typeof value === "object" &&
+    "toMillis" in value &&
+    typeof (value as { toMillis?: unknown }).toMillis === "function"
+  ) {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number") return value;
+
+  const parsed = Date.parse(String(value));
+  return Number.isNaN(parsed) ? undefined : parsed;
 };
 
 const stepIndexMap: Record<ImportStep, number> = {
@@ -108,11 +129,49 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
   const { programs, loading } = useGalloPrograms(companyId);
 
-  const importedProgramIds = new Set(
-    galloGoals
-      .filter((g) => g.programDetails?.programId)
-      .map((g) => g.programDetails.programId)
+  const importedProgramIds = useMemo(
+    () =>
+      new Set([
+        ...programs.filter((p) => p.hasGoals).map((p) => p.programId),
+        ...galloGoals
+          .filter((g) => g.programDetails?.programId)
+          .map((g) => g.programDetails.programId),
+      ]),
+    [galloGoals, programs]
   );
+
+  const importedProgramAudit = useMemo(() => {
+    const auditByProgram = new Map<string, GalloProgramImportAudit>();
+
+    galloGoals.forEach((goal) => {
+      const programId = goal.programDetails?.programId;
+      if (!programId) return;
+
+      const importedAtMs = toAuditMillis(goal.importedAt);
+      const fullName = [
+        goal.createdByFirstName?.trim(),
+        goal.createdByLastName?.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const importedByName =
+        fullName || goal.createdByUserId?.trim() || undefined;
+      const existing = auditByProgram.get(programId);
+
+      if (
+        !existing ||
+        (importedAtMs !== undefined &&
+          (existing.importedAtMs === undefined ||
+            importedAtMs < existing.importedAtMs))
+      ) {
+        auditByProgram.set(programId, { importedAtMs, importedByName });
+      } else if (!existing.importedByName && importedByName) {
+        auditByProgram.set(programId, { ...existing, importedByName });
+      }
+    });
+
+    return auditByProgram;
+  }, [galloGoals]);
 
   useEffect(() => {
     if (!companyId) return;
@@ -135,7 +194,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const [keyStatus, setKeyStatus] = useState<KeyStatusType | null>(null);
 
   const [selectedProgram, setSelectedProgram] =
-    useState<GalloProgramType | null>(null);
+    useState<DisplayGalloProgram | null>(null);
 
   const [goals, setGoals] = useState<GalloGoalType[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null);
@@ -500,7 +559,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     setHasFetchedAccounts(false);
   };
 
-  const handleSelectProgram = (program: GalloProgramType | null) => {
+  const handleSelectProgram = (program: DisplayGalloProgram | null) => {
     if (!program) return;
 
     setSelectedProgram(program);
@@ -612,11 +671,8 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             selectedEnv={env}
             programs={programs}
             selectedProgram={selectedProgram}
-            importedProgramIds={
-              new Set(
-                programs.filter((p) => p.hasGoals).map((p) => p.programId)
-              )
-            }
+            importedProgramIds={importedProgramIds}
+            importedProgramAudit={importedProgramAudit}
             onSelectProgram={handleSelectProgram}
           />
         )}
@@ -782,6 +838,9 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
                   <GalloProgramImportCard
                     program={selectedProgram}
                     alreadyImported={importedProgramIds.has(
+                      selectedProgram.programId
+                    )}
+                    importAudit={importedProgramAudit.get(
                       selectedProgram.programId
                     )}
                     expired={isProgramExpired(selectedProgram)}
