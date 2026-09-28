@@ -122,6 +122,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 
   const goToNotificationSettings = () => {
     sessionStorage.setItem("dashboardMode", "NotificationsMode");
+    sessionStorage.setItem("notificationCenterTab", "preferences");
 
     if (isImpersonating) {
       navigate("/dashboard");
@@ -140,11 +141,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     if (shouldShowNotificationWarning) {
       dispatch(showMessage(getNotificationWarningMessage()));
       goToNotificationSettings();
-      return;
-    }
-
-    if (notifications.length === 0) {
-      dispatch(showMessage("No notifications right now."));
       return;
     }
 

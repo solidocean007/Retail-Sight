@@ -1,0 +1,71 @@
+.notification-detail-dialog .MuiDialog-paper {
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: var(--dashboard-card);
+  color: var(--text-color);
+  box-shadow: 0 24px 70px color-mix(in srgb, black 36%, transparent);
+}
+
+.notification-detail-dialog .MuiDialogTitle-root {
+  display: flex;
+  padding: 1rem 1.1rem 0.8rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.notification-detail-dialog .MuiDialogTitle-root span {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--primary-blue);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.notification-detail-dialog .MuiDialogTitle-root h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.notification-detail-dialog .MuiDialogTitle-root .MuiIconButton-root {
+  color: var(--text-color);
+}
+
+.notification-detail-dialog .MuiDialogContent-root {
+  border-color: var(--border-color);
+}
+
+.notification-detail-dialog .MuiDialogContent-root time {
+  display: block;
+  color: var(--text-color);
+  font-size: 0.65rem;
+  opacity: 0.58;
+}
+
+.notification-detail-dialog .MuiDialogContent-root p {
+  margin: 0.65rem 0 0;
+  color: var(--text-color);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.notification-detail-dialog .MuiDialogActions-root {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.notification-detail-dialog .MuiButton-root {
+  border-radius: 9px;
+  color: var(--text-color);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.notification-detail-dialog .MuiButton-contained {
+  background: var(--primary-blue);
+  color: white;
+}

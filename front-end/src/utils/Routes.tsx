@@ -66,13 +66,23 @@ export const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/sign-up-login"
           element={<Navigate to="/login" replace />}
         />
         <Route path="/login" element={<LoginForm />} />
-        <Route path="/signup" element={<Navigate to="/request-access" replace />} />
+        <Route
+          path="/signup"
+          element={<Navigate to="/request-access" replace />}
+        />
         <Route path="/request-access" element={<RequestAccessForm />} />
         <Route path="/request-submitted" element={<RequestSubmitted />} />
         <Route
