@@ -110,7 +110,7 @@ export function getAccountDiffs(
       const normOld = oldValue;
 
       if (JSON.stringify(normNew) !== JSON.stringify(normOld)) {
-        updated[field] = normNew as any;
+        Object.assign(updated, { [field]: normNew });
         fieldsChanged.push(field);
       }
     });

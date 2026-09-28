@@ -911,6 +911,8 @@ export type CompanyAccountType = {
   typeOfAccount?: string;
   chain?: string; // e.g., "Food Lion" or "Walmart" or "Target"
   chainType?: "chain" | "independent"; // e.g., "Chain" or "Independent"
+  isTestAccount?: boolean;
+  testOwnerUid?: string;
   createdAt?: string;
   updatedAt?: string;
 };
