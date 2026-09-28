@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { PostWithID } from "../../utils/types";
 import HeaderBar from "./../HeaderBar";
 import { CircularProgress, Button, Box, Typography } from "@mui/material";
@@ -13,11 +13,21 @@ import { derivePostImageVariants } from "../../utils/PostLogic/derivePostImageVa
 
 export const PublicPostViewer = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { postId } = useParams();
   const user = useSelector(selectUser);
   const [post, setPost] = useState<PostWithID | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const collectionReturnState = location.state as {
+    returnToCollection?: string;
+    collectionName?: string;
+  } | null;
+  const returnToCollection = collectionReturnState?.returnToCollection;
+
+  const handleReturnToCollection = () => {
+    if (returnToCollection) navigate(returnToCollection);
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -81,7 +91,26 @@ export const PublicPostViewer = () => {
     <div className="view-shared-post-page">
       <HeaderBar toggleFilterMenu={() => {}} />
 
-      <div className="view-shared-post-container">
+      <div
+        className={`view-shared-post-container ${
+          returnToCollection ? "view-shared-post-container--returnable" : ""
+        }`}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            handleReturnToCollection();
+          }
+        }}
+      >
+        {returnToCollection && (
+          <button
+            type="button"
+            className="view-post-return"
+            onClick={handleReturnToCollection}
+            aria-label={`Back to ${collectionReturnState?.collectionName || "collection"}`}
+          >
+            ← Back to collection
+          </button>
+        )}
         <div className="view-shared-post-header">
           {!user && (
             <div className="cta-hero">

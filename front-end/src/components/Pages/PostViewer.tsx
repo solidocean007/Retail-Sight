@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { PostWithID } from "../../utils/types";
 import HeaderBar from "../HeaderBar";
 import { CircularProgress, Box, Typography } from "@mui/material";
@@ -12,13 +12,28 @@ import "./viewSharedPost.css";
 
 const PostViewer = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { postId } = useParams();
   const user = useSelector(selectUser);
 
   const [post, setPost] = useState<PostWithID | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const collectionReturnState = location.state as {
+    returnToCollection?: string;
+    collectionName?: string;
+  } | null;
+  const returnToCollection = collectionReturnState?.returnToCollection;
 
+  const handleReturnToCollection = () => {
+    if (returnToCollection) {
+      navigate(returnToCollection);
+      return;
+    }
+
+    sessionStorage.setItem("dashboardMode", "CollectionsMode");
+    navigate("/dashboard");
+  };
 
   useEffect(() => {
     if (!postId) {
@@ -92,19 +107,36 @@ const PostViewer = () => {
   // Valid Post
   // ---------------------------------------
   return (
-    <>
+    <div className="view-shared-post-page">
       <HeaderBar toggleFilterMenu={() => {}} />
 
-      <div className="view-shared-post-container">
+      <main
+        className="view-shared-post-container view-shared-post-container--returnable"
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            handleReturnToCollection();
+          }
+        }}
+      >
+        <button
+          type="button"
+          className="view-post-return"
+          onClick={handleReturnToCollection}
+          aria-label={`Back to ${collectionReturnState?.collectionName || "collections"}`}
+        >
+          ← Back to collections
+        </button>
         {post && (
-          <MemoizedPostCard
-            post={post}
-            id={post.id}
-            currentUserUid={user?.uid || ""}
-          />
+          <div className="view-post-card-wrapper">
+            <MemoizedPostCard
+              post={post}
+              id={post.id}
+              currentUserUid={user?.uid || ""}
+            />
+          </div>
         )}
-      </div>
-    </>
+      </main>
+    </div>
   );
 };
 

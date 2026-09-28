@@ -1,0 +1,223 @@
+.collection-card {
+  min-width: 0;
+  border: 1px solid var(--collections-line);
+  border-radius: 15px;
+  background: var(--collections-surface-strong);
+  box-shadow: 0 10px 28px var(--collections-shadow);
+  overflow: hidden;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.collection-card:hover {
+  border-color: var(--collections-line-strong);
+  box-shadow: 0 15px 34px var(--collections-shadow);
+  transform: translateY(-2px);
+}
+
+.collection-card__preview {
+  position: relative;
+  display: block;
+  height: 145px;
+  background:
+    radial-gradient(
+      circle at 18% 16%,
+      color-mix(in srgb, var(--primary-blue) 16%, transparent),
+      transparent 38%
+    ),
+    var(--collections-surface-muted);
+  overflow: hidden;
+}
+
+.collection-card__fan-image {
+  position: absolute;
+  top: 19px;
+  left: 50%;
+  z-index: var(--collection-fan-z);
+  width: 82px;
+  height: 108px;
+  border: 2px solid
+    color-mix(
+      in srgb,
+      var(--collections-surface-strong) 84%,
+      var(--collections-line-strong)
+    );
+  border-radius: 9px;
+  object-fit: cover;
+  box-shadow: 0 9px 22px
+    color-mix(in srgb, var(--collections-shadow) 88%, #000 12%);
+  transform: translateX(calc(-50% + var(--collection-fan-x)))
+    rotate(var(--collection-fan-rotation));
+  transform-origin: center 125%;
+  transition:
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.collection-card:hover .collection-card__fan-image {
+  filter: saturate(1.04);
+  transform: translateX(calc(-50% + var(--collection-fan-x))) translateY(-3px)
+    rotate(var(--collection-fan-rotation));
+}
+
+.collection-card__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--collections-muted);
+  font-size: 0.7rem;
+}
+
+.collection-card__placeholder svg {
+  width: 30px;
+  height: 30px;
+  color: var(--primary-blue);
+  opacity: 0.8;
+}
+
+.collection-card__visibility {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 10;
+  display: inline-flex;
+  min-height: 25px;
+  padding: 0.25rem 0.48rem;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid
+    color-mix(in srgb, var(--collections-line-strong) 76%, transparent);
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--collections-surface-strong) 90%,
+    transparent
+  );
+  color: var(--collections-text);
+  backdrop-filter: blur(8px);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.collection-card__visibility svg {
+  width: 13px;
+  height: 13px;
+}
+
+.collection-card__visibility--shared {
+  border-color: color-mix(in srgb, var(--primary-blue) 42%, transparent);
+  color: var(--primary-blue);
+}
+
+.collection-card__body {
+  padding: 0.85rem;
+}
+
+.collection-card__copy h3 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--collections-text);
+  font-size: 0.94rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-card__copy p {
+  display: -webkit-box;
+  min-height: 2.3em;
+  margin: 0.3rem 0 0;
+  overflow: hidden;
+  color: var(--collections-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.collection-card__meta {
+  display: flex;
+  margin: 0.72rem 0;
+  align-items: baseline;
+  gap: 0.28rem;
+  color: var(--collections-muted);
+}
+
+.collection-card__meta strong {
+  color: var(--collections-text);
+  font-size: 1.05rem;
+}
+
+.collection-card__meta span {
+  font-size: 0.68rem;
+}
+
+.collection-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.collection-card__actions > div {
+  display: flex;
+}
+
+.collection-card__open {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0.35rem 0.62rem;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--collections-line-strong);
+  border-radius: 9px;
+  background: color-mix(
+    in srgb,
+    var(--primary-blue) 9%,
+    var(--collections-surface)
+  );
+  color: var(--collections-text);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.collection-card__open svg {
+  width: 15px;
+  height: 15px;
+  color: var(--primary-blue);
+}
+
+.collection-card__open:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.collection-card__actions .MuiIconButton-root {
+  color: var(--collections-muted);
+}
+
+.collection-card__actions .MuiIconButton-root:hover {
+  background: var(--collections-surface-muted);
+  color: var(--primary-blue);
+}
+
+.collection-card__actions .collection-card__delete:hover {
+  color: var(--error-color, #d14343);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-card {
+    transition: none;
+  }
+
+  .collection-card__fan-image {
+    transition: none;
+  }
+}

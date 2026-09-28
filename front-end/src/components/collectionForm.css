@@ -1,10 +1,139 @@
-.collection-form input,
-.collection-form textarea {
-  margin-bottom: 15px;
+.collection-form-dialog.MuiPaper-root {
+  --collection-form-surface: #ffffff;
+  --collection-form-surface-muted: #edf2f4;
+  --collection-form-line: rgba(33, 65, 84, 0.16);
+  --collection-form-text: #152735;
+  --collection-form-muted: #647885;
+  border: 1px solid var(--collection-form-line);
+  border-radius: 18px;
+  background: var(--collection-form-surface);
+  color: var(--collection-form-text);
+  overflow: hidden;
 }
 
-.disabled-button {
-  pointer-events: none;
-  opacity: 0.5;
-  cursor: default;
+[data-theme="dark"] .collection-form-dialog.MuiPaper-root {
+  --collection-form-surface: #102335;
+  --collection-form-surface-muted: #0a1825;
+  --collection-form-line: rgba(124, 183, 217, 0.18);
+  --collection-form-text: #eef8ff;
+  --collection-form-muted: #94aabd;
+}
+
+.collection-form__title.MuiDialogTitle-root {
+  display: flex;
+  padding: 1rem 1rem 0.85rem;
+  align-items: center;
+  gap: 0.7rem;
+  border-bottom: 1px solid var(--collection-form-line);
+  background:
+    radial-gradient(
+      circle at 0 0,
+      color-mix(in srgb, var(--primary-blue) 10%, transparent),
+      transparent 44%
+    ),
+    var(--collection-form-surface);
+}
+
+.collection-form__mark {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--collection-form-surface-muted);
+  color: var(--primary-blue);
+}
+
+.collection-form__mark svg {
+  width: 21px;
+  height: 21px;
+}
+
+.collection-form__title > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 0.16rem;
+}
+
+.collection-form__title strong {
+  color: var(--collection-form-text);
+  font-size: 1rem;
+}
+
+.collection-form__title small {
+  color: var(--collection-form-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.collection-form__close.MuiIconButton-root {
+  margin-left: auto;
+  color: var(--collection-form-muted);
+}
+
+.collection-form__content.MuiDialogContent-root {
+  display: grid;
+  padding: 1.2rem 1rem 0.6rem;
+  gap: 0.25rem;
+}
+
+.collection-form__content .MuiInputBase-root {
+  margin: 0;
+  border-radius: 11px;
+  background: var(--collection-form-surface-muted);
+  color: var(--collection-form-text);
+}
+
+.collection-form__content .MuiInputBase-input {
+  background: transparent;
+  color: var(--collection-form-text);
+  box-shadow: none;
+}
+
+.collection-form__content .MuiOutlinedInput-notchedOutline {
+  border-color: var(--collection-form-line);
+}
+
+.collection-form__content .MuiInputLabel-root {
+  color: var(--collection-form-muted);
+}
+
+.collection-form__content .MuiInputLabel-root.Mui-focused {
+  color: var(--primary-blue);
+}
+
+.collection-form__content
+  .MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary-blue);
+}
+
+.collection-form__field-note {
+  display: flex;
+  margin: 0 0 0.8rem;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--collection-form-muted);
+  font-size: 0.64rem;
+}
+
+.collection-form__field-note span:last-child {
+  flex: 0 0 auto;
+}
+
+.collection-form__actions.MuiDialogActions-root {
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--collection-form-line);
+}
+
+.collection-form__actions .MuiButton-root {
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.collection-form__actions .MuiButton-text {
+  color: var(--collection-form-muted);
 }
