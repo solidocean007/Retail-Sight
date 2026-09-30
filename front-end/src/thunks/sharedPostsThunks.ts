@@ -24,6 +24,7 @@ import {
 } from "../utils/database/sharedPostsStoreUtils";
 import { normalizePost } from "../utils/normalize";
 import { locallyFilterPosts } from "../components/FilterSideBar/utils/filterUtils";
+import { getDateRangeBounds } from "../utils/dateRange";
 
 interface FetchSharedPostsArgs {
   companyId: string;
@@ -100,72 +101,21 @@ export const fetchFilteredSharedPostsBatch = createAsyncThunk(
         where("sharedWithCompanies", "array-contains", companyId),
       );
 
-      if (filters.distributorCompanyId) {
+      const { start, end } = getDateRangeBounds(filters.dateRange);
+      if (start) {
         baseQuery = query(
           baseQuery,
-          where("companyId", "==", filters.distributorCompanyId),
+          where("displayDate", ">=", Timestamp.fromDate(start)),
         );
       }
-
-      if (filters.accountNumber) {
-        const accountNumberString = String(filters.accountNumber).trim();
-        const accountNumberNumber = Number(accountNumberString);
-
-        const accountNumberValues: (string | number)[] = [accountNumberString];
-
-        if (!Number.isNaN(accountNumberNumber)) {
-          accountNumberValues.push(accountNumberNumber);
-        }
-
+      if (end) {
         baseQuery = query(
           baseQuery,
-          where("accountNumber", "in", accountNumberValues),
+          where("displayDate", "<=", Timestamp.fromDate(end)),
         );
       }
-
-      if (filters.postUserUid) {
-        baseQuery = query(
-          baseQuery,
-          where("postUserUid", "==", filters.postUserUid),
-        );
-      }
-
-      if (filters.companyGoalId) {
-        baseQuery = query(
-          baseQuery,
-          where("companyGoalId", "==", filters.companyGoalId),
-        );
-      }
-
-      // if (filters.brandId) {
-      //   baseQuery = query(
-      //     baseQuery,
-      //     where("brandIds", "array-contains", filters.brandId),
-      //   );
-      // }
-
-      if (filters.dateRange?.startDate) {
-        baseQuery = query(
-          baseQuery,
-          where(
-            "displayDate",
-            ">=",
-            Timestamp.fromDate(new Date(filters.dateRange.startDate)),
-          ),
-        );
-      }
-
-      if (filters.dateRange?.endDate) {
-        baseQuery = query(
-          baseQuery,
-          where(
-            "displayDate",
-            "<=",
-            Timestamp.fromDate(
-              new Date(`${filters.dateRange.endDate}T23:59:59.999Z`),
-            ),
-          ),
-        );
+      if (start || end) {
+        baseQuery = query(baseQuery, orderBy("displayDate", "desc"));
       }
 
       const snapshot = await getDocs(baseQuery);
@@ -177,9 +127,9 @@ export const fetchFilteredSharedPostsBatch = createAsyncThunk(
         }),
       );
 
-      // Keeps unsupported/shared edge filters working without adding risky Firestore clauses.
-      // Examples: hashtag, starTag, accountType, chain, chainType, minCaseCount,
-      // productType, state/city, legacy brand text fallback.
+      // Keep the shared-array query on a stable deployed index. All remaining
+      // criteria are applied consistently here, including the legacy brand-name
+      // fallback for posts created before brandIds were introduced.
       const fullyFilteredPosts = locallyFilterPosts(posts, {
         ...filters,
         feedType: "shared",

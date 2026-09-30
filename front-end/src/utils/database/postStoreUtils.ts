@@ -10,6 +10,7 @@ import {
 import { PostQueryFilters, PostType, PostWithID } from "../types";
 import { openDB } from "./indexedDBOpen";
 import { db } from "../firebase";
+import { getDateRangeBounds } from "../dateRange";
 
 const refetchMemo = new Map<string, string>();
 
@@ -305,21 +306,17 @@ export async function getFilteredPostsFromIndexedDB(
         //   filters.category.includes(post.category);
         const postDate = post.displayDate ? new Date(post.displayDate) : null;
 
-        // Convert the string dates in the filters to Date objects for comparison
-        const startDate = filters.dateRange?.startDate
-          ? new Date(filters.dateRange.startDate)
-          : null;
-        const endDate = filters.dateRange?.endDate
-          ? new Date(filters.dateRange.endDate)
-          : null;
+        const { start: startDate, end: endDate } = getDateRangeBounds(
+          filters.dateRange,
+        );
 
         const matchesDateRange =
-          !filters.dateRange ||
-          (postDate &&
-            startDate &&
-            postDate >= startDate &&
-            endDate &&
-            postDate <= endDate);
+          (!startDate && !endDate) ||
+          Boolean(
+            postDate &&
+              (!startDate || postDate >= startDate) &&
+              (!endDate || postDate <= endDate),
+          );
 
         // return matchesChannel && matchesCategory && matchesDateRange;
         return matchesDateRange;

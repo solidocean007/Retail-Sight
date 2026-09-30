@@ -363,6 +363,20 @@
   font-size: medium;
 }
 
+.store-name-account {
+  min-width: 0;
+}
+
+.post-account-number {
+  display: block;
+  margin-top: 1px;
+  color: var(--secondary-text-color, var(--text-color));
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+  opacity: 0.78;
+}
+
 .store-details {
   display: flex;
   flex-direction: column;

@@ -6,11 +6,6 @@ import {
   PostWithID,
   UserType,
 } from "../utils/types";
-import {
-  filterExactMatch,
-  // filterInMatch,
-  filterArrayContains,
-} from "../filters/postFilterServices"; // adjust path as needed
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
 import {
@@ -30,6 +25,8 @@ import {
 } from "firebase/firestore";
 
 import { normalizePost } from "../utils/normalize";
+import { getDateRangeBounds } from "../utils/dateRange";
+import { locallyFilterPosts } from "../components/FilterSideBar/utils/filterUtils";
 
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
@@ -244,121 +241,21 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       baseQuery = query(baseQuery, where("companyId", "==", companyId));
     }
 
-    // Date filtering
-    if (filters.dateRange?.startDate) {
-      const start = Timestamp.fromDate(new Date(filters.dateRange.startDate));
-      baseQuery = query(baseQuery, where("displayDate", ">=", start));
-    }
-
-    if (filters.dateRange?.endDate) {
-      // 🔧 Add time to include the entire end day
-      const end = Timestamp.fromDate(
-        new Date(`${filters.dateRange.endDate}T23:59:59.999Z`),
-      );
-      baseQuery = query(baseQuery, where("displayDate", "<=", end));
-    }
-
-    if (filters.companyId) {
-      baseQuery = filterExactMatch(
-        "postUserCompanyId",
-        filters.companyId ?? undefined,
-        baseQuery,
-      );
-    }
-    if (filters.postUserUid) {
+    const { start, end } = getDateRangeBounds(filters.dateRange);
+    if (start) {
       baseQuery = query(
         baseQuery,
-        where("postUserUid", "==", filters.postUserUid),
+        where("displayDate", ">=", Timestamp.fromDate(start)),
       );
     }
-
-    // accountName is display/search-only.
-    // accountNumber is the durable Firestore filter.
-    if (filters.accountNumber) {
-      const accountNumberString = String(filters.accountNumber).trim();
-      const accountNumberNumber = Number(accountNumberString);
-
-      const accountNumberValues: (string | number)[] = [accountNumberString];
-
-      if (!Number.isNaN(accountNumberNumber)) {
-        accountNumberValues.push(accountNumberNumber);
-      }
-
+    if (end) {
       baseQuery = query(
         baseQuery,
-        where("accountNumber", "in", accountNumberValues),
+        where("displayDate", "<=", Timestamp.fromDate(end)),
       );
     }
-    if (filters.accountType) {
-      baseQuery = query(
-        baseQuery,
-        where("accountType", "==", filters.accountType),
-      );
-    }
-
-    if (filters.accountChain) {
-      baseQuery = query(baseQuery, where("chain", "==", filters.accountChain));
-    }
-
-    if (filters.chainType) {
-      baseQuery = query(baseQuery, where("chainType", "==", filters.chainType));
-    }
-    if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
-      baseQuery = query(
-        baseQuery,
-        where("totalCaseCount", ">=", filters.minCaseCount),
-      );
-    }
-    if (filters.companyGoalId) {
-      baseQuery = query(
-        baseQuery,
-        where("companyGoalId", "==", filters.companyGoalId),
-      );
-    }
-    if (filters.galloGoalId) {
-      baseQuery = query(
-        baseQuery,
-        where("galloGoalId", "==", filters.galloGoalId),
-      );
-    }
-    if (filters.hashtag) {
-      baseQuery = filterArrayContains(
-        "hashtags",
-        filters.hashtag ?? undefined,
-        baseQuery,
-      );
-    }
-    if (filters.starTag) {
-      baseQuery = filterArrayContains(
-        "starTags",
-        filters.starTag ?? undefined,
-        baseQuery,
-      );
-    }
-    if (filters.brand) {
-      baseQuery = filterArrayContains(
-        "brands",
-        filters.brand ?? undefined,
-        baseQuery,
-      );
-    }
-    if (filters.productType) {
-      // lowercase the user’s selection so it matches the lower-case data in Firestore
-      const val = filters.productType.trim().toLowerCase();
-      baseQuery = filterArrayContains("productType", val, baseQuery);
-    }
-
-    // ❌ REMOVE: date filtering — these rely on displayDate index
-    // const { startDate, endDate } = filters.dateRange || {};
-    // if (startDate) baseQuery = query(baseQuery, where("displayDate", ">=", startDate));
-    // if (endDate) baseQuery = query(baseQuery, where("displayDate", "<=", endDate));
-
-    // ✅ Optional: single state/city
-    if (filters.states?.length === 1) {
-      baseQuery = filterExactMatch("state", filters.states[0], baseQuery);
-    }
-    if (filters.cities?.length === 1) {
-      baseQuery = filterExactMatch("city", filters.cities[0], baseQuery);
+    if (start || end) {
+      baseQuery = query(baseQuery, orderBy("displayDate", "desc"));
     }
 
     // const finalQuery = query(baseQuery, orderBy("displayDate", "desc"));
@@ -373,10 +270,15 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       }),
     );
 
+    // Keep Firestore queries on stable, deployed indexes. Applying the rest in
+    // one place avoids composite-index failures for combinations such as
+    // company + brand + date and keeps legacy normalized fields working.
+    const fullyFilteredPosts = locallyFilterPosts(posts, filters);
+
     return {
-      posts,
+      posts: fullyFilteredPosts,
       lastVisible: snapshot.docs[snapshot.docs.length - 1]?.id ?? null,
-      count: snapshot.size,
+      count: fullyFilteredPosts.length,
     };
   },
 );
