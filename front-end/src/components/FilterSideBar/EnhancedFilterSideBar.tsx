@@ -57,6 +57,7 @@ import {
 import { useAvailableFilterUsers } from "../../hooks/useAvailableFilterUsers";
 import { useNetworkAccountFacets } from "../../hooks/useNetworkAccountFacets";
 import { fetchFilteredSharedPostsBatch } from "../../thunks/sharedPostsThunks";
+import { showMessage } from "../../Slices/snackbarSlice";
 
 interface DistributorOption {
   id: string;
@@ -466,7 +467,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       if (isSharedFeed) {
         // there are 2 isSharedFeed conditions in this function, can we consolidate?
         setActiveSharedPostSet("posts");
-        dispatch(setFilteredSharedPosts([]));
         dispatch(setFilteredSharedPostFetchedAt(null));
       } else {
         setActiveCompanyPostSet("posts");
@@ -493,21 +493,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   };
 
   const handleApply = async (filtersToApply: PostQueryFilters = filters) => {
-    console.log("[SHARED FILTER DEBUG]", {
-      sourcePosts: sourcePosts.length,
-      distributorCompanyId: filtersToApply.distributorCompanyId,
-      accountName: filtersToApply.accountName,
-      accountNumber: filtersToApply.accountNumber,
-      matchingDistributorPosts: sourcePosts.filter(
-        (p) => p.companyId === filtersToApply.distributorCompanyId,
-      ).length,
-      matchingAccountPosts: sourcePosts.filter(
-        (p) =>
-          p.companyId === filtersToApply.distributorCompanyId &&
-          String(p.accountNumber ?? "") ===
-            String(filtersToApply.accountNumber ?? ""),
-      ).length,
-    });
+    // Mark this exact state as attempted before the request. If Firestore
+    // rejects it, the debounce effect will not spin in an automatic retry loop.
+    setLastAppliedFilters(filtersToApply);
     setIsApplying(true);
 
     try {
@@ -576,6 +564,13 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           setActiveSharedPostSet("filteredPosts");
           setLastAppliedFilters(filtersToApply);
           onFiltersApplied?.(filtersToApply);
+        } else {
+          dispatch(
+            showMessage({
+              text: "We could not apply those filters. Please adjust them and try again.",
+              severity: "error",
+            }),
+          );
         }
 
         return;
@@ -600,8 +595,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         return;
       }
 
-      dispatch(setFilteredPosts([]));
-
       const result = await dispatch(
         fetchFilteredPostsBatch({ filters: filtersToApply, companyId }),
       );
@@ -616,6 +609,13 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         setActiveCompanyPostSet("filteredPosts");
         setLastAppliedFilters(filtersToApply);
         onFiltersApplied?.(filtersToApply);
+      } else {
+        dispatch(
+          showMessage({
+            text: "We could not apply those filters. Please adjust them and try again.",
+            severity: "error",
+          }),
+        );
       }
     } finally {
       setIsApplying(false);
@@ -997,9 +997,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <div className="filter-group">
           <label className="date-label">From</label>
           <input
-            title="end-date-input"
+            title="start-date-input"
             type="date"
             value={filters.dateRange?.startDate || ""}
+            max={filters.dateRange?.endDate || undefined}
             onChange={(e) =>
               handleDateChange(
                 e.target.value || null,
@@ -1009,9 +1010,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           />
           <label className="date-label">To</label>
           <input
-            title="start-date-input"
+            title="end-date-input"
             type="date"
             value={filters.dateRange?.endDate || ""}
+            min={filters.dateRange?.startDate || undefined}
             onChange={(e) =>
               handleDateChange(
                 filters.dateRange?.startDate || null,

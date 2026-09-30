@@ -469,12 +469,20 @@ const PostCard: React.FC<PostCardProps> = ({
                   {" "}
                   {/* i need to eventually add store names on click to the filters*/}
                   <div className="store-name-number">
-                    <h3>{post.account?.accountName} </h3>
-
+                    <div className="store-name-account">
+                      <h3>{post.account?.accountName ?? post.accountName}</h3>
+                      {(post.accountNumber ?? post.account?.accountNumber) && (
+                        <span className="post-account-number">
+                          Account #{post.accountNumber ?? post.account?.accountNumber}
+                        </span>
+                      )}
+                    </div>
                     <h5>{formatDisplayDate(post.displayDate)}</h5>
                   </div>
                   <div className="store-address-box">
-                    <h6>{post.account?.accountAddress}</h6>{" "}
+                    <h6>
+                      {post.account?.accountAddress ?? post.accountAddress}
+                    </h6>{" "}
                   </div>
                 </div>
               </div>
