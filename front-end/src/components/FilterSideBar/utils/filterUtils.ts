@@ -1,6 +1,12 @@
 // filterUtils.ts
 
 import { PostQueryFilters, PostWithID, UserType } from "../../../utils/types";
+import {
+  formatDateInputForDisplay,
+  getDateRangeBounds,
+} from "../../../utils/dateRange";
+
+const FILTER_CACHE_VERSION = 2;
 
 const normalizeLoose = (value?: string | null): string =>
   (value ?? "")
@@ -92,8 +98,8 @@ export const getFilterSummaryText = (
   const { startDate, endDate } = filters.dateRange || {};
 
   if (startDate || endDate) {
-    const start = startDate ? new Date(startDate).toLocaleDateString() : "";
-    const end = endDate ? new Date(endDate).toLocaleDateString() : "";
+    const start = formatDateInputForDisplay(startDate);
+    const end = formatDateInputForDisplay(endDate);
 
     parts.push(
       start && end && start !== end
@@ -284,14 +290,19 @@ export function locallyFilterPosts(
       return false;
     }
 
-    if (filters.brandId) {
-      if (!post.brandIds?.includes(filters.brandId)) return false;
-    } else if (filters.brand) {
-      const matchesBrand = post.brands?.some(
+    if (filters.brandId || filters.brand) {
+      const matchesBrandId = Boolean(
+        filters.brandId && post.brandIds?.includes(filters.brandId),
+      );
+      const matchesBrandName = Boolean(
+        filters.brand &&
+          post.brands?.some(
         (brand) => normalizeBrand(brand) === normalizedBrandFilter,
+          ),
       );
 
-      if (!matchesBrand) return false;
+      // Older posts predate brandIds, so retain the normalized-name fallback.
+      if (!matchesBrandId && !matchesBrandName) return false;
     }
 
     if (
@@ -306,7 +317,9 @@ export function locallyFilterPosts(
     // Account number is the durable filter.
     // Account name is fallback/search-display only.
     if (filters.accountNumber) {
-      const postAccountNumber = String(post.accountNumber ?? "");
+      const postAccountNumber = String(
+        post.accountNumber ?? post.account?.accountNumber ?? "",
+      );
       const filterAccountNumber = String(filters.accountNumber);
 
       if (postAccountNumber !== filterAccountNumber) {
@@ -321,22 +334,40 @@ export function locallyFilterPosts(
         return false;
       }
     } else if (filters.accountName) {
-      const postAccountName = normalizeLoose(post.accountName);
+      const postAccountName = normalizeLoose(
+        post.accountName ?? post.account?.accountName,
+      );
 
       if (!postAccountName.includes(normalizedAccountNameFilter)) {
         return false;
       }
     }
 
-    if (filters.accountType && post.accountType !== filters.accountType) {
+    if (
+      filters.accountType &&
+      (post.accountType ?? post.account?.accountType) !== filters.accountType
+    ) {
       return false;
     }
 
-    if (filters.accountChain && post.chain !== filters.accountChain) {
+    if (
+      filters.accountChain &&
+      (post.chain ?? post.account?.chain) !== filters.accountChain
+    ) {
       return false;
     }
 
-    if (filters.chainType && post.chainType !== filters.chainType) {
+    if (
+      filters.chainType &&
+      (post.chainType ?? post.account?.chainType) !== filters.chainType
+    ) {
+      return false;
+    }
+
+    if (
+      filters.companyId &&
+      post.postUserCompanyId !== filters.companyId
+    ) {
       return false;
     }
 
@@ -349,14 +380,16 @@ export function locallyFilterPosts(
 
     if (
       filters.states?.length &&
-      (!post.state || !filters.states.includes(post.state))
+      (!(post.state ?? post.account?.state) ||
+        !filters.states.includes(post.state ?? post.account?.state ?? ""))
     ) {
       return false;
     }
 
     if (
       filters.cities?.length &&
-      (!post.city || !filters.cities.includes(post.city))
+      (!(post.city ?? post.account?.city) ||
+        !filters.cities.includes(post.city ?? post.account?.city ?? ""))
     ) {
       return false;
     }
@@ -364,15 +397,14 @@ export function locallyFilterPosts(
     if (filters.dateRange?.startDate || filters.dateRange?.endDate) {
       const postDate = toMillis(post.displayDate);
 
-      const start = filters.dateRange.startDate
-        ? new Date(filters.dateRange.startDate).getTime()
-        : null;
+      const bounds = getDateRangeBounds(filters.dateRange);
+      const start = bounds.start?.getTime() ?? null;
+      const end = bounds.end?.getTime() ?? null;
 
-      const end = filters.dateRange.endDate
-        ? new Date(filters.dateRange.endDate).setHours(23, 59, 59, 999)
-        : null;
-
-      if ((start && postDate < start) || (end && postDate > end)) {
+      if (
+        (start !== null && postDate < start) ||
+        (end !== null && postDate > end)
+      ) {
         return false;
       }
     }
@@ -382,7 +414,9 @@ export function locallyFilterPosts(
 }
 
 export function getFilterHash(filters: PostQueryFilters): string {
-  const cleaned: Record<string, unknown> = {};
+  const cleaned: Record<string, unknown> = {
+    __filterCacheVersion: FILTER_CACHE_VERSION,
+  };
 
   Object.entries(filters).forEach(([key, value]) => {
     if (key === "distributorCompanyName") return;
