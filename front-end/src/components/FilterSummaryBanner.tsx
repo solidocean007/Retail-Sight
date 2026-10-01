@@ -1,50 +1,78 @@
-// FilterSummaryBanner.tsx
-import React from "react";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+
 import "./filterSummaryBanner.css";
 
 interface FilterSummaryBannerProps {
   filteredCount: number;
   filterText: string;
   onClear: () => void;
+  onEdit: () => void;
   fetchedAt: string | null;
+  isLoading?: boolean;
 }
 
-const FilterSummaryBanner: React.FC<FilterSummaryBannerProps> = ({
+const formatFetchedAt = (value: string | null): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const FilterSummaryBanner = ({
   filteredCount,
   filterText,
   onClear,
+  onEdit,
   fetchedAt,
-}) => {
-  if (filteredCount === 0) {
-    return (
-      <div className="filter-summary-banner">
-        <span>No posts match the selected filters.</span>
-        <button className="btn-outline clear-filter-btn" onClick={onClear}>
-          Clear
-        </button>
-      </div>
-    );
-  }
+  isLoading = false,
+}: FilterSummaryBannerProps) => {
+  const updatedAt = formatFetchedAt(fetchedAt);
+  const isEmpty = !isLoading && filteredCount === 0;
 
   return (
-    <div className="filter-summary-banner">
-      <div className="filter-summary-text">
-        <span>
-          Showing filtered post{filteredCount !== 1 && "s"} for:
-          {filterText && ` ${filterText}`}
-        </span>
-        {fetchedAt && (
-          <div className="fetched-at">
-            as of {new Date(fetchedAt).toLocaleString()}
-          </div>
-        )}
-        {!fetchedAt && <span className="loading-text">Updating…</span>}
+    <section
+      className={`filter-summary-banner${isLoading ? " is-loading" : ""}${
+        isEmpty ? " is-empty" : ""
+      }`}
+      aria-live="polite"
+      aria-busy={isLoading}
+    >
+      <div className="filter-summary-banner__icon" aria-hidden="true">
+        {isLoading ? <RefreshRoundedIcon /> : <FilterAltOutlinedIcon />}
       </div>
 
-      <button className="btn-outline clear-filter-btn" onClick={onClear}>
-        Clear
-      </button>
-    </div>
+      <div className="filter-summary-banner__copy">
+        <strong>
+          {isLoading
+            ? "Updating displays…"
+            : isEmpty
+              ? "No displays match"
+              : `${filteredCount} display${filteredCount === 1 ? "" : "s"} match`}
+        </strong>
+        {filterText && <span>{filterText}</span>}
+        {!isLoading && updatedAt && <small>Updated {updatedAt}</small>}
+      </div>
+
+      <div className="filter-summary-banner__actions">
+        <button type="button" className="filter-summary-edit" onClick={onEdit}>
+          Adjust filters
+        </button>
+        <button
+          type="button"
+          className="filter-summary-clear"
+          onClick={onClear}
+        >
+          Clear all
+        </button>
+      </div>
+    </section>
   );
 };
 

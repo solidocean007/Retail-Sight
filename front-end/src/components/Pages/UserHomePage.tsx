@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VirtuosoHandle } from "react-virtuoso";
 import ActivityFeed from "./../ActivityFeed";
 import "./userHomePage.css";
-import { AppDispatch, RootState, useAppDispatch } from "../../utils/store";
-import { useDispatch, useSelector } from "react-redux";
+import { RootState, useAppDispatch } from "../../utils/store";
+import { useSelector } from "react-redux";
 import { fetchLocationOptions } from "../../Slices/locationSlice";
 import HeaderBar from "./../HeaderBar";
 import { UserHomePageHelmet } from "../../utils/helmetConfigurations";
@@ -12,7 +12,11 @@ import {
   getFilteredSet,
   getPostsFromIndexedDB,
 } from "../../utils/database/indexedDBUtils";
-import { mergeAndSetPosts, setFilteredPosts } from "../../Slices/postsSlice";
+import {
+  mergeAndSetPosts,
+  setFilteredPostFetchedAt,
+  setFilteredPosts,
+} from "../../Slices/postsSlice";
 import {
   OpenPostViewerOptions,
   PostQueryFilters,
@@ -21,9 +25,13 @@ import {
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import FilterSummaryBanner from "./../FilterSummaryBanner";
 import EnhancedFilterSidebar from "./../FilterSideBar/EnhancedFilterSideBar";
-import { getFilterSummaryText } from "./../FilterSideBar/utils/filterUtils";
+import {
+  clearAllFilters,
+  getFilterSummaryText,
+} from "./../FilterSideBar/utils/filterUtils";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredPostsBatch } from "../../thunks/postsThunks";
+import { fetchFilteredSharedPostsBatch } from "../../thunks/sharedPostsThunks";
 import { normalizePost } from "../../utils/normalize";
 import PostViewerModal from "./../PostViewerModal";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -40,6 +48,12 @@ import InstallPrompt from "../PWA/InstallPrompt";
 import { selectEffectiveCompanyId } from "../../Slices/impersonationSlice";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
+import {
+  setFilteredSharedPostFetchedAt,
+  setFilteredSharedPosts,
+} from "../../Slices/sharedPostsSlice";
+
+type FeedType = "company" | "shared";
 
 const toMillis = (value: unknown): number => {
   if (!value) return 0;
@@ -61,7 +75,7 @@ const toMillis = (value: unknown): number => {
 
 const getSharedPostTimestamp = (post: PostWithID): number =>
   toMillis(post.autoSharedAt) ||
-  toMillis(post.createdAt) ||
+  toMillis((post as PostWithID & { createdAt?: unknown }).createdAt) ||
   toMillis(post.timestamp) ||
   toMillis(post.displayDate);
 
@@ -78,8 +92,7 @@ const UserHomePage = () => {
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
-  const [activeFeedType, setActiveFeedType] =
-    useState<"company" | "shared">("company");
+  const [activeFeedType, setActiveFeedType] = useState<FeedType>("company");
   const [showFeedContext, setShowFeedContext] = useState(true);
   const [activeCompanyPostSet, setActiveCompanyPostSet] = useState<
     "posts" | "filteredPosts"
@@ -87,21 +100,28 @@ const UserHomePage = () => {
   const [activeSharedPostSet, setActiveSharedPostSet] = useState<
     "posts" | "filteredPosts"
   >("posts");
-  const [clearInput, setClearInput] = useState(false);
+  const clearInput = false;
   const user = useSelector(selectUser);
   const [sharedFeedLastViewedAt, setSharedFeedLastViewedAt] = useState(0);
   const [sharedViewInitialized, setSharedViewInitialized] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
+  const [appliedFiltersByFeed, setAppliedFiltersByFeed] = useState<
+    Record<FeedType, PostQueryFilters | null>
+  >({ company: null, shared: null });
+  const [filtersApplyingByFeed, setFiltersApplyingByFeed] = useState<
+    Record<FeedType, boolean>
+  >({ company: false, shared: false });
+  const appliedFilters = appliedFiltersByFeed[activeFeedType];
   const filterText = useMemo(
     () =>
-      lastFilters ? getFilterSummaryText(lastFilters, companyUsers || []) : "",
-    [lastFilters, companyUsers],
+      appliedFilters
+        ? getFilterSummaryText(appliedFilters, companyUsers || [])
+        : "",
+    [appliedFilters, companyUsers],
   );
   // const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
   const [postViewerOptions, setPostViewerOptions] =
     useState<OpenPostViewerOptions | null>(null);
-  const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
   const [showConfirmReset, setShowConfirmReset] = useState(false);
 
@@ -116,10 +136,10 @@ const UserHomePage = () => {
     (s: RootState) => s.posts.filteredPostFetchedAt,
   );
   const sharedFetchedAt = useSelector(
-  (s: RootState) => s.sharedPosts.filteredSharedPostFetchedAt,
-);
-const displayFetchedAt =
-  activeFeedType === "shared" ? sharedFetchedAt : fetchedAt;
+    (s: RootState) => s.sharedPosts.filteredSharedPostFetchedAt,
+  );
+  const displayFetchedAt =
+    activeFeedType === "shared" ? sharedFetchedAt : fetchedAt;
 
   const filteredSharedPostCount = useSelector(
     (s: RootState) => s.sharedPosts.filteredSharedPostCount,
@@ -132,6 +152,7 @@ const displayFetchedAt =
 
   const displayCount =
     activeFeedType === "shared" ? filteredSharedPostCount : filteredCount;
+  const filtersApplying = filtersApplyingByFeed[activeFeedType];
 
   const feedContextLabel =
     activeFeedType === "shared"
@@ -277,13 +298,14 @@ const displayFetchedAt =
 
   // at top of UserHomePage.tsx
   const location = useLocation();
-  const { filters: initialFilters, postIdToScroll: initialScrollId } =
+  const { filters: initialFilters } =
     (location.state as {
       filters?: PostQueryFilters;
       postIdToScroll?: string;
     }) || {};
 
   const hasSetInitialScroll = useRef(false);
+  const hasHydratedInitialFilters = useRef(false);
   useEffect(() => {
     if (hasSetInitialScroll.current) return;
     const state = location.state as {
@@ -296,29 +318,146 @@ const displayFetchedAt =
     }
   }, [location.state]);
 
-  // 1) When we get new filters, load the full set
+  const handleFiltersApplied = useCallback((filters: PostQueryFilters) => {
+    const feedType: FeedType =
+      filters.feedType === "shared" ? "shared" : "company";
+
+    setAppliedFiltersByFeed((current) => ({
+      ...current,
+      [feedType]: filters,
+    }));
+    setFiltersApplyingByFeed((current) => ({
+      ...current,
+      [feedType]: false,
+    }));
+
+    if (feedType === "shared") {
+      setActiveSharedPostSet("filteredPosts");
+    } else {
+      setActiveCompanyPostSet("filteredPosts");
+    }
+  }, []);
+
+  const handleApplyingChange = useCallback(
+    (feedType: FeedType, applying: boolean) => {
+      setFiltersApplyingByFeed((current) => ({
+        ...current,
+        [feedType]: applying,
+      }));
+    },
+    [],
+  );
+
+  const clearFeedFilters = useCallback(
+    async (feedType: FeedType) => {
+      setAppliedFiltersByFeed((current) => ({
+        ...current,
+        [feedType]: null,
+      }));
+      setFiltersApplyingByFeed((current) => ({
+        ...current,
+        [feedType]: false,
+      }));
+
+      if (feedType === "shared") {
+        setActiveSharedPostSet("posts");
+        dispatch(setFilteredSharedPosts([]));
+        dispatch(setFilteredSharedPostFetchedAt(null));
+        return;
+      }
+
+      setCurrentHashtag(null);
+      setCurrentStarTag(null);
+      setIsSearchActive(false);
+      setActiveCompanyPostSet("posts");
+      dispatch(setFilteredPosts([]));
+      dispatch(setFilteredPostFetchedAt(null));
+
+      const cachedPosts = await getPostsFromIndexedDB();
+      if (cachedPosts?.length > 0) {
+        dispatch(mergeAndSetPosts(cachedPosts.map(normalizePost)));
+      }
+    },
+    [dispatch],
+  );
+
+  // Hydrate navigation-provided filters once and only publish them after the
+  // cache or Firestore request succeeds.
   useEffect(() => {
-    if (!initialFilters || !effectiveCompanyId) return;
-    setActiveCompanyPostSet("filteredPosts");
-    setLastFilters(initialFilters);
+    if (
+      hasHydratedInitialFilters.current ||
+      !initialFilters ||
+      !effectiveCompanyId
+    ) {
+      return;
+    }
+
+    hasHydratedInitialFilters.current = true;
+    const feedType: FeedType =
+      initialFilters.feedType === "shared" ? "shared" : "company";
+    const filters = { ...initialFilters, feedType };
+    setActiveFeedType(feedType);
+    handleApplyingChange(feedType, true);
 
     (async () => {
-      const cached = await getFilteredSet(initialFilters);
-      if (cached) {
-        dispatch(setFilteredPosts(cached));
-      } else {
+      try {
+        const cached = await getFilteredSet(filters);
+        if (cached) {
+          if (feedType === "shared") {
+            dispatch(setFilteredSharedPosts(cached));
+            dispatch(setFilteredSharedPostFetchedAt(new Date().toISOString()));
+          } else {
+            dispatch(setFilteredPosts(cached));
+            dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
+          }
+          handleFiltersApplied(filters);
+          return;
+        }
+
+        if (feedType === "shared") {
+          const result = await dispatch(
+            fetchFilteredSharedPostsBatch({
+              filters,
+              companyId: effectiveCompanyId,
+            }),
+          );
+          if (fetchFilteredSharedPostsBatch.fulfilled.match(result)) {
+            setActiveFeedType("shared");
+            handleFiltersApplied(filters);
+            return;
+          }
+          throw new Error("Shared filter hydration failed");
+        }
+
         const result = await dispatch(
           fetchFilteredPostsBatch({
-            filters: initialFilters,
+            filters,
             companyId: effectiveCompanyId,
           }),
         );
         if (fetchFilteredPostsBatch.fulfilled.match(result)) {
-          dispatch(setFilteredPosts(result.payload.posts.map(normalizePost)));
+          handleFiltersApplied(filters);
+          return;
         }
+        throw new Error("Company filter hydration failed");
+      } catch (error) {
+        console.error("Could not restore feed filters:", error);
+        handleApplyingChange(feedType, false);
+        dispatch(
+          showMessage({
+            text: "We could not restore those display filters.",
+            severity: "error",
+          }),
+        );
       }
     })();
-  }, [initialFilters, dispatch, effectiveCompanyId]);
+  }, [
+    initialFilters,
+    dispatch,
+    effectiveCompanyId,
+    handleApplyingChange,
+    handleFiltersApplied,
+  ]);
 
   const toggleFilterMenu = () => {
     if (isFilterMenuOpen) {
@@ -326,25 +465,31 @@ const displayFetchedAt =
       setTimeout(() => {
         setIsFilterMenuOpen(false);
         setIsClosing(false);
-      }, 400); // match animation time
+      }, 280); // match the mobile panel animation
     } else {
       setIsFilterMenuOpen(true);
     }
   };
 
-  const clearSearch = async () => {
-    setCurrentHashtag(null);
-    setCurrentStarTag(null);
-    setActiveCompanyPostSet("posts");
-    setLastFilters(null); // ✅ hides FilterSummaryBanner
-    dispatch(setFilteredPosts([]));
-    // dispatch(setFilteredPostCount(0)); // you'd need to define this reducer
+  const clearSearch = useCallback(
+    () => clearFeedFilters(activeFeedType),
+    [activeFeedType, clearFeedFilters],
+  );
 
-    const cachedPosts = await getPostsFromIndexedDB();
-    if (cachedPosts?.length > 0) {
-      dispatch(mergeAndSetPosts(cachedPosts.map(normalizePost)));
-    }
-  };
+  useEffect(() => {
+    if (!currentHashtag && !currentStarTag) return;
+
+    const tagFilters: PostQueryFilters = {
+      ...clearAllFilters("company"),
+      hashtag: currentHashtag,
+      starTag: currentStarTag,
+    };
+
+    setAppliedFiltersByFeed((current) => ({
+      ...current,
+      company: tagFilters,
+    }));
+  }, [currentHashtag, currentStarTag]);
 
   const confirmReset = async () => {
     dispatch(setResetting(true)); // ✅ fix
@@ -376,8 +521,7 @@ const displayFetchedAt =
     <div className="feed-toggle" role="tablist" aria-label="Display feed">
       <button
         className={
-          "feed-toggle-option " +
-          (activeFeedType === "company" ? "active" : "")
+          "feed-toggle-option " + (activeFeedType === "company" ? "active" : "")
         }
         type="button"
         role="tab"
@@ -389,8 +533,7 @@ const displayFetchedAt =
 
       <button
         className={
-          "feed-toggle-option " +
-          (activeFeedType === "shared" ? "active" : "")
+          "feed-toggle-option " + (activeFeedType === "shared" ? "active" : "")
         }
         type="button"
         role="tab"
@@ -422,15 +565,6 @@ const displayFetchedAt =
           />
         </div>
         <div className="mobile-home-page-actions">
-          {isFilteredMode && (
-            <FilterSummaryBanner
-              filteredCount={displayCount}
-              filterText={filterText}
-              onClear={clearSearch}
-              fetchedAt={displayFetchedAt}
-            />
-          )}
-
           {!isFilterMenuOpen && !isClosing && (
             <div className="activity-feed-header-bar icon-bar">
               <Fab
@@ -456,6 +590,16 @@ const displayFetchedAt =
 
         <div className="home-page-content">
           <div className="activity-feed-container">
+            {(isFilteredMode || filtersApplying) && (
+              <FilterSummaryBanner
+                filteredCount={displayCount}
+                filterText={filterText}
+                onClear={clearSearch}
+                onEdit={toggleFilterMenu}
+                fetchedAt={displayFetchedAt}
+                isLoading={filtersApplying}
+              />
+            )}
             {sharedPosts.length > 0 && (
               <div className="feed-toolbar">
                 <span
@@ -492,7 +636,7 @@ const displayFetchedAt =
                 postIdToScroll={postIdToScroll}
                 setPostIdToScroll={setPostIdToScroll}
                 toggleFilterMenu={toggleFilterMenu}
-                appliedFilters={lastFilters}
+                appliedFilters={appliedFiltersByFeed.company}
               />
             )}
           </div>
@@ -503,24 +647,16 @@ const displayFetchedAt =
             } ${isClosing ? "sidebar-closing" : ""}`}
           >
             <EnhancedFilterSidebar
-              activePostSet={activeCompanyPostSet}
-              activeSharedPostSet={activeSharedPostSet}
-              setActiveCompanyPostSet={setActiveCompanyPostSet}
-              setActiveSharedPostSet={setActiveSharedPostSet}
-              isSearchActive={isSearchActive}
-              setIsSearchActive={setIsSearchActive}
-              onFiltersApplied={setLastFilters}
-              currentHashtag={currentHashtag}
-              setCurrentHashtag={setCurrentHashtag}
-              currentStarTag={currentStarTag}
-              setCurrentStarTag={setCurrentStarTag}
+              appliedFilters={appliedFilters}
+              onFiltersApplied={handleFiltersApplied}
+              onClearFilters={clearFeedFilters}
+              onApplyingChange={handleApplyingChange}
               toggleFilterMenu={toggleFilterMenu}
-              initialFilters={initialFilters}
               isSharedFeed={activeFeedType === "shared"}
             />
           </div>
         </div>
-        {postViewerOpen && (
+        {postViewerOptions?.postId && (
           <PostViewerModal
             postId={postViewerOptions?.postId ?? null}
             open={Boolean(postViewerOptions?.postId)}

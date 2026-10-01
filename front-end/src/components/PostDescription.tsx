@@ -16,10 +16,16 @@ import { RootState } from "../utils/store";
 
 interface PostDescriptionProps {
   description?: string;
-  getPostsByTag?: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
+  getPostsByTag?: (
+    hashTag: string,
+    companyID?: string,
+  ) => Promise<PostWithID[]>;
   getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet?: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
+  setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
+  setActivePostSet?: React.Dispatch<
+    React.SetStateAction<"posts" | "filteredPosts">
+  >;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -43,6 +49,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   getPostsByTag,
   getPostsByStarTag,
   setCurrentHashtag,
+  setCurrentStarTag,
   setActivePostSet,
   setIsSearchActive,
 }) => {
@@ -117,7 +124,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     event.preventDefault();
     setFilteredPosts([]);
     // Prevents the default anchor behavior
-    if(!getPostsByTag) {
+    if (!getPostsByTag) {
       return;
     }
     try {
@@ -127,6 +134,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       if (setCurrentHashtag) {
         setCurrentHashtag(hashtag.trimEnd().toLowerCase());
       }
+      setCurrentStarTag?.(null);
       // dispatch(setHashtagPosts(hashtagPosts));
       dispatch(setFilteredPosts(hashtagPosts));
       addHashtagPostsToIndexedDB(hashtagPosts);
@@ -141,7 +149,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   ) => {
     event.preventDefault(); // Prevents the default anchor behavior
     setFilteredPosts([]);
-    if(!getPostsByStarTag) {
+    if (!getPostsByStarTag) {
       return;
     }
     try {
@@ -149,7 +157,8 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       const starTagPosts = await getPostsByStarTag(starTag);
       setIsSearchActive?.(true);
       setActivePostSet?.("filteredPosts");
-      setCurrentHashtag?.(starTag.trimEnd().toLowerCase());
+      setCurrentStarTag?.(starTag.trimEnd().toLowerCase());
+      setCurrentHashtag?.(null);
       // dispatch(setStarTagPosts(starTagPosts));
       dispatch(setFilteredPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts); // why do this?  why not just add to filtered posts?

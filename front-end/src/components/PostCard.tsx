@@ -65,6 +65,7 @@ interface PostCardProps {
   ) => Promise<PostWithID[]>;
   getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<
     React.SetStateAction<"posts" | "filteredPosts">
   >;
@@ -84,6 +85,7 @@ const PostCard: React.FC<PostCardProps> = ({
   getPostsByTag,
   getPostsByStarTag,
   setCurrentHashtag,
+  setCurrentStarTag,
   setActivePostSet,
   setIsSearchActive,
   postIdToScroll = null, // Default to null if not provided
@@ -118,8 +120,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
-  const [isSharedContextExpanded, setIsSharedContextExpanded] =
-    useState(false);
+  const [isSharedContextExpanded, setIsSharedContextExpanded] = useState(false);
   const isOwner = user?.uid === post.postUser?.uid;
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
   const isSharedPost = post.companyId !== user?.companyId;
@@ -516,7 +517,8 @@ const PostCard: React.FC<PostCardProps> = ({
                           {(post.accountNumber ??
                             post.account?.accountNumber) && (
                             <span className="post-account-number">
-                              Account #{post.accountNumber ??
+                              Account #
+                              {post.accountNumber ??
                                 post.account?.accountNumber}
                             </span>
                           )}
@@ -642,6 +644,7 @@ const PostCard: React.FC<PostCardProps> = ({
                     getPostsByTag={getPostsByTag}
                     getPostsByStarTag={getPostsByStarTag}
                     setCurrentHashtag={setCurrentHashtag}
+                    setCurrentStarTag={setCurrentStarTag}
                     setActivePostSet={setActivePostSet}
                     setIsSearchActive={setIsSearchActive}
                   />

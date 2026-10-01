@@ -16,11 +16,12 @@ interface PostCardRendererProps {
     post: PostWithID;
     getPostsByTag: (
       hashTag: string,
-      companyId?: string
+      companyId?: string,
     ) => Promise<PostWithID[]>;
     getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   };
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<
     React.SetStateAction<"posts" | "filteredPosts">
   >;
@@ -36,6 +37,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   style,
   data: { post, getPostsByTag, getPostsByStarTag },
   setCurrentHashtag,
+  setCurrentStarTag,
   setActivePostSet,
   setIsSearchActive,
   postIdToScroll,
@@ -54,7 +56,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
           onPostVisible(post.id);
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
 
     observer.observe(cardRef.current);
@@ -75,6 +77,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
         getPostsByTag={getPostsByTag}
         getPostsByStarTag={getPostsByStarTag}
         setCurrentHashtag={setCurrentHashtag}
+        setCurrentStarTag={setCurrentStarTag}
         setActivePostSet={setActivePostSet}
         setIsSearchActive={setIsSearchActive}
         postIdToScroll={postIdToScroll}

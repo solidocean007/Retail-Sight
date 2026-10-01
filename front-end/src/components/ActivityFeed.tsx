@@ -69,6 +69,7 @@ interface ActivityFeedProps {
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   virtuosoRef,
   setCurrentHashtag,
+  setCurrentStarTag,
   activeCompanyPostSet,
   setActiveCompanyPostSet,
   setIsSearchActive,
@@ -225,6 +226,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                   style={{ height: "100%" }}
                   data={{ post, getPostsByTag, getPostsByStarTag }}
                   setCurrentHashtag={setCurrentHashtag}
+                  setCurrentStarTag={setCurrentStarTag}
                   setActivePostSet={setActiveCompanyPostSet}
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}

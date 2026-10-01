@@ -417,9 +417,12 @@
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
+    height: 100%;
+    min-height: 0;
     width: 100%;
     min-width: 0;
     max-width: none;
-    align-self: start;
+    align-self: stretch;
+    overflow: hidden;
   }
 }
