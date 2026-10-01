@@ -1,6 +1,7 @@
 // filterUtils.ts
 
 import { PostQueryFilters, PostWithID, UserType } from "../../../utils/types";
+import { sortPostsNewestFirst } from "../../../utils/sortPosts";
 import {
   formatDateInputForDisplay,
   getDateRangeBounds,
@@ -289,7 +290,7 @@ export function locallyFilterPosts(
   const normalizedBrandFilter = normalizeBrand(filters.brand);
   const normalizedAccountNameFilter = normalizeLoose(filters.accountName);
 
-  return posts.filter((post) => {
+  const filteredPosts = posts.filter((post) => {
     if (
       filters.distributorCompanyId &&
       post.companyId !== filters.distributorCompanyId
@@ -437,6 +438,8 @@ export function locallyFilterPosts(
 
     return true;
   });
+
+  return sortPostsNewestFirst(filteredPosts);
 }
 
 export function getFilterHash(filters: PostQueryFilters): string {

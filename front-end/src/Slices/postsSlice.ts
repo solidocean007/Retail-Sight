@@ -10,6 +10,7 @@ import {
 import { PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
 import { normalizePost } from "../utils/normalize";
+import { sortPostsNewestFirst } from "../utils/sortPosts";
 import { RootState } from "../utils/store";
 
 type CursorType = string;
@@ -46,11 +47,7 @@ const initialState: PostsState = {
 };
 
 export const sortPostsByDate = (posts: PostWithID[]) => {
-  return posts.sort((a, b) => {
-    const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
-    const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
-    return dateB - dateA; // Sort in descending order
-  });
+  return sortPostsNewestFirst(posts);
 };
 
 export const setFilteredPostFetchedAt = createAction<string | null>(
@@ -246,7 +243,7 @@ const postsSlice = createSlice({
         const { posts, lastVisible, count } = action.payload;
 
         // ✅ Always replace filtered results
-        state.filteredPosts = posts;
+        state.filteredPosts = sortPostsByDate(posts.map(normalizePost));
         state.filteredPostCount = count;
         state.lastVisibleFiltered = lastVisible ?? null;
 
