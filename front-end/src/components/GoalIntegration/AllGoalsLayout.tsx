@@ -4,17 +4,22 @@ import AllGalloGoalsView from "./AllGalloGoalsView";
 import "./allGoalsLayout.css";
 
 export type GoalSource = "company" | "gallo";
+export type GalloGoalView = "current" | "upcoming" | "archived" | "disabled";
 
 type AllGoalsLayoutProps = {
   companyId?: string;
   source: GoalSource;
   galloEnabled: boolean;
+  galloView: GalloGoalView;
+  onGalloViewChange: (view: GalloGoalView) => void;
 };
 
 const AllGoalsLayout = ({
   companyId,
   source,
   galloEnabled,
+  galloView,
+  onGalloViewChange,
 }: AllGoalsLayoutProps) => {
   return (
     <section
@@ -26,7 +31,12 @@ const AllGoalsLayout = ({
       {source === "company" ? (
         <AllCompanyGoalsView companyId={companyId} />
       ) : (
-        galloEnabled && <AllGalloGoalsView />
+        galloEnabled && (
+          <AllGalloGoalsView
+            view={galloView}
+            onViewChange={onGalloViewChange}
+          />
+        )
       )}
     </section>
   );

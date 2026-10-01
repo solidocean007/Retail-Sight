@@ -10,7 +10,10 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import { selectGoalsByTiming } from "../../Slices/galloGoalsSlice";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
-import AllGoalsLayout, { type GoalSource } from "./AllGoalsLayout";
+import AllGoalsLayout, {
+  type GalloGoalView,
+  type GoalSource,
+} from "./AllGoalsLayout";
 import CreateGoalsLayout from "./CreateGoalsLayout";
 import SupplierGoalsLayout from "./SupplierGoalsLayout";
 
@@ -36,6 +39,7 @@ const GoalManagerLayout = ({ companyId }: GoalManagerLayoutProps) => {
   const galloEnabled = isEnabled("galloAxis");
   const [createOpen, setCreateOpen] = useState(false);
   const [source, setSource] = useState<GoalSource>("company");
+  const [galloView, setGalloView] = useState<GalloGoalView>("current");
 
   useEffect(() => {
     if (!integrationsLoading && !galloEnabled && source === "gallo") {
@@ -60,11 +64,13 @@ const GoalManagerLayout = ({ companyId }: GoalManagerLayoutProps) => {
       ? [
           {
             label: "Current",
+            view: "current" as const,
             value: galloGoalsByTiming.current.length,
             detail: "Live Axis goals",
           },
           {
             label: "Upcoming",
+            view: "upcoming" as const,
             value:
               galloGoalsByTiming.upcoming.length +
               galloGoalsByTiming.scheduled.length,
@@ -72,7 +78,10 @@ const GoalManagerLayout = ({ companyId }: GoalManagerLayoutProps) => {
           },
           {
             label: "Archived",
-            value: galloGoalsByTiming.archived.length,
+            view: "archived" as const,
+            value: galloGoalsByTiming.archived.filter(
+              (goal) => goal.lifeCycleStatus !== "disabled",
+            ).length,
             detail: "Past Axis goals",
           },
         ]
@@ -226,14 +235,37 @@ const GoalManagerLayout = ({ companyId }: GoalManagerLayoutProps) => {
         </section>
       )}
 
-      <section className="goal-manager-summary" aria-label="Goal summary">
-        {summaryItems.map((item) => (
-          <div key={item.label}>
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
-            <small>{item.detail}</small>
-          </div>
-        ))}
+      <section
+        className={`goal-manager-summary ${
+          source === "gallo" ? "goal-manager-summary--interactive" : ""
+        }`}
+        aria-label={source === "gallo" ? "Gallo goal views" : "Goal summary"}
+        role={source === "gallo" ? "tablist" : undefined}
+      >
+        {summaryItems.map((item) =>
+          source === "gallo" && "view" in item ? (
+            <button
+              key={item.label}
+              id={`gallo-view-tab-${item.view}`}
+              type="button"
+              role="tab"
+              aria-selected={galloView === item.view}
+              aria-controls="gallo-goal-view-panel"
+              className={galloView === item.view ? "is-active" : ""}
+              onClick={() => setGalloView(item.view)}
+            >
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+              <small>{item.detail}</small>
+            </button>
+          ) : (
+            <div key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+              <small>{item.detail}</small>
+            </div>
+          ),
+        )}
       </section>
 
       <section className="goal-manager-panel" data-goal-source={source}>
@@ -242,6 +274,8 @@ const GoalManagerLayout = ({ companyId }: GoalManagerLayoutProps) => {
             companyId={companyId}
             source={source}
             galloEnabled={galloEnabled}
+            galloView={galloView}
+            onGalloViewChange={setGalloView}
           />
         </div>
       </section>

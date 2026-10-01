@@ -1,27 +1,29 @@
-import { EnrichedGalloAccountType } from "../../../utils/types";
+import { FireStoreGalloGoalDocType } from "../../../utils/types";
+
+type GalloGoalAccount = FireStoreGalloGoalDocType["accounts"][number];
 
 export type GalloGoalAccountDiffType = {
-  activated: EnrichedGalloAccountType[];
-  deactivated: EnrichedGalloAccountType[];
+  activated: GalloGoalAccount[];
+  deactivated: GalloGoalAccount[];
   reassigned: {
-    account: EnrichedGalloAccountType;
+    account: GalloGoalAccount;
     before: string;
     after: string;
   }[];
 };
 
 export const diffGalloGoalAccounts = (
-  original: EnrichedGalloAccountType[],
-  current: EnrichedGalloAccountType[]
+  original: GalloGoalAccount[],
+  current: GalloGoalAccount[],
 ): GalloGoalAccountDiffType => {
-  const byId = (arr: EnrichedGalloAccountType[]) =>
+  const byId = (arr: GalloGoalAccount[]) =>
     new Map(arr.map((a) => [a.distributorAcctId, a]));
 
   const origMap = byId(original);
   const currMap = byId(current);
 
-  const activated: EnrichedGalloAccountType[] = [];
-  const deactivated: EnrichedGalloAccountType[] = [];
+  const activated: GalloGoalAccount[] = [];
+  const deactivated: GalloGoalAccount[] = [];
   const reassigned: GalloGoalAccountDiffType["reassigned"] = [];
 
   currMap.forEach((curr, id) => {
@@ -29,9 +31,7 @@ export const diffGalloGoalAccounts = (
     if (!prev) return;
 
     if (prev.status !== curr.status) {
-      curr.status === "active"
-        ? activated.push(curr)
-        : deactivated.push(curr);
+      curr.status === "active" ? activated.push(curr) : deactivated.push(curr);
     }
 
     const prevRoute = prev.salesRouteNums?.[0];

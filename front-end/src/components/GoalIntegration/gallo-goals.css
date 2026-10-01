@@ -5,6 +5,163 @@
   font-weight: bold;
 }
 
+.gallo-goals-view {
+  width: 100%;
+  min-width: 0;
+}
+
+.gallo-goals-toolbar {
+  display: flex;
+  margin-bottom: 1.2rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.gallo-goals-search {
+  display: grid;
+  width: min(100%, 420px);
+  gap: 0.28rem;
+}
+
+.gallo-goals-search > span {
+  color: var(--goals-muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gallo-goals-search input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.55rem 0.72rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 10px;
+  outline: 0;
+  background: var(--goals-surface-strong);
+  color: var(--goals-text);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.gallo-goals-search input:focus {
+  border-color: var(--gallo-wine);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gallo-wine) 13%, transparent);
+}
+
+.gallo-goals-search input::placeholder {
+  color: var(--goals-muted);
+}
+
+.gallo-goals-admin-view {
+  display: inline-flex;
+  min-height: 38px;
+  padding: 0.48rem 0.65rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 9px;
+  align-items: center;
+  gap: 0.42rem;
+  background: var(--goals-surface-strong);
+  color: var(--goals-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.gallo-goals-admin-view span {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  place-items: center;
+  background: var(--goals-surface-muted);
+  color: var(--goals-text);
+  font-size: 0.62rem;
+}
+
+.gallo-goals-admin-view.is-active {
+  border-color: color-mix(in srgb, var(--gallo-wine) 55%, var(--goals-line));
+  background: var(--gallo-wine-soft);
+  color: var(--goals-text);
+}
+
+.gallo-goals-admin-view:focus-visible {
+  outline: 2px solid var(--gallo-wine);
+  outline-offset: 2px;
+}
+
+.admin-gallo-section__header {
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--goals-line);
+}
+
+.admin-gallo-section__header h6 {
+  display: flex;
+  margin: 0;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--goals-text);
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.admin-gallo-section__header p {
+  margin-top: 0.12rem;
+  color: var(--goals-muted);
+  font-size: 0.72rem;
+}
+
+.admin-gallo-section__count {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.34rem;
+  border-radius: 999px;
+  place-items: center;
+  background: var(--gallo-wine-soft);
+  color: var(--gallo-wine);
+  font-size: 0.65rem;
+}
+
+.admin-gallo-section--archived {
+  opacity: 0.94;
+}
+
+.admin-gallo-section--disabled .admin-gallo-section__count {
+  background: color-mix(in srgb, #bd6a37 15%, transparent);
+  color: color-mix(in srgb, #bd6a37 80%, var(--goals-text));
+}
+
+.gallo-goals-empty {
+  display: grid;
+  min-height: 120px;
+  padding: 1.25rem;
+  border: 1px dashed var(--goals-line-strong);
+  border-radius: 12px;
+  place-content: center;
+  gap: 0.25rem;
+  background: color-mix(in srgb, var(--goals-surface-muted) 64%, transparent);
+  color: var(--goals-muted);
+  text-align: center;
+}
+
+.gallo-goals-empty strong {
+  color: var(--goals-text);
+  font-size: 0.86rem;
+}
+
+.gallo-goals-empty span {
+  font-size: 0.72rem;
+}
+
+.gallo-goal-card-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
 /* ===== Goal Tabs ===== */
 
 .goal-tabs {
@@ -33,7 +190,7 @@
 }
 
 .goal-tab.active {
-  background-color:var(--surface-elevated);
+  background-color: var(--surface-elevated);
 
   color: #1976d2;
   border-bottom-color: #1976d2;
@@ -142,6 +299,14 @@
 
 /* ===== Mobile Responsive Styles ===== */
 @media (max-width: 600px) {
+  .gallo-goals-toolbar {
+    align-items: stretch;
+  }
+
+  .gallo-goals-search {
+    flex: 1;
+  }
+
   .accounts-table thead {
     display: none;
   }

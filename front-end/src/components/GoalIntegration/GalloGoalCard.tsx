@@ -1,64 +1,47 @@
-// ProgramCard.tsx
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Box,
-  Typography,
-  Collapse,
-  Button,
-  Paper,
-  Table,
-  TableRow,
-  TableCell,
-  TableHead,
-  TableBody,
-} from "@mui/material";
-import "./galloGoalCard.css";
-import { FireStoreGalloGoalDocType } from "../../utils/types";
-import { useAppDispatch } from "../../utils/store";
-import {
-  addOrUpdateGalloGoal,
-  FireStoreGalloGoalWithId,
-} from "../../Slices/galloGoalsSlice";
-import { GoalActionsMenu } from "./GoalActionsMenu";
-import { formatGoalDate } from "./GalloIntegration/MyGalloGoalCard";
+import { Collapse, Paper } from "@mui/material";
+import { useState } from "react";
 
-interface ProgramCardProps {
+import { FireStoreGalloGoalWithId } from "../../Slices/galloGoalsSlice";
+import { FireStoreGalloGoalDocType } from "../../utils/types";
+import GalloGoalFeedback from "../GoalReports/GalloGoalFeedback";
+import { GoalActionsMenu } from "./GoalActionsMenu";
+import {
+  formatGalloGoalDate,
+  getGalloGoalSummary,
+} from "./utils/getGalloGoalSummary";
+
+import "./galloGoalCard.css";
+
+interface Props {
   goal: FireStoreGalloGoalWithId;
   employeeMap: Record<string, string>;
   onViewPostModal: (id: string) => void;
-
   canManage: boolean;
   onEdit: (goal: FireStoreGalloGoalDocType) => void;
   onArchive: (goal: FireStoreGalloGoalDocType) => void;
   onDisable: (goal: FireStoreGalloGoalDocType) => void;
-
   showTimingHint?: boolean;
   timingContext?: "scheduled" | "upcoming";
+  compact?: boolean;
 }
 
-function formatDisplayDate(v?: any, fallback = "on a future date"): string {
-  if (!v) return fallback;
-
-  // Firestore Timestamp
-  if (typeof v.toDate === "function") {
-    return v.toDate().toLocaleDateString();
+const formatDisplayDate = (value?: unknown, fallback = "a future date") => {
+  if (!value) return fallback;
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof value.toDate === "function"
+  ) {
+    return value.toDate().toLocaleDateString();
   }
+  const parsed = new Date(value as string | number | Date);
+  return Number.isNaN(parsed.getTime())
+    ? fallback
+    : parsed.toLocaleDateString();
+};
 
-  // ISO string
-  if (typeof v === "string") {
-    const ms = Date.parse(v);
-    return Number.isNaN(ms) ? fallback : new Date(ms).toLocaleDateString();
-  }
-
-  // Date
-  if (v instanceof Date) {
-    return v.toLocaleDateString();
-  }
-
-  return fallback;
-}
-
-const GalloGoalCard: React.FC<ProgramCardProps> = ({
+const GalloGoalCard = ({
   goal,
   employeeMap,
   onViewPostModal,
@@ -68,220 +51,174 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   onDisable,
   showTimingHint = false,
   timingContext,
-}) => {
+  compact = false,
+}: Props) => {
   const [expanded, setExpanded] = useState(false);
-  const [accountsOpen, setAccountsOpen] = useState(true);
-  const activeAccounts = goal.accounts.filter((a) => a.status === "active");
-  const totalAccounts = activeAccounts.length;
-  const submittedCount = activeAccounts.filter((a) => a.submittedPostId).length;
-  const progressRatio = totalAccounts > 0 ? submittedCount / totalAccounts : 0;
-
-  let progressClass = "progress-none";
-  if (submittedCount === totalAccounts && totalAccounts > 0) {
-    progressClass = "progress-complete";
-  } else if (progressRatio >= 0.5) {
-    progressClass = "progress-warning";
-  } else if (submittedCount > 0) {
-    progressClass = "progress-active";
-  }
+  const summary = getGalloGoalSummary(goal);
 
   return (
-    <Paper elevation={20} className="gallo-goal-card">
-      {/* Header */}
-
-      <div
-        className="gallo-goal-card__header"
-        // onMouseEnter={(e) => openActions(goal.id, e.currentTarget)}
-        // onMouseLeave={closeActions}
-      >
-        <div className="gallo-goal-card__header-actions">
-          {canManage && (
-            <button className="btn-secondary" onClick={() => onEdit(goal)}>
-              Edit
-            </button>
-          )}
-        </div>
-        <div className="gallo-goal-card__header-left">
-          <div className="gallo-goal-card__header-text">
-            <Typography variant="h6">
-              {goal.programDetails.programTitle}
-            </Typography>
-            <div className="gallo-program-id">
-              <p>program id: {goal.goalDetails.goalId}</p>
-            </div>
+    <Paper
+      elevation={0}
+      className={`gallo-goal-card ${compact ? "gallo-goal-card--compact" : ""}`}
+    >
+      <header className="gallo-goal-card__header">
+        <div className="gallo-goal-card__identity">
+          <div className="gallo-goal-card__title-row">
+            <h3>{goal.programDetails.programTitle}</h3>
             <span
               className={`gallo-goal-card__badge gallo-goal-card__badge--${goal.lifeCycleStatus}`}
-              title={goal.lifeCycleStatus}
             >
-              {goal.lifeCycleStatus.toUpperCase()}
+              {goal.lifeCycleStatus}
             </span>
-
-            <div className="gallo-goal-card__dates">
-              <h3>
-                Starts: {formatGoalDate(goal.programDetails.programStartDate)}
-              </h3>
-              <h3>
-                Ends: {formatGoalDate(goal.programDetails.programEndDate)}
-              </h3>
-            </div>
           </div>
+          <span className="gallo-program-id">
+            ID: {goal.goalDetails.goalId}
+          </span>
         </div>
-        {showTimingHint && timingContext === "scheduled" && (
-          <div className="goal-timing-hint scheduled">
-            Scheduled · Displays {formatDisplayDate(goal.displayDate)}
-          </div>
-        )}
 
-        {showTimingHint && timingContext === "upcoming" && (
-          <div className="goal-timing-hint upcoming">
-            Upcoming · Starts{" "}
-            {goal.programDetails?.programStartDate
-              ? new Date(
-                  goal.programDetails.programStartDate,
-                ).toLocaleDateString()
-              : ""}
-          </div>
+        {canManage && (
+          <GoalActionsMenu
+            status={goal.lifeCycleStatus}
+            onEdit={() => onEdit(goal)}
+            onArchive={() => onArchive(goal)}
+            onDisable={() => onDisable(goal)}
+          />
         )}
+      </header>
+
+      {showTimingHint && timingContext === "scheduled" && (
+        <div className="goal-timing-hint scheduled">
+          Scheduled · Visible {formatDisplayDate(goal.displayDate)}
+        </div>
+      )}
+      {showTimingHint && timingContext === "upcoming" && (
+        <div className="goal-timing-hint upcoming">
+          Upcoming · Starts{" "}
+          {formatGalloGoalDate(goal.programDetails.programStartDate)}
+        </div>
+      )}
+
+      <div className="gallo-goal-card__dates">
+        <span>{formatGalloGoalDate(goal.programDetails.programStartDate)}</span>
+        <span aria-hidden="true">→</span>
+        <span>{formatGalloGoalDate(goal.programDetails.programEndDate)}</span>
       </div>
+
+      <div className="gallo-goal-card__progress">
+        <div>
+          <strong>{summary.percent}% complete</strong>
+          <span>
+            {summary.submittedCount}/{summary.totalAccounts} submitted
+          </span>
+        </div>
+        <div
+          className="gallo-goals-progress-track"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={summary.percent}
+          aria-label={`${goal.programDetails.programTitle} completion`}
+        >
+          <span style={{ width: `${summary.percent}%` }} />
+        </div>
+      </div>
+
       <button
-        className="btn-secondary"
-        onClick={(e) => {
-          e.stopPropagation();
-          setExpanded((v) => !v);
-        }}
+        type="button"
+        className="gallo-goal-card__expand"
+        aria-expanded={expanded}
+        aria-controls={`gallo-goal-card-details-${goal.id}`}
+        onClick={() => setExpanded((value) => !value)}
       >
-        {expanded ? "Hide Accounts" : "Show Accounts"}
+        {expanded ? "Hide account details" : "View account details"}
       </button>
 
-      {/* Progress */}
-      <div className="gallo-goal-card__progress">
-        <strong>{submittedCount}</strong> / {totalAccounts} submitted
-      </div>
-
-      {/* Body */}
       <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <div className="gallo-goal-card__body">
+        <div
+          id={`gallo-goal-card-details-${goal.id}`}
+          className="gallo-goal-card__body"
+        >
           <div className="gallo-goal-card__summary">
-            <div className="gallo-goal-card__goal">
-              <strong>Goal:</strong> {goal.goalDetails.goal}
+            <div>
+              <span>Goal</span>
+              <strong>{goal.goalDetails.goal}</strong>
             </div>
-
-            <div className="gallo-goal-card__metrics">
-              Metric: {goal.goalDetails.goalMetric} | Min:{" "}
-              {goal.goalDetails.goalValueMin}
+            <div>
+              <span>Measure</span>
+              <strong>
+                {goal.goalDetails.goalValueMin} {goal.goalDetails.goalMetric}
+              </strong>
             </div>
-            {/* <Button size="small" onClick={() => setAccountsOpen((v) => !v)}>
-              {accountsOpen ? "Hide Accounts" : "Show Accounts"}
-            </Button> */}
+            <div>
+              <span>Excluded</span>
+              <strong>{summary.excludedAccounts.length}</strong>
+            </div>
+            {(summary.importedAtLabel || summary.importedByLabel) && (
+              <div>
+                <span>Imported</span>
+                <strong>
+                  {summary.importedAtLabel || "Date unavailable"}
+                  {summary.importedByLabel
+                    ? ` · ${summary.importedByLabel}`
+                    : ""}
+                </strong>
+              </div>
+            )}
           </div>
 
-          {/* Accounts */}
-          <Collapse in={accountsOpen} timeout="auto" unmountOnExit>
-            <div className="gallo-goal-card__accounts">
-              {goal.accounts.length !== activeAccounts.length && (
-                <Typography variant="caption" color="text.secondary">
-                  {goal.accounts.length - activeAccounts.length} inactive
-                  account(s) hidden
-                </Typography>
-              )}
+          <GalloGoalFeedback
+            galloGoalDocId={goal.id}
+            reportGoalId={goal.goalDetails.goalId}
+            goalTitle={goal.programDetails.programTitle}
+            disabledOppIds={summary.excludedAccounts.map(
+              (account) => account.oppId,
+            )}
+          />
 
-              {/* Mobile cards */}
-              <div className="gallo-goal-card__accounts-mobile">
-                {activeAccounts.map((account, idx) => (
-                  <div key={idx} className="account-card">
-                    <div className="account-card__title">
-                      {account.accountName}
-                    </div>
-
-                    <div className="account-card__row">
-                      <span>Route</span>
-                      <span>
-                        {Array.isArray(account.salesRouteNums)
-                          ? account.salesRouteNums.join(", ")
-                          : account.salesRouteNums}
-                      </span>
-                    </div>
-
-                    <div className="account-card__row">
-                      <span>Salesperson</span>
-                      <span>
-                        {employeeMap[
-                          Array.isArray(account.salesRouteNums)
-                            ? account.salesRouteNums[0]
-                            : account.salesRouteNums
-                        ] || "Unknown"}
-                      </span>
-                    </div>
-
-                    <div className="account-card__row">
-                      <span>Status</span>
-                      {account.submittedPostId ? (
-                        <button
-                          onClick={() =>
-                            onViewPostModal(account.submittedPostId!)
-                          }
-                        >
-                          View
-                        </button>
-                      ) : (
-                        <span className="gallo-goal-card__status--pending">
-                          Not Submitted
-                        </span>
-                      )}
-                    </div>
+          <div className="gallo-goal-card__accounts">
+            {summary.activeAccounts.map((account) => {
+              const routes = Array.isArray(account.salesRouteNums)
+                ? account.salesRouteNums
+                : [account.salesRouteNums];
+              const routeLabel = routes.filter(Boolean).join(", ") || "—";
+              return (
+                <article
+                  key={account.oppId || account.distributorAcctId}
+                  className="account-card"
+                >
+                  <div className="account-card__title">
+                    <strong>{account.accountName}</strong>
+                    <small>{account.distributorAcctId}</small>
                   </div>
-                ))}
-              </div>
-
-              <div className="gallo-goal-card__accounts-table">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Account</TableCell>
-                      <TableCell>Route</TableCell>
-                      <TableCell>Salesperson</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {activeAccounts.map((account, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{account.accountName}</TableCell>
-                        <TableCell>
-                          {Array.isArray(account.salesRouteNums)
-                            ? account.salesRouteNums.join(", ")
-                            : account.salesRouteNums}
-                        </TableCell>
-                        <TableCell>
-                          {employeeMap[
-                            Array.isArray(account.salesRouteNums)
-                              ? account.salesRouteNums[0]
-                              : account.salesRouteNums
-                          ] || "Unknown"}
-                        </TableCell>
-                        <TableCell>
-                          {account.submittedPostId ? (
-                            <button
-                              onClick={() =>
-                                onViewPostModal(account.submittedPostId!)
-                              }
-                            >
-                              View
-                            </button>
-                          ) : (
-                            <span className="gallo-goal-card__status--pending">
-                              Not Submitted
-                            </span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </Collapse>
+                  <div className="account-card__row">
+                    <span>Route</span>
+                    <span>{routeLabel}</span>
+                  </div>
+                  <div className="account-card__row">
+                    <span>Salesperson</span>
+                    <span>{employeeMap[routes[0]] || "Unassigned"}</span>
+                  </div>
+                  <div className="account-card__row">
+                    <span>Status</span>
+                    {account.submittedPostId ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onViewPostModal(account.submittedPostId!)
+                        }
+                      >
+                        View display
+                      </button>
+                    ) : (
+                      <span className="gallo-goal-card__status--pending">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </Collapse>
     </Paper>

@@ -1,26 +1,126 @@
 .goal-actions-menu {
-  margin-top: 6px;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: var(--card-shadow);
-
-  z-index: 1000;
+  position: relative;
+  display: inline-block;
 }
-.goal-actions-menu button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 6px 8px;
+
+.goal-actions-menu summary {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--card-outline, var(--border-color));
+  border-radius: 10px;
+  place-items: center;
+  background: color-mix(
+    in srgb,
+    var(--surface-elevated) 92%,
+    var(--primary-blue) 8%
+  );
+  color: var(--text-color);
   cursor: pointer;
+  list-style: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
 }
 
-.goal-actions-buttons {
-  display: flex;
+.goal-actions-menu summary::-webkit-details-marker {
+  display: none;
 }
 
-.goal-actions-menu button:hover {
+.goal-actions-menu summary:focus-visible {
+  outline: 2px solid var(--accent-color, var(--primary-blue));
+  outline-offset: 2px;
+}
+
+.goal-actions-menu summary:hover,
+.goal-actions-menu[open] summary {
+  border-color: var(--primary-blue);
+  background: color-mix(
+    in srgb,
+    var(--surface-elevated) 80%,
+    var(--primary-blue) 20%
+  );
+}
+
+.goal-actions-menu summary:hover {
+  transform: translateY(-1px);
+}
+
+.goal-actions-menu summary svg {
+  font-size: 1.25rem;
+}
+
+.goal-actions-menu__popover {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  display: grid;
+  width: min(240px, calc(100vw - 2rem));
+  padding: 0.42rem;
+  border: 1px solid var(--card-outline, var(--border-color));
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--dashboard-card, var(--surface-elevated)) 96%,
+    var(--primary-blue) 4%
+  );
+  box-shadow: var(--card-shadow, 0 18px 45px rgba(0, 0, 0, 0.28));
+  z-index: 60;
+  transform-origin: top right;
+  animation: goal-actions-enter 140ms ease-out;
+}
+
+.goal-actions-menu__label {
+  padding: 0.42rem 0.62rem 0.38rem;
+  color: var(--subtext-color);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.goal-actions-menu__popover button {
+  display: grid;
+  gap: 0.16rem;
+  width: 100%;
+  padding: 0.62rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.goal-actions-menu__popover button:hover {
   background: var(--outlined-button-hover);
+}
+
+.goal-actions-menu__popover button span {
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.goal-actions-menu__popover button small {
+  color: var(--subtext-color);
+  font-size: 0.66rem;
+  line-height: 1.25;
+}
+
+.goal-actions-menu__popover button.is-danger span {
+  color: var(--error-color, #d24d57);
+}
+
+@keyframes goal-actions-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

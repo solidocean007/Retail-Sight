@@ -1,57 +1,69 @@
-/* components/Gallo/galloGoalCard.css */
 .gallo-goal-card {
   display: flex;
+  padding: 0.9rem;
+  border: 1px solid var(--goals-line, var(--card-outline));
+  border-radius: 13px !important;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: var(--bg-card);
+  gap: 0.7rem;
+  background: var(--goals-surface-strong, var(--dashboard-card)) !important;
+  color: var(--goals-text, var(--text-color)) !important;
+}
+
+.gallo-goal-card--compact {
+  gap: 0.5rem;
+  padding: 0.72rem;
+  opacity: 0.94;
 }
 
 .gallo-goal-card__header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.gallo-goal-card__header-actions {
-  width: 100%;
-  height: 100%;
-  max-width: 100px;
+.gallo-goal-card__identity {
+  min-width: 0;
+}
+
+.gallo-goal-card__title-row {
   display: flex;
-  gap: 8px;
+  align-items: flex-start;
   flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
-.gallo-goal-card__header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.gallo-goal-card__title-row h3 {
+  margin: 0;
+  color: var(--goals-text, var(--text-color));
+  font-size: 0.92rem;
+  line-height: 1.3;
+}
+
+.gallo-program-id {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--goals-muted, var(--text-muted));
+  font-size: 0.64rem;
 }
 
 .gallo-goal-card__badge {
-  display: inline-block;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
-}
-@media (hover: hover) {
-  .gallo-goal-card__manage-btn {
-    display: none;
-  }
+  padding: 0.16rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-/* Status badges */
 .gallo-goal-card__badge--active {
   background: var(--bg-success);
   color: var(--text-success);
 }
-
 .gallo-goal-card__badge--archived {
   background: var(--bg-neutral);
   color: var(--text-secondary);
 }
-
 .gallo-goal-card__badge--disabled {
   background: var(--bg-danger);
   color: var(--text-danger);
@@ -59,187 +71,147 @@
 
 .gallo-goal-card__dates {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--goals-muted, var(--text-muted));
+  font-size: 0.7rem;
 }
 
 .gallo-goal-card__progress {
-  font-size: 14px;
-  color: var(--text-secondary);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.gallo-goal-card__progress > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gallo-goal-card__progress strong {
+  font-size: 0.78rem;
+}
+.gallo-goal-card__progress span {
+  color: var(--goals-muted, var(--text-muted));
+  font-size: 0.66rem;
+}
+
+.gallo-goal-card__expand {
+  align-self: flex-start;
+  padding: 0.38rem 0.55rem;
+  border: 1px solid var(--goals-line, var(--card-outline));
+  border-radius: 8px;
+  background: transparent;
+  color: var(--goals-text, var(--text-color));
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.gallo-goal-card__expand:focus-visible,
+.account-card button:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
+.goal-timing-hint {
+  padding: 0.35rem 0.5rem;
+  border-radius: 7px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.goal-timing-hint.scheduled {
+  background: var(--goals-surface-muted);
+  color: var(--goals-muted);
+}
+.goal-timing-hint.upcoming {
+  background: rgba(237, 108, 2, 0.1);
+  color: var(--warning-color, #b86218);
 }
 
 .gallo-goal-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--goals-line, var(--card-outline));
+  gap: 0.8rem;
 }
 
 .gallo-goal-card__summary {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.gallo-goal-card__summary > div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.gallo-goal-card__summary span {
+  color: var(--goals-muted, var(--text-muted));
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gallo-goal-card__summary strong {
+  font-size: 0.7rem;
 }
 
 .gallo-goal-card__accounts {
-  margin-top: 8px;
-}
-
-.gallo-goal-card__status--pending {
-  color: var(--text-danger);
-  font-weight: 600;
-}
-
-/* ---------- Accounts responsive ---------- */
-
-.gallo-goal-card__accounts-mobile {
-  display: none;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  gap: 0.55rem;
 }
 
 .account-card {
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--surface-elevated);
+  padding: 0.65rem;
+  border: 1px solid var(--goals-line, var(--card-outline));
+  border-radius: 9px;
+  background: var(--goals-surface-muted, var(--surface-elevated));
 }
 
 .account-card__title {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+.account-card__title strong,
+.account-card__title small {
+  display: block;
+}
+.account-card__title strong {
+  font-size: 0.76rem;
+}
+.account-card__title small {
+  margin-top: 0.1rem;
+  color: var(--goals-muted, var(--text-muted));
+  font-size: 0.6rem;
 }
 
 .account-card__row {
   display: flex;
+  padding: 0.22rem 0;
+  align-items: center;
   justify-content: space-between;
-  font-size: 14px;
-  padding: 4px 0;
+  gap: 0.75rem;
+  font-size: 0.68rem;
 }
 
-.account-card__row span:first-child {
-  color: var(--text-secondary);
+.account-card__row > span:first-child {
+  color: var(--goals-muted, var(--text-muted));
 }
 
-.goal-timing-hint,
-.gallo-program-id {
-  font-size: 0.75rem;
-  margin-top: 4px;
-  font-weight: 500;
+.account-card button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--link-color, var(--primary-blue));
+  font: inherit;
+  font-weight: 750;
 }
 
-.goal-timing-hint.scheduled {
-  color: #6c757d; /* neutral */
-}
-
-.goal-timing-hint.upcoming {
-  color: #ed6c02; /* amber */
-}
-
-/* ---------- Desktop ---------- */
-
-.gallo-goal-card__accounts-table {
-  display: block;
-}
-
-/* ---------- Mobile ---------- */
-@media (max-width: 768px) {
-  .gallo-goal-card__accounts-table {
-    display: none;
-  }
-
-  .gallo-goal-card__accounts-mobile {
-    display: flex;
-  }
-
-  .gallo-goal-card__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .gallo-goal-card__header-actions {
-    width: 100%;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .gallo-goal-card__progress {
-    font-size: 13px;
-  }
-}
-
-.gallo-goal-card__header-left {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.goal-actions summary {
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.goal-actions button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 6px 8px;
-  font-size: 13px;
-}
-
-/* ============================
-   Gallo Sub Tabs (Current / Upcoming)
-   ============================ */
-
-.gallo-subtabs {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin: 0.75rem 0 1rem;
-}
-
-/* Base pill */
-.gallo-subtab {
-  border: 1px solid var(--outlined-button-border);
-  background: var(--btn-secondary-bg);
-  color: var(--text-muted);
-
-  padding: 0.35rem 1rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-/* Hover */
-.gallo-subtab:hover {
-  background: var(--btn-secondary-hover);
-  color: var(--primary-blue);
-}
-
-/* Active */
-.gallo-subtab.active {
-  background: var(--btn-primary-bg);
-  color: black;
-  border-color: var(--btn-primary-bg);
-
-  box-shadow: var(--button-shadow);
-}
-
-/* Mobile */
-@media (max-width: 600px) {
-  .gallo-subtabs {
-    justify-content: space-between;
-  }
-
-  .gallo-subtab {
-    flex: 1;
-    text-align: center;
-  }
+.gallo-goal-card__status--pending {
+  color: var(--goals-muted, var(--text-muted));
 }
