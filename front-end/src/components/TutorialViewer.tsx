@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "./Tutorial.css"; // Assuming you have a separate CSS file
+import "./tutorial.css";
 import SectionOne from "./TutorialSections/SectionOne";
 import SectionTwo from "./TutorialSections/SectionTwo";
 import SectionThree from "./TutorialSections/SectionThree";

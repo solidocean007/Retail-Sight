@@ -1,90 +1,122 @@
-import React, { Suspense, useEffect, useMemo, useState } from "react";
-import { Tabs, Tab, Box, Typography, useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import MyCompanyGoals from "./MyCompanyGoals";
-import "./myGoals.css";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Box, CircularProgress, Tab, Tabs } from "@mui/material";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import TrackChangesOutlinedIcon from "@mui/icons-material/TrackChangesOutlined";
 import { useSelector } from "react-redux";
-import { RootState } from "../../utils/store";
+
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
+import { RootState } from "../../utils/store";
+import MyCompanyGoals from "./MyCompanyGoals";
 
-const MyGalloGoals = React.lazy(() => import("./MyGalloGoals"));
+import "./myGoals.css";
 
-interface MyGoalsProps {
-  // onViewPostModal: (postId: string) => void;
-}
+const MyGalloGoals = lazy(() => import("./MyGalloGoals"));
 
-const MyGoals: React.FC<MyGoalsProps> = () => {
+type GoalSource = "company" | "gallo";
+
+const MyGoals = () => {
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId,
   );
-  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const { isEnabled, loading: integrationsLoading } =
+    useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
-  const [tabIndex, setTabIndex] = useState(0);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [activeSource, setActiveSource] = useState<GoalSource>("company");
 
-  // Build tabs from data to avoid index drift
-  const tabs = useMemo(
+  const sources = useMemo(
     () => [
-      { key: "company", label: "Company Goals" },
-      ...(galloEnabled ? [{ key: "gallo", label: "Gallo Goals" }] : []),
+      {
+        key: "company" as const,
+        label: "Company goals",
+        description: "Goals assigned and tracked by your company.",
+        icon: <BusinessOutlinedIcon />,
+      },
+      ...(galloEnabled
+        ? [
+            {
+              key: "gallo" as const,
+              label: "Gallo goals",
+              description: "Programs synchronized from Gallo Axis.",
+              icon: <AutoAwesomeOutlinedIcon />,
+            },
+          ]
+        : []),
     ],
     [galloEnabled],
   );
 
-  // Clamp index if Gallo becomes disabled while user is on tab 1
   useEffect(() => {
-    // If the available tabs change, ensure current index is valid.
-    if (tabIndex >= tabs.length) setTabIndex(0);
-  }, [tabs.length, tabIndex]);
+    if (!galloEnabled && activeSource === "gallo") {
+      setActiveSource("company");
+    }
+  }, [activeSource, galloEnabled]);
 
-  // Clamp index if Gallo becomes disabled while user is on tab 1
-  useEffect(() => {
-    // If the available tabs change, ensure current index is valid.
-    if (tabIndex >= tabs.length) setTabIndex(0);
-  }, [tabs.length, tabIndex]);
+  const activeDescription =
+    sources.find((source) => source.key === activeSource)?.description ??
+    sources[0].description;
 
   return (
-    <Box className="my-goals-container">
-      <Tabs
-        value={tabIndex}
-        onChange={(_, i) => setTabIndex(i)}
-        variant={isMobile ? "fullWidth" : "standard"}
-        centered={!isMobile}
-        className="goals-tabs"
-        sx={{
-          "& .MuiTabs-indicator": {
-            display: "none",
-          },
-        }}
-      >
-        {tabs.map((t) => (
-          <Tab key={t.key} label={t.label} className="goals-tab" />
-        ))}
-      </Tabs>
+    <main className="my-goals-page">
+      <header className="my-goals-page__header">
+        <div className="my-goals-page__title-group">
+          <span className="my-goals-page__mark" aria-hidden="true">
+            <TrackChangesOutlinedIcon />
+          </span>
+          <div>
+            <span className="my-goals-page__eyebrow">Performance</span>
+            <h1>My goals</h1>
+            <p>Stay focused on active work and see what is coming next.</p>
+          </div>
+        </div>
+        {integrationsLoading && (
+          <span className="my-goals-page__integration-status">
+            <CircularProgress size={13} />
+            Checking integrations
+          </span>
+        )}
+      </header>
 
-      <Typography
-        variant="body2"
-        sx={{
-          color: "var(--text-muted)",
-          textAlign: "center",
-          mb: 1,
-        }}
-      >
-        {tabIndex === 0
-          ? "Goals created and tracked by your company"
-          : "Goals synced from Gallo Axis programs"}
-      </Typography>
+      <section className="goal-source-panel" aria-label="Goal source">
+        <Tabs
+          value={activeSource}
+          onChange={(_, value: GoalSource) => setActiveSource(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          className="goal-source-tabs"
+          aria-label="Choose a goal source"
+        >
+          {sources.map((source) => (
+            <Tab
+              key={source.key}
+              value={source.key}
+              icon={source.icon}
+              iconPosition="start"
+              label={source.label}
+              className="goal-source-tab"
+            />
+          ))}
+        </Tabs>
+        <p className="goal-source-panel__description">{activeDescription}</p>
+      </section>
 
       <Box className="goals-content">
-        {tabIndex === 0 && <MyCompanyGoals />}
-        {galloEnabled && tabIndex === 1 && (
-          <Suspense fallback={<div style={{ padding: 8 }}>Loading…</div>}>
+        {activeSource === "company" && <MyCompanyGoals />}
+        {galloEnabled && activeSource === "gallo" && (
+          <Suspense
+            fallback={
+              <div className="my-goals-loading" role="status">
+                <CircularProgress size={28} />
+                <span>Loading your Gallo goals…</span>
+              </div>
+            }
+          >
             <MyGalloGoals />
           </Suspense>
         )}
       </Box>
-    </Box>
+    </main>
   );
 };
 

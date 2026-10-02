@@ -1,136 +1,514 @@
-.goal-manager {
-  padding: 1rem;
-  color: var(--text-color);
+.goal-manager-page {
+  --goals-surface: rgba(248, 250, 251, 0.94);
+  --goals-surface-strong: #fff;
+  --goals-surface-muted: #edf2f4;
+  --goals-line: rgba(33, 65, 84, 0.14);
+  --goals-line-strong: rgba(35, 126, 184, 0.27);
+  --goals-text: #152735;
+  --goals-muted: #637783;
+  --goals-shadow: rgba(22, 52, 70, 0.11);
+  --gallo-wine: #8b3658;
+  --gallo-wine-soft: rgba(139, 54, 88, 0.12);
+  --gallo-gold: #b8862d;
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(1rem, 2.4vw, 2.25rem);
+  color: var(--goals-text);
 }
 
-.goal-manager-title {
-  font-size: 1.6rem;
-  margin-bottom: 1rem;
+[data-theme="dark"] .goal-manager-page {
+  --goals-surface: rgba(13, 29, 43, 0.94);
+  --goals-surface-strong: #102335;
+  --goals-surface-muted: #0a1825;
+  --goals-line: rgba(124, 183, 217, 0.16);
+  --goals-line-strong: rgba(91, 185, 239, 0.28);
+  --goals-text: #eef8ff;
+  --goals-muted: #94aabd;
+  --goals-shadow: rgba(0, 0, 0, 0.28);
+  --gallo-wine: #d2789d;
+  --gallo-wine-soft: rgba(210, 120, 157, 0.14);
+  --gallo-gold: #e1b75c;
 }
 
-/* ===============================
-   SECTIONS
-   =============================== */
-
-.goal-section {
-  border-radius: var(--radius-xl);
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  /* box-shadow: var(--card-shadow); */
+.goal-manager-header,
+.goal-manager-source,
+.goal-manager-summary,
+.goal-manager-panel {
+  width: min(100%, 1180px);
+  margin-right: auto;
+  margin-left: auto;
 }
 
-.goal-section-header {
+.goal-manager-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   margin-bottom: 1rem;
-}
-
-.goal-section-header h3 {
-  margin: 0;
-}
-
-.goal-section-body {
-  display: flex;
-  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 1rem;
 }
 
-/* ===============================
-   DISPLAYGRAM TABS
-   =============================== */
-
-.goal-section-tabs {
+.goal-manager-header__identity {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
 }
 
-.gm-tab {
-  padding: 0.4rem 0.9rem;
-  border-radius: var(--btn-border-radius);
-  background: var(--btn-secondary-bg);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
+.goal-manager-header__mark {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid var(--goals-line-strong);
+  border-radius: 15px;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 255, 255, 0.24),
+      transparent 48%
+    ),
+    color-mix(in srgb, var(--primary-blue) 13%, var(--goals-surface));
+  color: var(--primary-blue);
+  box-shadow: 0 10px 26px
+    color-mix(in srgb, var(--primary-blue) 15%, transparent);
+}
+
+.goal-manager-header__mark--wine {
+  border-color: color-mix(in srgb, var(--gallo-wine) 45%, var(--goals-line));
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 255, 255, 0.24),
+      transparent 48%
+    ),
+    color-mix(in srgb, var(--gallo-wine) 13%, var(--goals-surface));
+  color: var(--gallo-wine);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--gallo-wine) 18%, transparent);
+}
+
+.goal-manager-header__wine-icons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.goal-manager-header__wine-icons svg {
+  width: 22px;
+  height: 22px;
+}
+
+.goal-manager-header__wine-icons svg + svg {
+  margin-left: -0.5rem;
+  color: var(--gallo-gold);
+  transform: translateY(0.2rem);
+}
+
+.goal-manager-eyebrow {
+  display: block;
+  margin-bottom: 0.22rem;
+  color: var(--primary-blue);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.goal-manager-header h1 {
+  margin: 0;
+  color: var(--goals-text);
+  font-size: clamp(1.5rem, 2.5vw, 2.05rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.goal-manager-header p {
+  max-width: 62ch;
+  margin: 0.4rem 0 0;
+  color: var(--goals-muted);
+  font-size: 0.84rem;
+}
+
+.goal-manager-create {
+  display: inline-flex;
+  min-height: 38px;
+  padding: 0.55rem 0.82rem;
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 55%, transparent);
+  border-radius: 10px;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--primary-blue);
+  color: #fff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 850;
   cursor: pointer;
-  width: fit-content;
+  box-shadow: 0 8px 22px
+    color-mix(in srgb, var(--primary-blue) 24%, transparent);
 }
 
-/* Hover only applies to INACTIVE tabs */
-.gm-tab:not(.gm-tab-active):hover {
-  background: var(--btn-secondary-hover);
+.goal-manager-create svg {
+  width: 18px;
+  height: 18px;
 }
 
-.gm-tab:focus-visible {
+.goal-manager-create--wine {
+  border-color: color-mix(in srgb, var(--gallo-wine) 60%, transparent);
+  background: var(--gallo-wine);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--gallo-wine) 28%, transparent);
+}
+
+.goal-manager-source {
+  display: grid;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 16px;
+  grid-template-columns: minmax(180px, 0.55fr) minmax(420px, 1.45fr);
+  align-items: center;
+  gap: 0.8rem;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--gallo-wine) 8%, transparent),
+      transparent 42%
+    ),
+    var(--goals-surface);
+  box-shadow: 0 10px 28px var(--goals-shadow);
+}
+
+.goal-manager-source__intro {
+  padding: 0.35rem 0.45rem;
+}
+
+.goal-manager-source__intro > span {
+  color: var(--goals-text);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-manager-source__intro p {
+  margin: 0.25rem 0 0;
+  color: var(--goals-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.goal-manager-source__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.goal-manager-source__options button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 66px;
+  padding: 0.65rem 0.72rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 12px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  background: color-mix(in srgb, var(--goals-surface-strong) 88%, transparent);
+  color: var(--goals-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.goal-manager-source__options button:hover {
+  border-color: var(--goals-line-strong);
+  transform: translateY(-1px);
+}
+
+.goal-manager-source__options button.is-active {
+  border-color: color-mix(in srgb, var(--primary-blue) 56%, var(--goals-line));
+  background: color-mix(
+    in srgb,
+    var(--primary-blue) 9%,
+    var(--goals-surface-strong)
+  );
+  box-shadow: 0 8px 22px
+    color-mix(in srgb, var(--primary-blue) 14%, transparent);
+}
+
+.goal-manager-source__options button:nth-child(2).is-active {
+  border-color: color-mix(in srgb, var(--gallo-wine) 58%, var(--goals-line));
+  background: color-mix(
+    in srgb,
+    var(--gallo-wine) 10%,
+    var(--goals-surface-strong)
+  );
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--gallo-wine) 16%, transparent);
+}
+
+.goal-manager-source__options button:focus-visible {
   outline: 2px solid var(--primary-blue);
   outline-offset: 2px;
 }
 
-/* Active tab always wins */
-.gm-tab-active {
-  background: var(--btn-primary-bg);
-  color: black;
+.goal-manager-source__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--primary-blue) 11%, transparent);
+  color: var(--primary-blue);
 }
 
-.gm-tab-active {
-  background: var(--btn-primary-bg);
-  color: black;
+.goal-manager-source__icon svg {
+  width: 20px;
+  height: 20px;
 }
 
-/* ===============================
-   INTEGRATIONS
-   =============================== */
-
-.integration-section {
-  border-left: 4px solid var(--primary-blue);
-}
-
-.integration-hint {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.integration-card {
-  background: var(--company-goal-card-background);
-  border-radius: var(--radius-xl);
-  padding: 1rem;
-}
-
-.integration-card-header {
+.goal-manager-source__icon--wine {
   display: flex;
-  align-items: center;
+  background: var(--gallo-wine-soft);
+  color: var(--gallo-wine);
+}
+
+.goal-manager-source__icon--wine svg + svg {
+  margin-left: -0.42rem;
+  color: var(--gallo-gold);
+  transform: translateY(0.16rem);
+}
+
+.goal-manager-source__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.goal-manager-source__copy strong {
+  overflow: hidden;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-manager-source__copy small {
+  margin-top: 0.15rem;
+  overflow: hidden;
+  color: var(--goals-muted);
+  font-size: 0.67rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-manager-source__badge {
+  padding: 0.22rem 0.42rem;
+  border: 1px solid color-mix(in srgb, var(--gallo-gold) 46%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gallo-gold) 12%, transparent);
+  color: var(--gallo-gold);
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.goal-manager-summary {
+  display: grid;
+  margin-bottom: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
-.integration-badge {
+.goal-manager-summary > div,
+.goal-manager-summary > button {
+  display: grid;
+  min-height: 92px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--primary-blue) 8%, transparent),
+      transparent 48%
+    ),
+    var(--goals-surface);
+  box-shadow: 0 10px 28px var(--goals-shadow);
+}
+
+.goal-manager-summary > button {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.goal-manager-summary--interactive > button {
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease,
+    background 150ms ease;
+}
+
+.goal-manager-summary--interactive > button:hover {
+  border-color: color-mix(in srgb, var(--gallo-wine) 42%, var(--goals-line));
+  transform: translateY(-1px);
+}
+
+.goal-manager-summary--interactive > button.is-active {
+  border-color: color-mix(in srgb, var(--gallo-wine) 64%, var(--goals-line));
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--gallo-wine) 18%, transparent),
+      transparent 54%
+    ),
+    var(--goals-surface-strong);
+  box-shadow: 0 12px 30px
+    color-mix(in srgb, var(--gallo-wine) 17%, var(--goals-shadow));
+}
+
+.goal-manager-summary--interactive > button:focus-visible {
+  outline: 2px solid var(--gallo-wine);
+  outline-offset: 2px;
+}
+
+.goal-manager-summary span {
+  color: var(--goals-muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-manager-summary strong {
+  align-self: end;
+  color: var(--goals-text);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.goal-manager-summary small {
+  margin-top: 0.28rem;
+  color: var(--goals-muted);
+  font-size: 0.7rem;
+}
+
+.goal-manager-panel {
+  overflow: hidden;
+  border: 1px solid var(--goals-line);
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--primary-blue) 7%, transparent),
+      transparent 34%
+    ),
+    var(--goals-surface);
+  box-shadow: 0 16px 42px var(--goals-shadow);
+}
+
+.goal-manager-tabs {
+  display: flex;
+  padding: 0.7rem 0.8rem 0;
+  border-bottom: 1px solid var(--goals-line);
+  gap: 0.25rem;
+}
+
+.goal-manager-tabs button {
+  padding: 0.58rem 0.85rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--goals-muted);
+  font: inherit;
   font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  background: var(--warning-bg);
-  color: var(--warning-color);
+  font-weight: 850;
+  cursor: pointer;
 }
 
-.integration-description {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-bottom: 0.75rem;
+.goal-manager-tabs button.is-active {
+  border-bottom-color: var(--primary-blue);
+  color: var(--goals-text);
 }
 
-/* ===============================
-   MOBILE
-   =============================== */
+.goal-manager-tabs button:focus-visible,
+.goal-manager-create:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
 
-@media (max-width: 600px) {
-  .goal-section-tabs {
-    flex-direction: column;
+.goal-manager-content,
+.goal-manager-page--partner .goal-manager-panel {
+  padding: clamp(0.75rem, 2vw, 1.2rem);
+}
+
+@media (max-width: 700px) {
+  .goal-manager-page {
+    padding: 0.85rem;
   }
 
-  .goal-manager {
+  .goal-manager-header {
+    align-items: center;
+  }
+
+  .goal-manager-header__mark {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 13px;
+  }
+
+  .goal-manager-header p {
+    display: none;
+  }
+
+  .goal-manager-source {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-manager-source__intro {
+    display: none;
+  }
+
+  .goal-manager-summary {
+    gap: 0.45rem;
+  }
+
+  .goal-manager-summary > div,
+  .goal-manager-summary > button {
+    min-height: 78px;
+    padding: 0.7rem;
+  }
+
+  .goal-manager-summary small {
+    display: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .goal-manager-create {
+    width: 40px;
     padding: 0;
+    justify-content: center;
+    font-size: 0;
   }
 
-  .gm-tab {
-    width: 100%;
-    text-align: center;
+  .goal-manager-tabs button {
+    flex: 1;
+  }
+
+  .goal-manager-source__options {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-manager-source__options button {
+    min-height: 58px;
   }
 }

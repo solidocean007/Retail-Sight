@@ -36,7 +36,11 @@ import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { RootState } from "../utils/store";
 import ImageModal from "./ImageModal";
-import { CampaignOutlined, MoreVert } from "@mui/icons-material";
+import {
+  CampaignOutlined,
+  KeyboardArrowDown,
+  MoreVert,
+} from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import LinkShareModal from "./LinkShareModal";
@@ -61,6 +65,7 @@ interface PostCardProps {
   ) => Promise<PostWithID[]>;
   getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<
     React.SetStateAction<"posts" | "filteredPosts">
   >;
@@ -80,6 +85,7 @@ const PostCard: React.FC<PostCardProps> = ({
   getPostsByTag,
   getPostsByStarTag,
   setCurrentHashtag,
+  setCurrentStarTag,
   setActivePostSet,
   setIsSearchActive,
   postIdToScroll = null, // Default to null if not provided
@@ -114,6 +120,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
+  const [isSharedContextExpanded, setIsSharedContextExpanded] = useState(false);
   const isOwner = user?.uid === post.postUser?.uid;
   const isAdmin = user?.role === "admin" || user?.role === "super-admin";
   const isSharedPost = post.companyId !== user?.companyId;
@@ -129,8 +136,7 @@ const PostCard: React.FC<PostCardProps> = ({
     ? post.shareNoteAudienceCompanyId === user?.companyId
     : isSharedPost;
   const sharedContext =
-    post.shareNote?.trim() &&
-    (isShareNoteAuthorCompany || isShareNoteAudience)
+    post.shareNote?.trim() && (isShareNoteAuthorCompany || isShareNoteAudience)
       ? post.shareNote.trim()
       : "";
   const sharedContextCompanyName = isShareNoteAuthorCompany
@@ -389,106 +395,146 @@ const PostCard: React.FC<PostCardProps> = ({
         }
       >
         {sharedContext && (
-          <div className="shared-post-context" role="note">
-            <div className="shared-post-context-heading">
-              <CampaignOutlined fontSize="small" />
-              <span>{sharedContextCompanyName}</span>
+          <div
+            className={`shared-post-context ${
+              isSharedContextExpanded ? "expanded" : ""
+            }`}
+            role="note"
+          >
+            <button
+              type="button"
+              className="shared-post-context-toggle"
+              aria-expanded={isSharedContextExpanded}
+              aria-controls={`shared-post-context-${id}`}
+              onClick={() =>
+                setIsSharedContextExpanded((isExpanded) => !isExpanded)
+              }
+            >
+              <span className="shared-post-context-heading">
+                <CampaignOutlined fontSize="small" />
+                <span>{sharedContextCompanyName}</span>
+              </span>
+              <span className="shared-post-context-action">
+                {isSharedContextExpanded ? "Hide context" : "Show context"}
+                <KeyboardArrowDown
+                  className="shared-post-context-arrow"
+                  fontSize="small"
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+            <div
+              id={`shared-post-context-${id}`}
+              className="shared-post-context-body"
+            >
+              <p>{sharedContext}</p>
             </div>
-            <p>{sharedContext}</p>
           </div>
         )}
         <div className="card-border">
-        <div
-          className={`post-card-container ${
-            shouldHighlight ? "shouldHighlight" : ""
-          }`}
-          style={{ position: "relative" }}
-        >
-          <div className="post-header">
-            <div className="visibility">
-              <div className="view-box">
-                <p>view: {post.migratedVisibility}</p>
-                <div className="post-card-controls">
-                  <button
-                    aria-label="settings"
-                    aria-controls="post-card-menu"
-                    aria-haspopup="true"
-                    onClick={handleVertIconClick}
-                  >
-                    <MoreVert />
-                  </button>
-                  <div>
-                    {Boolean(anchorEl) && (
-                      <Menu
-                        id="post-card-menu"
-                        anchorEl={anchorEl}
-                        open={true}
-                        onClose={() => setAnchorEl(null)}
+          <div
+            className={`post-card-container ${
+              shouldHighlight ? "shouldHighlight" : ""
+            }`}
+            style={{ position: "relative" }}
+          >
+            <div className="card-trim">
+              <div className="post-header">
+                <div className="visibility">
+                  <div className="view-box">
+                    <p>view: {post.migratedVisibility}</p>
+                    <div className="post-card-controls">
+                      <button
+                        aria-label="settings"
+                        aria-controls="post-card-menu"
+                        aria-haspopup="true"
+                        onClick={handleVertIconClick}
                       >
-                        <MenuItem
-                          onClick={() => handleShare()}
-                          disabled={isSharing}
-                        >
-                          {isSharing ? <CircularProgress size={20} /> : "Share"}
-                        </MenuItem>
-                        {canCreateSocialCard && (
-                          <ExportDisplayCardButton
-                            post={post}
-                            variant="menuItem"
-                          />
+                        <MoreVert />
+                      </button>
+                      <div>
+                        {Boolean(anchorEl) && (
+                          <Menu
+                            id="post-card-menu"
+                            anchorEl={anchorEl}
+                            open={true}
+                            onClose={() => setAnchorEl(null)}
+                          >
+                            <MenuItem
+                              onClick={() => handleShare()}
+                              disabled={isSharing}
+                            >
+                              {isSharing ? (
+                                <CircularProgress size={20} />
+                              ) : (
+                                "Share"
+                              )}
+                            </MenuItem>
+                            {canCreateSocialCard && (
+                              <ExportDisplayCardButton
+                                post={post}
+                                variant="menuItem"
+                              />
+                            )}
+                            {canEditPost && (
+                              <MenuItem onClick={handleOpenEdit}>
+                                Update Post
+                              </MenuItem>
+                            )}
+                            <MenuItem
+                              onClick={() =>
+                                setIsAddToCollectionModalOpen(true)
+                              }
+                            >
+                              Add to Collections
+                            </MenuItem>
+                          </Menu>
                         )}
-                        {canEditPost && (
-                          <MenuItem onClick={handleOpenEdit}>
-                            Update Post
-                          </MenuItem>
-                        )}
-                        <MenuItem
-                          onClick={() => setIsAddToCollectionModalOpen(true)}
-                        >
-                          Add to Collections
-                        </MenuItem>
-                      </Menu>
-                    )}
-                  </div>
-                  <Dialog
-                    open={isAddToCollectionModalOpen}
-                    onClose={() => setIsAddToCollectionModalOpen(false)}
-                  >
-                    <AddPostToCollectionModal
-                      post={post}
-                      onClose={() => setIsAddToCollectionModalOpen(false)}
-                    />
-                  </Dialog>
-                </div>
-              </div>
-            </div>
-            <div className="post-header-top"></div>
-            <div className="header-bottom">
-              <div className="details-date">
-                <div className="store-details">
-                  {" "}
-                  {/* i need to eventually add store names on click to the filters*/}
-                  <div className="store-name-number">
-                    <div className="store-name-account">
-                      <h3>{post.account?.accountName ?? post.accountName}</h3>
-                      {(post.accountNumber ?? post.account?.accountNumber) && (
-                        <span className="post-account-number">
-                          Account #{post.accountNumber ?? post.account?.accountNumber}
-                        </span>
-                      )}
+                      </div>
+                      <Dialog
+                        open={isAddToCollectionModalOpen}
+                        onClose={() => setIsAddToCollectionModalOpen(false)}
+                      >
+                        <AddPostToCollectionModal
+                          post={post}
+                          onClose={() => setIsAddToCollectionModalOpen(false)}
+                        />
+                      </Dialog>
                     </div>
-                    <h5>{formatDisplayDate(post.displayDate)}</h5>
-                  </div>
-                  <div className="store-address-box">
-                    <h6>
-                      {post.account?.accountAddress ?? post.accountAddress}
-                    </h6>{" "}
                   </div>
                 </div>
-              </div>
-              <div className="post-user-details">
-                <div className="avatar-name">
-                  {/* <div
+                <div className="post-header-top"></div>
+                <div className="header-bottom">
+                  <div className="details-date">
+                    <div className="store-details">
+                      {" "}
+                      {/* i need to eventually add store names on click to the filters*/}
+                      <div className="store-name-number">
+                        <div className="store-name-account">
+                          <h3>
+                            {post.account?.accountName ?? post.accountName}
+                          </h3>
+                          {(post.accountNumber ??
+                            post.account?.accountNumber) && (
+                            <span className="post-account-number">
+                              Account #
+                              {post.accountNumber ??
+                                post.account?.accountNumber}
+                            </span>
+                          )}
+                        </div>
+                        <h5>{formatDisplayDate(post.displayDate)}</h5>
+                      </div>
+                      <div className="store-address-box">
+                        <h6>
+                          {post.account?.accountAddress ?? post.accountAddress}
+                        </h6>{" "}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="post-user-details">
+                    <div className="avatar-name">
+                      {/* <div
                   className="post-user-avatar"
                   onClick={handleOnUserNameClick} // type mismatch here
                   style={{ cursor: "pointer" }}
@@ -506,103 +552,107 @@ const PostCard: React.FC<PostCardProps> = ({
                   )}
                 </div> */}
 
-                  <div className="post-user-name">
-                    <p>
-                      <a href="#" onClick={handleOnUserNameClick}>
-                        {post.postUser?.firstName && post.postUser?.lastName
-                          ? `${post.postUser.firstName} ${post.postUser.lastName}`
-                          : "Unknown User"}
-                      </a>
-                    </p>
+                      <div className="post-user-name">
+                        <p>
+                          <a href="#" onClick={handleOnUserNameClick}>
+                            {post.postUser?.firstName && post.postUser?.lastName
+                              ? `${post.postUser.firstName} ${post.postUser.lastName}`
+                              : "Unknown User"}
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="created-On-Behalf">
+                      {createdOnBehalf && (
+                        <h5>
+                          Created by: {post.postedBy?.firstName}{" "}
+                          {post.postedBy?.lastName}
+                        </h5>
+                      )}
+                    </div>
+
+                    {postCompanyName && (
+                      <div
+                        className={`user-company-box ${
+                          isSharedPost ? "shared-post-company" : ""
+                        }`}
+                      >
+                        <p>
+                          {isSharedPost
+                            ? `From ${postCompanyName}`
+                            : postCompanyName}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
+              </div>
 
-                <div className="created-On-Behalf">
-                  {createdOnBehalf && (
-                    <h5>
-                      Created by: {post.postedBy?.firstName}{" "}
-                      {post.postedBy?.lastName}
-                    </h5>
-                  )}
+              {post.companyGoalId && (
+                <div className="company-goal-banner textured-background">
+                  Company Goal: {post.companyGoalTitle}
                 </div>
+              )}
+              {/* {post.galloGoal?.oppId || post.oppId && post.galloGoal && ( */}
+              {post.galloGoal?.oppId && (
+                <div className="gallo-goal-banner gallo-textured-background">
+                  Gallo Goal: {post.galloGoal?.title}
+                </div>
+              )}
+              {post.brands && post.brands.length > 0 && (
+                <div className="brands-list">
+                  {post.brands.map((brand) => (
+                    <Chip key={brand} label={brand} size="small" />
+                  ))}
+                </div>
+              )}
+              {/* {post.id} */}
+              <div className="description-image">
+                <div className="like-quantity-row">
+                  <h4>
+                    {/* {post.productType} */}
+                    {post.totalCaseCount > 0 &&
+                      ` quantity: ${post.totalCaseCount}`}
+                  </h4>
+                  <div className="likes-box">
+                    <button
+                      className="like-heart like-button"
+                      onClick={handleLikePostButtonClick}
+                      disabled={!user}
+                    >
+                      {likedByUser ? "❤️" : "🤍"}
+                    </button>
 
-                {postCompanyName && (
-                  <div
-                    className={`user-company-box ${
-                      isSharedPost ? "shared-post-company" : ""
-                    }`}
-                  >
-                    <p>
-                      {isSharedPost ? `From ${postCompanyName}` : postCompanyName}
-                    </p>
+                    {likesCount > 0 && (
+                      <div
+                        className={`likes-count-badge ${
+                          likesCount >= 10 ? "is-double" : ""
+                        } ${likesCount >= 100 ? "is-triple" : ""}`}
+                        aria-label={`${likesCount} likes`}
+                        title={`${likesCount} likes`}
+                      >
+                        <h6>{likesCount >= 100 ? "99+" : likesCount}</h6>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {post.companyGoalId && (
-            <div className="company-goal-banner textured-background">
-              Company Goal: {post.companyGoalTitle}
-            </div>
-          )}
-          {/* {post.galloGoal?.oppId || post.oppId && post.galloGoal && ( */}
-          {post.galloGoal?.oppId && (
-            <div className="gallo-goal-banner gallo-textured-background">
-              Gallo Goal: {post.galloGoal?.title}
-            </div>
-          )}
-          {post.brands && post.brands.length > 0 && (
-            <div className="brands-list">
-              {post.brands.map((brand) => (
-                <Chip key={brand} label={brand} size="small" />
-              ))}
-            </div>
-          )}
-          {/* {post.id} */}
-          <div className="description-image">
-            <div className="like-quantity-row">
-              <h4>
-                {/* {post.productType} */}
-                {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
-              </h4>
-              <div className="likes-box">
-                <button
-                  className="like-heart like-button"
-                  onClick={handleLikePostButtonClick}
-                  disabled={!user}
-                >
-                  {likedByUser ? "❤️" : "🤍"}
-                </button>
-
-                {likesCount > 0 && (
-                  <div
-                    className={`likes-count-badge ${
-                      likesCount >= 10 ? "is-double" : ""
-                    } ${likesCount >= 100 ? "is-triple" : ""}`}
-                    aria-label={`${likesCount} likes`}
-                    title={`${likesCount} likes`}
-                  >
-                    <h6>{likesCount >= 100 ? "99+" : likesCount}</h6>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="hash-tag-container">
-              {/* Display hashtags above the image */}
-              <PostDescription
-                description={post.description}
-                getPostsByTag={getPostsByTag}
-                getPostsByStarTag={getPostsByStarTag}
-                setCurrentHashtag={setCurrentHashtag}
-                setActivePostSet={setActivePostSet}
-                setIsSearchActive={setIsSearchActive}
-              />
-            </div>
-            <div className="activity-post-image-box">
-              {post.imageUrl && (
-                <div className="image-aspect-wrapper">
-                  {/* <FadeImage
+                </div>
+                <div className="hash-tag-container">
+                  {/* Display hashtags above the image */}
+                  <PostDescription
+                    description={post.description}
+                    getPostsByTag={getPostsByTag}
+                    getPostsByStarTag={getPostsByStarTag}
+                    setCurrentHashtag={setCurrentHashtag}
+                    setCurrentStarTag={setCurrentStarTag}
+                    setActivePostSet={setActivePostSet}
+                    setIsSearchActive={setIsSearchActive}
+                  />
+                </div>
+                <div className="activity-post-image-box">
+                  {post.imageUrl && (
+                    <div className="image-aspect-wrapper">
+                      {/* <FadeImage
                     srcList={feed}
                     alt="Post image"
                     onClick={() => {
@@ -610,33 +660,34 @@ const PostCard: React.FC<PostCardProps> = ({
                       setIsImageModalOpen(true);
                     }}
                   /> */}
-                  {safeImageSet.feedSrc && (
-                    <img
-                      title="display image"
-                      src={safeImageSet.feedSrc}
-                      className="post-image"
-                      loading="lazy"
-                      onClick={() => setIsImageModalOpen(true)}
-                    />
+                      {safeImageSet.feedSrc && (
+                        <img
+                          title="display image"
+                          src={safeImageSet.feedSrc}
+                          className="post-image"
+                          loading="lazy"
+                          onClick={() => setIsImageModalOpen(true)}
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {commentCount > 0 && (
-              <div className="comment-button-container">
                 {commentCount > 0 && (
-                  <button
-                    className="view-comment-button"
-                    onClick={openCommentModal}
-                  >
-                    {commentCount} Comments
-                  </button>
+                  <div className="comment-button-container">
+                    {commentCount > 0 && (
+                      <button
+                        className="view-comment-button"
+                        onClick={openCommentModal}
+                      >
+                        {commentCount} Comments
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
-          {user && <CommentSection post={post} />}
+              {user && <CommentSection post={post} />}
+            </div>
           </div>
         </div>
       </div>

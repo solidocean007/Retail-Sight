@@ -1,242 +1,219 @@
-// Dashboard.tsx
-import { useSelector } from "react-redux";
-import "./dashboard.css";
-import React, { useEffect, useState } from "react";
-import { selectUser } from "../../Slices/userSlice.ts";
-import { DashboardModeType } from "../../utils/types.ts";
-import "./dashboard.css";
-import { DashboardHelmet } from "../../utils/helmetConfigurations.tsx";
-import { AppBar, Box, IconButton, Toolbar, useMediaQuery } from "@mui/material";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { AppBar, IconButton, Toolbar, useMediaQuery } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import UserProfileViewer from "../UserProfileViewer.tsx";
-import CollectionsViewer from "../CollectionsViewer.tsx";
-import TutorialViewer from "../TutorialViewer.tsx";
-import AccountManager from "../AccountManagement/AccountsManager.tsx";
-import GoalManagerLayout from "../GoalIntegration/GoalManagerLayout.tsx";
+import { useSelector } from "react-redux";
+
+import "./dashboard.css";
+import { selectUser } from "../../Slices/userSlice.ts";
+import type { DashboardModeType, UserType } from "../../utils/types.ts";
+import { DashboardHelmet } from "../../utils/helmetConfigurations.tsx";
 import DashMenu from "../DashMenu.tsx";
-import ProductsManager from "../ProductsManagement/ProductsManager.tsx";
-import MyGoals from "../GoalIntegration/MyGoals.tsx";
-import AdminUsersConsole from "../AdminDashboard/AdminUsersConsole.tsx";
-import TeamsViewer from "../TeamsViewer.tsx";
-import MyAccounts from "../MyAccounts.tsx";
-import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.tsx";
-import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
-import IntegrationsView from "./IntegrationsView.tsx";
-import { ComingSoonCard } from "../ComingSoonCard.tsx";
 import PastDueBanner from "./Billing/PastDueBanner.tsx";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice.ts";
 import { selectEffectiveCompanyId } from "../../Slices/impersonationSlice.ts";
-import DeveloperViewAsPanel from "../DeveloperDashboard/DeveloperViewAsPanel.tsx";
-import SupervisorFeedbackReview from "../GoalReports/SupervisorFeedbackReview.tsx";
+import {
+  getAllowedDashboardModes,
+  getDefaultDashboardMode,
+  resolveDashboardMode,
+  type DashboardAccessContext,
+} from "./dashboardModes.ts";
 
-const ADMIN_MODES: DashboardModeType[] = [
-  "ConnectionsMode",
-  "TeamMode",
-  "AccountsMode",
-  "ProductsMode",
-  "UsersMode2",
-  "GoalManagerMode",
-  "IntegrationsMode",
-  "AnnouncementsMode",
-];
+const UserProfileViewer = lazy(() => import("../UserProfileViewer.tsx"));
+const CollectionsViewer = lazy(() => import("../CollectionsViewer.tsx"));
+const TutorialViewer = lazy(() => import("../TutorialViewer.tsx"));
+const AccountManager = lazy(
+  () => import("../AccountManagement/AccountsManager.tsx"),
+);
+const GoalManagerLayout = lazy(
+  () => import("../GoalIntegration/GoalManagerLayout.tsx"),
+);
+const ProductsManager = lazy(
+  () => import("../ProductsManagement/ProductsManager.tsx"),
+);
+const MyGoals = lazy(() => import("../GoalIntegration/MyGoals.tsx"));
+const AdminUsersConsole = lazy(
+  () => import("../AdminDashboard/AdminUsersConsole.tsx"),
+);
+const TeamsViewer = lazy(() => import("../TeamsViewer.tsx"));
+const MyAccounts = lazy(() => import("../MyAccounts.tsx"));
+const CompanyConnectionsManager = lazy(
+  () => import("../Connections/CompanyConnectionsManager.tsx"),
+);
+const NotificationCenter = lazy(
+  () => import("../Notifications/NotificationCenter.tsx"),
+);
+const IntegrationsView = lazy(() => import("./IntegrationsView.tsx"));
+const ComingSoonCard = lazy(() =>
+  import("../ComingSoonCard.tsx").then((module) => ({
+    default: module.ComingSoonCard,
+  })),
+);
+const DeveloperViewAsPanel = lazy(
+  () => import("../DeveloperDashboard/DeveloperViewAsPanel.tsx"),
+);
+const SupervisorFeedbackReview = lazy(
+  () => import("../GoalReports/SupervisorFeedbackReview.tsx"),
+);
+
+type DashboardViewProps = {
+  companyId?: string;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+  mode: DashboardModeType;
+  user: UserType | null;
+};
+
+const DashboardView = ({
+  companyId,
+  isAdmin,
+  isSuperAdmin,
+  mode,
+  user,
+}: DashboardViewProps) => {
+  switch (mode) {
+    case "AnnouncementsMode":
+      return (
+        <ComingSoonCard
+          title="Announcements"
+          description="Create and schedule announcements for your team."
+        />
+      );
+    case "ConnectionsMode":
+      return (
+        <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
+      );
+    case "IntegrationsMode":
+      return <IntegrationsView />;
+    case "TeamMode":
+      return <TeamsViewer />;
+    case "NotificationsMode":
+      return <NotificationCenter />;
+    case "AccountsMode":
+      return <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />;
+    case "ProductsMode":
+      return <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />;
+    case "MyGoalsMode":
+      return <MyGoals />;
+    case "UsersMode2":
+      return <AdminUsersConsole />;
+    case "ProfileMode":
+      return <UserProfileViewer />;
+    case "MyAccountsMode":
+      return <MyAccounts />;
+    case "GoalManagerMode":
+      return <GoalManagerLayout companyId={companyId} />;
+    case "SupervisorFeedbackMode":
+      return <SupervisorFeedbackReview />;
+    case "CollectionsMode":
+      return <CollectionsViewer />;
+    case "TutorialMode":
+      return <TutorialViewer />;
+    case "DeveloperViewAsMode":
+      return <DeveloperViewAsPanel />;
+    default:
+      return null;
+  }
+};
+
+const DashboardViewFallback = () => (
+  <div className="dashboard-view-loading" role="status">
+    <span className="dashboard-view-loading__indicator" aria-hidden="true" />
+    <span>Loading dashboard view…</span>
+  </div>
+);
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
-  const isIpadMini = useMediaQuery("(max-width: 767px)");
-  const drawerWidth = 200;
   const user = useSelector(selectUser);
   const companyId = useSelector(selectEffectiveCompanyId);
-  const [drawerOpen, setDrawerOpen] = useState(true);
   const isSupplier = useSelector(selectIsSupplier);
-  const isEmployee = user?.role === "employee";
-  const isSupervisor = user?.role === "supervisor";
-  const isAdmin = user?.role === "admin";
-  const isSuperAdmin = user?.role === "super-admin";
-  const isDeveloper = user?.role === "developer";
-
-  const canAccessAdmin = isAdmin || isSuperAdmin || isDeveloper;
-
-  const defaultMode: DashboardModeType = isSupplier
-    ? "ConnectionsMode"
-    : canAccessAdmin
-      ? "GoalManagerMode"
-      : "MyGoalsMode";
-
-  const [dashboardMode, setDashboardMode] =
-    useState<DashboardModeType>(defaultMode);
-
-  const [selectedMode, setSelectedMode] =
-    useState<DashboardModeType>(defaultMode);
-
-  const [_screenWidth, setScreenWidth] = useState(window.innerWidth);
-
-  const SUPPLIER_BLOCKED_MODES: DashboardModeType[] = [
-    "MyGoalsMode",
-    "MyAccountsMode",
-    "AccountsMode",
-    "ProductsMode",
-    "GoalManagerMode",
-    "TeamMode",
-  ];
+  const role = user?.role;
+  const isAdmin = role === "admin";
+  const isSuperAdmin = role === "super-admin";
+  const accessContext = useMemo<DashboardAccessContext>(
+    () => ({ isSupplier, role }),
+    [isSupplier, role],
+  );
+  const allowedModes = useMemo(
+    () => getAllowedDashboardModes(accessContext),
+    [accessContext],
+  );
+  const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
+  const [activeMode, setActiveMode] = useState<DashboardModeType>(() =>
+    getDefaultDashboardMode(accessContext),
+  );
+  const restoredSessionMode = useRef(false);
 
   useEffect(() => {
-    const savedMode = sessionStorage.getItem(
-      "dashboardMode",
-    ) as DashboardModeType;
+    const requestedMode = restoredSessionMode.current
+      ? activeMode
+      : sessionStorage.getItem("dashboardMode");
 
-    if (savedMode) {
-      if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(savedMode)) {
-        setDashboardMode("ConnectionsMode");
-        setSelectedMode("ConnectionsMode");
-      } else if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
-        setDashboardMode("MyGoalsMode");
-        setSelectedMode("MyGoalsMode");
-      } else {
-        setDashboardMode(savedMode);
-        setSelectedMode(savedMode);
-      }
-
+    if (!restoredSessionMode.current) {
+      restoredSessionMode.current = true;
       sessionStorage.removeItem("dashboardMode");
     }
-  }, [canAccessAdmin, isSupplier]);
+
+    const resolvedMode = resolveDashboardMode(requestedMode, accessContext);
+    if (resolvedMode !== activeMode) setActiveMode(resolvedMode);
+  }, [accessContext, activeMode]);
 
   useEffect(() => {
-    if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(dashboardMode)) {
-      setDashboardMode("ConnectionsMode");
-      setSelectedMode("ConnectionsMode");
-    }
-  }, [isSupplier, dashboardMode]);
-
-  useEffect(() => {
-    const handleResize = () => setScreenWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const handleMenuClick = (mode: DashboardModeType) => {
-    setSelectedMode(mode);
-    setDashboardMode(mode); // ✅ now the render logic responds!
-    setDrawerOpen(false);
-    console.log(mode);
-  };
-
-  const toggleDrawer =
-    (open: boolean) => (event: React.MouseEvent | React.KeyboardEvent) => {
-      if (
-        event.type === "keydown" &&
-        ((event as React.KeyboardEvent).key === "Tab" ||
-          (event as React.KeyboardEvent).key === "Shift")
-      ) {
-        return;
-      }
-      setDrawerOpen(open);
-    };
-
-  useEffect(() => {
-    // if we flip into desktop view, open the drawer
-    if (isLargeScreen) {
-      setDrawerOpen(true);
-    }
-    if (isIpadMini) {
-      setDrawerOpen(false);
-    }
-    // but if we flip into mobile, leave whatever state we were in
+    setDrawerOpen(isLargeScreen);
   }, [isLargeScreen]);
 
-  return (
-    <div className="dashboard-container">
-      <DashboardHelmet />
-      <Box sx={{ flexGrow: 1, ml: isLargeScreen ? `${drawerWidth}px` : 0 }}>
-        <AppBar position="static">
-          {!isLargeScreen && (
-            <Toolbar
-              sx={{
-                padding: "0.5rem 1rem",
-                backgroundColor: "var(--dashboard-header-background)",
-                // backgroundColor: "red",
-                color: "var(--text-color)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <IconButton
-                edge="start"
-                color="inherit"
-                aria-label="menu"
-                onClick={toggleDrawer(true)}
-              >
-                <MenuIcon />
-              </IconButton>
-            </Toolbar>
-          )}
-        </AppBar>
+  const handleMenuClick = (mode: DashboardModeType) => {
+    setActiveMode(resolveDashboardMode(mode, accessContext));
+    if (!isLargeScreen) setDrawerOpen(false);
+  };
 
-        <PastDueBanner />
-      </Box>
+  return (
+    <div
+      className={`dashboard-container${
+        isLargeScreen ? " dashboard-container--desktop" : ""
+      }`}
+    >
+      <DashboardHelmet />
+
       <DashMenu
+        activeMode={activeMode}
+        allowedModes={allowedModes}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         variant={isLargeScreen ? "permanent" : "temporary"}
         onMenuClick={handleMenuClick}
-        isEmployee={isEmployee}
-        canAccessAdmin={canAccessAdmin}
-        selectedMode={selectedMode}
       />
 
-      <Box
-        sx={{
-          marginLeft: isLargeScreen ? `${drawerWidth}px` : 0,
-          padding: 0,
-          height: "100%",
-        }}
-      >
-        {dashboardMode === "AnnouncementsMode" && (
-          <ComingSoonCard
-            title="Announcements"
-            description="Create and schedule announcements for your team."
-          />
-        )}
-        {dashboardMode === "ConnectionsMode" && (
-          <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
-        )}
-        {dashboardMode === "IntegrationsMode" && <IntegrationsView />}
-        {dashboardMode === "TeamMode" && !isSupplier && <TeamsViewer />}
-        {dashboardMode === "NotificationsMode" && <NotificationSettingsPanel />}
-        {dashboardMode === "AccountsMode" && (
-          <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
-        )}
-        {dashboardMode === "ProductsMode" && !isSupplier && (
-          <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
-        )}
-        {dashboardMode === "MyGoalsMode" && !isSupplier && <MyGoals />}
-        {/* {dashboardMode === "UsersMode" && <EmployeesViewer />} */}
-        {dashboardMode === "UsersMode2" && canAccessAdmin && (
-          <AdminUsersConsole />
-        )}
-        {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
-        {dashboardMode === "MyAccountsMode" && user && !isSupplier && (
-          <MyAccounts />
-        )}
-        {dashboardMode === "GoalManagerMode" &&
-          canAccessAdmin &&
-          !isSupplier && <GoalManagerLayout companyId={companyId} />}
-
-        {/* Supervisors don't get the goal manager, so this is their only
-            surface for feedback an admin routed to them. */}
-        {dashboardMode === "SupervisorFeedbackMode" && !isSupplier && (
-          <SupervisorFeedbackReview />
+      <div className="dashboard-body">
+        {!isLargeScreen && (
+          <AppBar className="dashboard-mobile-app-bar" position="static">
+            <Toolbar className="dashboard-mobile-toolbar">
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="Open dashboard menu"
+                onClick={() => setDrawerOpen(true)}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Toolbar>
+          </AppBar>
         )}
 
-        {dashboardMode === "CollectionsMode" && (
-          <CollectionsViewer setDashboardMode={setDashboardMode} />
-        )}
-        {dashboardMode === "TutorialMode" && <TutorialViewer />}
-        {dashboardMode === "DeveloperViewAsMode" && isDeveloper && (
-          <DeveloperViewAsPanel />
-        )}
-      </Box>
+        <PastDueBanner />
+
+        <main className="dashboard-view" data-dashboard-mode={activeMode}>
+          <Suspense fallback={<DashboardViewFallback />}>
+            <DashboardView
+              companyId={companyId}
+              isAdmin={isAdmin}
+              isSuperAdmin={isSuperAdmin}
+              mode={activeMode}
+              user={user}
+            />
+          </Suspense>
+        </main>
+      </div>
     </div>
   );
 };

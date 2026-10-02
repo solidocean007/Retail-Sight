@@ -14,12 +14,15 @@ export const loadUserAccounts = createAsyncThunk(
     {
       companyId,
       salesRouteNum,
-    }: { companyId: string; salesRouteNum: string },
-    thunkAPI
+      forceRefresh = false,
+    }: { companyId: string; salesRouteNum: string; forceRefresh?: boolean },
+    thunkAPI,
   ) => {
     try {
-      const cached = await getUserAccountsFromIndexedDB();
-      if (cached?.length > 0) return cached;
+      if (!forceRefresh) {
+        const cached = await getUserAccountsFromIndexedDB();
+        if (cached?.length > 0) return cached;
+      }
 
       const fresh = await fetchUsersAccounts(companyId, salesRouteNum);
 
@@ -27,10 +30,10 @@ export const loadUserAccounts = createAsyncThunk(
       return fresh;
     } catch (err: any) {
       return thunkAPI.rejectWithValue(
-        err?.message || "Failed to load user accounts"
+        err?.message || "Failed to load user accounts",
       );
     }
-  }
+  },
 );
 
 interface UserAccountsState {
@@ -67,7 +70,7 @@ const userAccountsSlice = createSlice({
         (state, action: PayloadAction<CompanyAccountType[]>) => {
           state.loading = "succeeded";
           state.accounts = action.payload;
-        }
+        },
       )
       .addCase(loadUserAccounts.rejected, (state, action) => {
         state.loading = "failed";
@@ -80,9 +83,11 @@ const userAccountsSlice = createSlice({
 export const { setUserAccounts, clearUserAccounts } = userAccountsSlice.actions;
 
 export const selectUserAccounts = (state: RootState) =>
-  state.userAccounts.accounts; 
+  state.userAccounts.accounts;
 export const selectUserAccountsLoading = (state: RootState) =>
   state.userAccounts.loading;
+export const selectUserAccountsError = (state: RootState) =>
+  state.userAccounts.error;
 
 // Export the reducer
 export default userAccountsSlice.reducer;

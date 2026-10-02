@@ -3,15 +3,11 @@ import React, { useMemo } from "react";
 import { Button, Collapse, Tooltip, Typography } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Timestamp } from "firebase/firestore";
-import { CompanyGoalWithIdType } from "../../utils/types";
+import { PartnerGoalOption } from "../../hooks/useAvailableGoals";
 import "./companyGoalCard.css";
 
-type SupplierGoal = CompanyGoalWithIdType & {
-  originCompanyName?: string;
-};
-
 interface SupplierGoalCardProps {
-  goal: SupplierGoal;
+  goal: PartnerGoalOption;
   expanded: boolean;
   onToggleExpand: (goalId: string) => void;
   mobile?: boolean;
@@ -60,11 +56,11 @@ const SupplierGoalCard: React.FC<SupplierGoalCardProps> = ({
     });
   }, [goal.submittedPosts]);
 
-  const submittedCount = submittedPosts.length;
+  const submittedCount = goal.submissionCount ?? submittedPosts.length;
 
   return (
     <div className="info-box-company-goal">
-      <div className="goal-badge">Supplier Goal</div>
+      <div className="goal-badge">Partner Goal</div>
 
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">
@@ -98,11 +94,11 @@ const SupplierGoalCard: React.FC<SupplierGoalCardProps> = ({
         </div>
 
         <div className="goal-progress-section">
-          <Typography variant="caption">Supplier Visibility</Typography>
+          <Typography variant="caption">Partner visibility</Typography>
 
           <div className="goal-progress-numbers">
             <div style={{ display: "flex", alignItems: "center" }}>
-              <span>{submittedCount} Total Submissions</span>
+              <span>{submittedCount} total submissions</span>
 
               <Tooltip title="Posts submitted by the distributor for this supplier-linked goal.">
                 <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
@@ -131,19 +127,19 @@ const SupplierGoalCard: React.FC<SupplierGoalCardProps> = ({
             }}
             disabled={submittedCount === 0}
           >
-            {expanded ? "Hide submissions" : "Show submissions"}
+            {expanded ? "Hide recent submissions" : "Show recent submissions"}
           </Button>
         </div>
       </div>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <Typography variant="h6" sx={{ mt: 2 }}>
-          Submissions
+          Recent submissions
         </Typography>
 
         {submittedCount === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            No submissions have been attached to this goal yet.
+            No submissions have been shared for this goal yet.
           </Typography>
         ) : (
           <div className="user-table-wrapper">

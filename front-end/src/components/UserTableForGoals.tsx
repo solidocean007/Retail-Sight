@@ -1,25 +1,27 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import "./userTableForGoals.css";
-import { CompanyGoalWithIdType, GoalAssignmentType } from "../utils/types";
+import { useMemo, useState } from "react";
+import ExpandMoreOutlinedIcon from "@mui/icons-material/ExpandMoreOutlined";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+
 import { GoalAccountReport } from "../types/goalReports";
+import { CompanyGoalWithIdType, GoalAssignmentType } from "../utils/types";
 import AccountReportAction from "./GoalReports/AccountReportAction";
 import AccountReportsFlag from "./GoalReports/AccountReportsFlag";
+
+import "./userTableForGoals.css";
 
 export interface UserRowType {
   uid: string;
   firstName: string;
   lastName: string;
   isInactive: boolean;
-
   submissions: {
     postId: string;
     storeName: string;
     submittedAt: string;
   }[];
-
   userCompletionPercentage: number;
-
   unsubmittedAccounts: {
     accountName: string;
     accountAddress: string;
@@ -31,26 +33,26 @@ interface Props {
   users: UserRowType[];
   goal: CompanyGoalWithIdType;
   onViewPostModal: (postId: string, target?: HTMLElement) => void;
-
-  /**
-   * Opt-in rep capture. Only passed from a rep's own goal view — this table is
-   * also used by CompanyGoalCard and AdminGoalViewerCard, where an admin must
-   * not see "report" controls on other people's accounts.
-   */
   enableReporting?: boolean;
   reports?: GoalAccountReport[];
   onReportSaved?: () => void;
-
-  /**
-   * Opt-in admin review — the mirror of enableReporting. Shows a caution pill
-   * on accounts that have feedback. Never both at once: a rep files, an admin
-   * reviews.
-   */
   reviewReports?: boolean;
   onAcknowledgeReports?: (reportIds: string[]) => Promise<void>;
 }
 
-const UserTableForGoals: React.FC<Props> = ({
+type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
+
+const formatSubmissionDate = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+};
+
+const UserTableForGoals = ({
   users,
   goal,
   onViewPostModal,
@@ -59,31 +61,25 @@ const UserTableForGoals: React.FC<Props> = ({
   onReportSaved,
   reviewReports = false,
   onAcknowledgeReports,
-}) => {
-  const navigate = useNavigate();
+}: Props) => {
   const [searchTerm, setSearchTerm] = useState("");
-  type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
-  
-  // 🧩 Build a quick lookup for assignments per user (if new model)
+
   const assignmentsByUser = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    (goal.goalAssignments || []).forEach((a: GoalAssignmentType) => {
-      if (!map[a.uid]) map[a.uid] = [];
-      map[a.uid].push(a.accountNumber);
+    const assignments: Record<string, string[]> = {};
+    (goal.goalAssignments || []).forEach((assignment: GoalAssignmentType) => {
+      assignments[assignment.uid] ??= [];
+      assignments[assignment.uid].push(assignment.accountNumber);
     });
-    return map;
+    return assignments;
   }, [goal.goalAssignments]);
 
-  const handleViewGoalPost = (postId: string, ref: HTMLElement) => {
-    onViewPostModal(postId, ref);
-  };
-
   const sortedFilteredUsers = useMemo(() => {
-    const filtered = users.filter((u) =>
-      `${u.firstName} ${u.lastName}`
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filtered = users.filter((user) =>
+      `${user.firstName} ${user.lastName}`
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+        .includes(normalizedSearch),
     );
 
     return filtered.sort((a, b) => {
@@ -93,179 +89,205 @@ const UserTableForGoals: React.FC<Props> = ({
       if (sortMode === "completion-asc") {
         return a.userCompletionPercentage - b.userCompletionPercentage;
       }
-      // Alphabetical by last, then first
-      const aLast = a.lastName || "";
-      const bLast = b.lastName || "";
-      const aFirst = a.firstName || "";
-      const bFirst = b.firstName || "";
-      return aLast.localeCompare(bLast) || aFirst.localeCompare(bFirst);
+      return (
+        (a.lastName || "").localeCompare(b.lastName || "") ||
+        (a.firstName || "").localeCompare(b.firstName || "")
+      );
     });
-  }, [users, searchTerm, sortMode]);
+  }, [searchTerm, sortMode, users]);
 
   return (
-    <div>
-      <div className="user-table-head">
-        <div className="user-table-search">
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ marginBottom: "8px", padding: "4px", width: "100%" }}
-          />
-        </div>
-        <div className="user-table-filter">
-          <select
-            value={sortMode}
-            onChange={(e) => setSortMode(e.target.value as SortMode)}
-            style={{ marginBottom: "8px", marginLeft: "8px" }}
-          >
-            <option value="completion-desc">Completion ↓</option>
-            <option value="completion-asc">Completion ↑</option>
-            <option value="alphabetical">Alphabetical (Last Name)</option>
-          </select>
-        </div>
-      </div>
-      <div className="user-table-wrapper">
-        <table className="user-table">
-          <tbody>
-            {sortedFilteredUsers.map((user, idx) => {
-              const assignedAccounts = assignmentsByUser[user.uid] || [];
+    <section className="goal-users-panel" aria-label="Goal submissions and assigned accounts">
+      {users.length > 1 && (
+        <div className="goal-users-toolbar">
+          <label className="goal-users-search">
+            <SearchOutlinedIcon aria-hidden="true" />
+            <span className="goal-users-visually-hidden">Search users</span>
+            <input
+              type="search"
+              placeholder="Search users"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </label>
 
-              return (
-                <tr key={user.uid}>
-                  <td className="user-table-count">{idx + 1}</td>
-                  <td>
-                    <div className="user-info-cell">
-                      <div className="user-name-cell">
-                        {user.isInactive ? (
-                          <span className="inactive-label">
-                            Inactive user (accounts need reassignment)
-                          </span>
-                        ) : (
-                          `${user.lastName}, ${user.firstName}`
-                        )}
-                      </div>
+          <label className="goal-users-sort">
+            <span>Sort</span>
+            <select
+              value={sortMode}
+              onChange={(event) => setSortMode(event.target.value as SortMode)}
+            >
+              <option value="completion-desc">Highest completion</option>
+              <option value="completion-asc">Lowest completion</option>
+              <option value="alphabetical">Last name A–Z</option>
+            </select>
+          </label>
+        </div>
+      )}
 
-                      <span
-                        className={`completion-pill ${
-                          user.userCompletionPercentage >= 90
-                            ? "high"
-                            : user.userCompletionPercentage >= 50
-                            ? "mid"
-                            : "low"
-                        }`}
+      <div className="goal-user-list">
+        {sortedFilteredUsers.length === 0 && (
+          <div className="goal-users-empty" role="status">
+            No users match that search.
+          </div>
+        )}
+
+        {sortedFilteredUsers.map((user, index) => {
+          const assignedAccounts = assignmentsByUser[user.uid] || [];
+          const completionTone =
+            user.userCompletionPercentage >= 90
+              ? "high"
+              : user.userCompletionPercentage >= 50
+                ? "mid"
+                : "low";
+          const displayName =
+            `${user.firstName} ${user.lastName}`.trim() || "Unnamed user";
+
+          return (
+            <article className="goal-user-row" key={user.uid}>
+              <header className="goal-user-row__header">
+                <span className="goal-user-row__index" aria-hidden="true">
+                  {index + 1}
+                </span>
+                <div className="goal-user-row__identity">
+                  <strong>{displayName}</strong>
+                  {user.isInactive && (
+                    <span className="goal-user-row__inactive">
+                      Inactive · accounts need reassignment
+                    </span>
+                  )}
+                </div>
+                <span className={`goal-completion-pill goal-completion-pill--${completionTone}`}>
+                  {user.userCompletionPercentage}% complete
+                </span>
+              </header>
+
+              <div className="goal-submissions-section">
+                <div className="goal-submissions-section__heading">
+                  <div>
+                    <span>Submissions</span>
+                    <small>Photos attached to this goal</small>
+                  </div>
+                  <strong>{user.submissions.length}</strong>
+                </div>
+
+                {user.submissions.length > 0 ? (
+                  <div className="goal-submission-list">
+                    {user.submissions.map((submission, submissionIndex) => (
+                      <div
+                        key={`${submission.postId}-${submissionIndex}`}
+                        className="goal-submission-item"
                       >
-                        {user.userCompletionPercentage}%
-                      </span>
-                    </div>
-
-                    {/* Show submissions */}
-                    <div className="submissions-wrapper">
-                      {user.submissions.length > 0 ? (
-                        user.submissions.map((sub, subIdx) => (
-                          <div key={subIdx} className="submission-item">
-                            <div className="store-name">{sub.storeName}</div>
-                            <div className="submitted-at">
-                              {new Date(sub.submittedAt).toLocaleString()}
-                            </div>
-                            <button
-                              onClick={(e) =>
-                                handleViewGoalPost(sub.postId, e.currentTarget)
-                              }
-                            >
-                              View
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <div>— No submissions</div>
-                      )}
-                    </div>
-
-                    {/* Expandable unsubmitted accounts */}
-                    {user.unsubmittedAccounts.length > 0 && (
-                      <details className="unsubmitted-details">
-                        <summary
-                          className="unsubmitted-summary"
-                          onClick={(e) => e.stopPropagation()}
+                        <span className="goal-submission-item__icon" aria-hidden="true">
+                          <StorefrontOutlinedIcon />
+                        </span>
+                        <div className="goal-submission-item__copy">
+                          <strong>{submission.storeName}</strong>
+                          <span>{formatSubmissionDate(submission.submittedAt)}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="goal-submission-view"
+                          onClick={(event) =>
+                            onViewPostModal(submission.postId, event.currentTarget)
+                          }
                         >
-                          {user.unsubmittedAccounts.length} unsubmitted account
-                          {user.unsubmittedAccounts.length > 1 ? "s" : ""}
-                        </summary>
-                        <ul className="unsubmitted-list">
-                          {user.unsubmittedAccounts.map((acc) => (
-                            <li key={acc.accountNumber}>
-                              <div className="unsubmitted-account-name">
-                                {acc.accountName}
-                                {assignedAccounts.length > 0 &&
-                                  assignedAccounts.includes(
-                                    acc.accountNumber
-                                  ) && (
-                                    <span className="assigned-indicator">
-                                      (Assigned)
-                                    </span>
-                                  )}
-                                {reviewReports && (
-                                  <AccountReportsFlag
-                                    accountName={acc.accountName}
-                                    reports={reports.filter(
-                                      (r) =>
-                                        r.accountNumber === acc.accountNumber &&
-                                        r.userId === user.uid,
-                                    )}
-                                    onAcknowledge={onAcknowledgeReports}
-                                  />
-                                )}
-                              </div>
-                              <div className="unsubmitted-account-address">
-                                {acc.accountAddress || "No address"}
-                              </div>
-                              {enableReporting && (
-                                <AccountReportAction
-                                  goalKind="company"
-                                  goalId={goal.id}
-                                  goalTitle={goal.goalTitle}
-                                  accountNumber={acc.accountNumber}
-                                  accountName={acc.accountName}
-                                  existingReport={reports.find(
-                                    (r) =>
-                                      r.accountNumber === acc.accountNumber &&
-                                      r.userId === user.uid,
-                                  )}
-                                  onSaved={onReportSaved}
-                                />
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </details>
-                    )}
-
-                    {/* Optional: show assigned account count */}
-                    {goal.goalAssignments?.length && goal.goalAssignments?.length > 0 && (
-                      <div className="assigned-count">
-                        {assignedAccounts.length > 0 ? (
-                          <span>
-                            Assigned to{" "}
-                            <strong>{assignedAccounts.length}</strong> account
-                            {assignedAccounts.length > 1 ? "s" : ""}
-                          </span>
-                        ) : (
-                          <span className="no-assignment">
-                            No assigned accounts
-                          </span>
-                        )}
+                          <VisibilityOutlinedIcon />
+                          View post
+                        </button>
                       </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="goal-submissions-empty">
+                    <span className="goal-submissions-empty__icon" aria-hidden="true">
+                      <StorefrontOutlinedIcon />
+                    </span>
+                    <div>
+                      <strong>No submissions yet</strong>
+                      <span>Completed store posts will appear here.</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {user.unsubmittedAccounts.length > 0 && (
+                <details className="unsubmitted-details">
+                  <summary className="unsubmitted-summary">
+                    <span>
+                      <strong>Needs submission</strong>
+                      <small>Assigned stores without a completed post</small>
+                    </span>
+                    <span className="unsubmitted-summary__count">
+                      {user.unsubmittedAccounts.length}
+                    </span>
+                    <ExpandMoreOutlinedIcon aria-hidden="true" />
+                  </summary>
+                  <ul className="unsubmitted-list">
+                    {user.unsubmittedAccounts.map((account) => (
+                      <li key={account.accountNumber}>
+                        <div className="unsubmitted-account-copy">
+                          <div className="unsubmitted-account-name">
+                            {account.accountName}
+                            {assignedAccounts.includes(account.accountNumber) && (
+                              <span className="assigned-indicator">Assigned</span>
+                            )}
+                            {reviewReports && (
+                              <AccountReportsFlag
+                                accountName={account.accountName}
+                                reports={reports.filter(
+                                  (report) =>
+                                    report.accountNumber === account.accountNumber &&
+                                    report.userId === user.uid,
+                                )}
+                                onAcknowledge={onAcknowledgeReports}
+                              />
+                            )}
+                          </div>
+                          <div className="unsubmitted-account-address">
+                            {account.accountAddress || "No address available"}
+                          </div>
+                        </div>
+                        {enableReporting && (
+                          <AccountReportAction
+                            goalKind="company"
+                            goalId={goal.id}
+                            goalTitle={goal.goalTitle}
+                            accountNumber={account.accountNumber}
+                            accountName={account.accountName}
+                            existingReport={reports.find(
+                              (report) =>
+                                report.accountNumber === account.accountNumber &&
+                                report.userId === user.uid,
+                            )}
+                            onSaved={onReportSaved}
+                          />
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {goal.goalAssignments && goal.goalAssignments.length > 0 && (
+                <footer className="goal-user-row__footer">
+                  {assignedAccounts.length > 0 ? (
+                    <span>
+                      <strong>{assignedAccounts.length}</strong> assigned account
+                      {assignedAccounts.length === 1 ? "" : "s"}
+                    </span>
+                  ) : (
+                    <span className="goal-user-row__no-assignment">
+                      No accounts assigned to this user
+                    </span>
+                  )}
+                </footer>
+              )}
+            </article>
+          );
+        })}
       </div>
-    </div>
+    </section>
   );
 };
 

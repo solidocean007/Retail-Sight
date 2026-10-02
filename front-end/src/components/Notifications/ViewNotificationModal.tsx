@@ -1,173 +1,132 @@
-// components/Notifications/ViewNotificationModal.tsx
-import React, { useEffect } from "react";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
-  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
 } from "@mui/material";
-import { OpenPostViewerOptions, UserNotificationType } from "../../utils/types";
 import { useNavigate } from "react-router-dom";
-import { getFunctions, httpsCallable } from "firebase/functions";
+
+import { useNotificationActions } from "../../hooks/useNotificationActions";
+import { OpenPostViewerOptions, UserNotificationType } from "../../utils/types";
 import {
   getNotificationPostId,
   isCommentNotification,
 } from "./utils/notificationHelpers";
 
-interface Props {
+import "./notifications/view-notification-modal.css";
+
+type ViewNotificationModalProps = {
   open: boolean;
   onClose: () => void;
   notification: UserNotificationType | null;
   openPostViewer?: (options: OpenPostViewerOptions) => void;
-}
+};
 
-const ViewNotificationModal: React.FC<Props> = ({
+const formatDate = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const ViewNotificationModal = ({
   open,
   onClose,
   notification,
   openPostViewer,
-}) => {
+}: ViewNotificationModalProps) => {
   const navigate = useNavigate();
-  const functions = getFunctions();
-  const trackNotificationClick = httpsCallable(
-    functions,
-    "trackNotificationClickCallable",
-  );
+  const { trackClick } = useNotificationActions();
 
   if (!notification) return null;
 
-  // -----------------------------
-  // Format Firestore timestamp → local readable date
-  // -----------------------------
-  const formattedDate = (() => {
-    if (!notification.createdAt) return "";
+  const postId = getNotificationPostId(notification);
+  const formattedDate = formatDate(notification.createdAt);
 
-    try {
-      let date: Date;
+  const handleLink = () => {
+    if (!notification.link) return;
+    void trackClick(notification.id, "modal");
 
-      if (
-        typeof notification.createdAt === "object" &&
-        notification.createdAt !== null &&
-        "toDate" in notification.createdAt
-      ) {
-        date = (notification.createdAt as any).toDate();
-      } else {
-        date = new Date(notification.createdAt as string);
-      }
-
-      return date.toLocaleString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      });
-    } catch {
-      return "";
-    }
-  })();
-
-  // -----------------------------
-  // Track click + navigate
-  // -----------------------------
-  const handleNotificationClick = async (
-    notif: UserNotificationType,
-    source: "modal" | "dropdown" | "push",
-  ) => {
-    try {
-      await trackNotificationClick({
-        notificationId: notif.id,
-        source: source,
-      });
-    } catch (err) {
-      console.error("Failed to track notification click", err);
-    }
-
-    if (!notif.link) return;
-
-    if (notif.link.startsWith("http")) {
-      window.open(notif.link, "_blank", "noopener,noreferrer");
+    if (notification.link.startsWith("http")) {
+      window.open(notification.link, "_blank", "noopener,noreferrer");
     } else {
-      navigate(notif.link);
+      navigate(notification.link);
     }
 
     onClose();
   };
 
-  const handleViewPost = async () => {
-    if (!notification || !openPostViewer) return;
+  const handleViewPost = () => {
+    if (!postId) return;
+    void trackClick(notification.id, "modal");
 
-    const targetPostId = getNotificationPostId(notification);
-    if (!targetPostId) return;
-
-    try {
-      await trackNotificationClick({
-        notificationId: notification.id,
-        source: "modal",
-      });
-    } catch (err) {
-      console.error("Failed to track notification click", err);
-    }
-
-    openPostViewer({
-      postId: targetPostId,
+    const options: OpenPostViewerOptions = {
+      postId,
       focusCommentId: notification.commentId ?? null,
       openComments: isCommentNotification(notification),
       source: "notification",
-    });
+    };
+
+    if (openPostViewer) {
+      openPostViewer(options);
+    } else {
+      navigate(`/post/${postId}`);
+    }
 
     onClose();
   };
 
-  const truncateLink = (url: string, max = 35) => {
-    if (url.length <= max) return url;
-    return url.slice(0, max) + "…";
-  };
-
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{notification.title}</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      className="notification-detail-dialog"
+    >
+      <DialogTitle>
+        <div>
+          <span>Notification</span>
+          <h2>{notification.title}</h2>
+        </div>
+        <IconButton aria-label="Close notification" onClick={onClose}>
+          <CloseRoundedIcon />
+        </IconButton>
+      </DialogTitle>
 
       <DialogContent dividers>
-        {formattedDate && (
-          <Typography variant="subtitle2" gutterBottom>
-            Received: {formattedDate}
-          </Typography>
-        )}
-
-        <Typography variant="body1" paragraph>
-          {notification.message}
-        </Typography>
+        {formattedDate && <time>{formattedDate}</time>}
+        <p>{notification.message}</p>
       </DialogContent>
 
-      <DialogActions
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        {notification.link && (
-          <Button
-            variant="outlined"
-            onClick={() => handleNotificationClick(notification, "modal")}
-            sx={{
-              maxWidth: 300,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-            title={notification.link} // 👈 full URL on hover
-          >
-            {truncateLink(notification.link)}
+      <DialogActions>
+        {notification.link && !postId && (
+          <Button startIcon={<LinkRoundedIcon />} onClick={handleLink}>
+            Open update
           </Button>
         )}
-
-        {getNotificationPostId(notification) && (
-          <Button onClick={handleViewPost}>View Post</Button>
+        {postId && (
+          <Button
+            variant="contained"
+            startIcon={<OpenInNewRoundedIcon />}
+            onClick={handleViewPost}
+          >
+            View display
+          </Button>
         )}
-
-        {/* <Button onClick={onClose} variant="contained">
-          Close
-        </Button> */}
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

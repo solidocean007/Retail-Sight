@@ -1,29 +1,116 @@
-/* filterSummaryBanner.css */
 .filter-summary-banner {
-  width: 100%;
-  background-color: green;
-  color: white;
-  font-size: smaller;
-  font-weight: bolder;
   display: flex;
-  justify-content: space-between;
+  gap: 0.4rem;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--card-shadow);
-  flex-direction: column;
+  width: calc(100% - 0.8rem);
+  min-height: 42px;
+  margin: 0 0.4rem 0.42rem;
+  padding: 0.36rem 0.42rem;
+  border: 1px solid
+    color-mix(in srgb, var(--primary-blue) 28%, var(--border-color));
+  border-radius: 11px;
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--primary-blue) 10%, transparent),
+      transparent 54%
+    ),
+    color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  color: var(--text-color);
+  box-shadow: 0 6px 18px
+    color-mix(in srgb, var(--primary-blue) 7%, transparent);
+}
+
+.filter-summary-banner__state {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.36rem;
+}
+
+.filter-summary-banner__state strong {
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.filter-summary-banner__icon {
+  display: grid;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
   border-radius: 8px;
-  padding: 1rem;
+  place-items: center;
+  background: color-mix(in srgb, var(--primary-blue) 14%, transparent);
+  color: var(--primary-blue);
 }
 
-.fetched-at {
-  opacity: 0.7;
-  font-size: small;
-  margin-top: 2px;
+.filter-summary-banner__icon svg {
+  font-size: 0.98rem;
 }
 
-
-.clear-filter-btn {
-  font-size: 0.85rem;
-  padding: 0.3rem 0.75rem;
+.filter-summary-banner.is-loading .filter-summary-banner__icon svg {
+  animation: filter-summary-spin 900ms linear infinite;
 }
 
+.filter-summary-banner__actions {
+  display: flex;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.filter-summary-banner__actions button {
+  min-height: 29px;
+  padding: 0.34rem 0.52rem;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.filter-summary-edit {
+  border: 1px solid var(--primary-blue);
+  background: var(--primary-blue);
+  color: white;
+}
+
+.filter-summary-clear {
+  border: 1px solid var(--border-color);
+  background: var(--surface-elevated);
+  color: var(--text-color);
+}
+
+.filter-summary-banner__actions button:hover {
+  filter: brightness(1.06);
+}
+
+@keyframes filter-summary-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 900px) {
+  .filter-summary-banner {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .filter-summary-banner__state strong {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-summary-banner.is-loading .filter-summary-banner__icon svg {
+    animation: none;
+  }
+}

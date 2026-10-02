@@ -1,135 +1,222 @@
-// UploadAvatar.tsx
-import React, { useState, useRef } from "react";
+import { ChangeEvent, useId, useRef, useState } from "react";
+import { Button, Slider } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import AvatarEditor from "react-avatar-editor";
-import { Button, Slider, Stack } from "@mui/material";
-import { uploadUserAvatar } from "../utils/uploadUserAvatar";
 import { doc, updateDoc } from "firebase/firestore";
+import { useDispatch } from "react-redux";
+
+import { updateCurrentUser } from "../Slices/userSlice";
 import { db } from "../utils/firebase";
 import { UserType } from "../utils/types";
+import {
+  MAX_AVATAR_FILE_SIZE,
+  SUPPORTED_AVATAR_TYPES,
+  uploadUserAvatar,
+} from "../utils/uploadUserAvatar";
+
 import "./uploadAvatar.css";
-import { useDispatch } from "react-redux";
-import { updateCurrentUser } from "../Slices/userSlice";
 
 interface Props {
   user: UserType;
   setEditingPicture: (value: boolean) => void;
+  onStatusChange?: (message: string, tone: "success" | "error") => void;
 }
 
-const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
+const createCroppedBlob = (canvas: HTMLCanvasElement) =>
+  new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Unable to prepare the cropped image."));
+      },
+      "image/jpeg",
+      0.9,
+    );
+  });
+
+const UploadAvatar = ({
+  user,
+  setEditingPicture,
+  onStatusChange,
+}: Props) => {
   const dispatch = useDispatch();
+  const inputId = useId();
+  const editorRef = useRef<AvatarEditor | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [scale, setScale] = useState(1.1);
-  const editorRef = useRef<AvatarEditor | null>(null);
+  const [isWorking, setIsWorking] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // reference to your user document
   const userRef = doc(db, "users", user.uid);
+  const hasAvatar = Boolean(user.profileUrlOriginal || user.profileUrlThumbnail);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      setSelectedFile(file);
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    setErrorMessage("");
+
+    if (!file) return;
+
+    if (!SUPPORTED_AVATAR_TYPES.includes(file.type)) {
+      setSelectedFile(null);
+      setErrorMessage("Choose a JPG, PNG, or WebP image.");
+      return;
     }
+
+    if (file.size > MAX_AVATAR_FILE_SIZE) {
+      setSelectedFile(null);
+      setErrorMessage("Choose an image smaller than 8 MB.");
+      return;
+    }
+
+    setSelectedFile(file);
+    setScale(1.1);
   };
 
   const handleUpload = async () => {
-    if (!editorRef.current || !selectedFile) return;
-    const canvas = editorRef.current.getImageScaledToCanvas();
-    canvas.toBlob(async (croppedBlob) => {
-      if (!croppedBlob) return;
+    if (!editorRef.current || !selectedFile || isWorking) return;
+
+    setIsWorking(true);
+    setErrorMessage("");
+
+    try {
+      const canvas = editorRef.current.getImageScaledToCanvas();
+      const croppedBlob = await createCroppedBlob(canvas);
       const avatarData = await uploadUserAvatar(
         selectedFile,
         croppedBlob,
-        user.uid
+        user.uid,
       );
 
-      // save both original & thumbnail
-      await updateDoc(userRef, {
-        profileUrlOriginal: avatarData.profileUrlOriginal,
-        profileUrlThumbnail: avatarData.profileUrlThumbnail,
-      });
-
-      dispatch(
-        updateCurrentUser({
-          profileUrlOriginal: avatarData.profileUrlOriginal,
-          profileUrlThumbnail: avatarData.profileUrlThumbnail,
-        })
-      );
-
+      await updateDoc(userRef, avatarData);
+      dispatch(updateCurrentUser(avatarData));
+      onStatusChange?.("Profile photo updated.", "success");
       setEditingPicture(false);
-    }, "image/jpeg");
+    } catch (error) {
+      console.error("Unable to update profile photo:", error);
+      setErrorMessage("We couldn't save that photo. Please try again.");
+    } finally {
+      setIsWorking(false);
+    }
   };
 
   const handleRemoveAvatar = async () => {
-    // clear both fields so you revert to initials/default
-    await updateDoc(userRef, {
-      profileUrlOriginal: null,
-      profileUrlThumbnail: null,
-    });
-    dispatch(updateCurrentUser({ profileUrlOriginal: null, profileUrlThumbnail: null }));
-    setEditingPicture(false);
+    if (!hasAvatar || isWorking) return;
+
+    const confirmed = window.confirm("Remove your current profile photo?");
+    if (!confirmed) return;
+
+    setIsWorking(true);
+    setErrorMessage("");
+
+    try {
+      const clearedAvatar = {
+        profileUrlOriginal: null,
+        profileUrlThumbnail: null,
+      };
+      await updateDoc(userRef, clearedAvatar);
+      dispatch(updateCurrentUser(clearedAvatar));
+      onStatusChange?.("Profile photo removed.", "success");
+      setEditingPicture(false);
+    } catch (error) {
+      console.error("Unable to remove profile photo:", error);
+      setErrorMessage("We couldn't remove that photo. Please try again.");
+    } finally {
+      setIsWorking(false);
+    }
   };
 
   return (
     <div className="avatar-upload-container">
+      <div className="avatar-upload-container__header">
+        <strong>Profile photo</strong>
+        <span>JPG, PNG, or WebP · 8 MB maximum</span>
+      </div>
+
       <input
+        id={inputId}
         type="file"
-        accept="image/*"
+        accept={SUPPORTED_AVATAR_TYPES.join(",")}
         onChange={handleFileChange}
         className="avatar-file-input"
+        disabled={isWorking}
       />
 
-      {selectedFile ? (
+      {!selectedFile && (
+        <label className="avatar-file-label" htmlFor={inputId}>
+          <FileUploadOutlinedIcon />
+          Choose image
+        </label>
+      )}
+
+      {selectedFile && (
         <div className="editor-preview-box">
           <AvatarEditor
             ref={editorRef}
             image={selectedFile}
-            width={150}
-            height={150}
-            border={40}
+            width={180}
+            height={180}
+            border={32}
             borderRadius={999}
-            color={[255, 255, 255, 0.6]}
+            color={[8, 21, 33, 0.72]}
             scale={scale}
           />
-          <Slider
-            value={scale}
-            min={1}
-            max={3}
-            step={0.01}
-            onChange={(_, v) => setScale(v as number)}
-            size="small"
-            sx={{ maxWidth: 180, mt: 2 }}
-          />
-          <Stack direction="row" spacing={1} mt={2}>
+
+          <label className="avatar-scale-control">
+            <span>Zoom</span>
+            <Slider
+              value={scale}
+              min={1}
+              max={3}
+              step={0.01}
+              onChange={(_, value) => setScale(value as number)}
+              size="small"
+              disabled={isWorking}
+            />
+          </label>
+
+          <div className="avatar-button-row">
             <Button
               onClick={handleUpload}
               variant="contained"
               size="small"
-              sx={{ fontSize: "0.75rem" }}
+              disabled={isWorking}
             >
-              Save Avatar
+              {isWorking ? "Saving…" : "Save photo"}
             </Button>
             <Button
-              onClick={() => setSelectedFile(null)}
-              variant="outlined"
+              onClick={() => {
+                setSelectedFile(null);
+                setErrorMessage("");
+              }}
+              variant="text"
               size="small"
-              sx={{ fontSize: "0.75rem" }}
+              disabled={isWorking}
             >
-              Cancel
+              Choose another
             </Button>
-          </Stack>
+          </div>
         </div>
-      ) : (
-        <Stack direction="row" spacing={1} mt={2}>
-          <Button
-            onClick={handleRemoveAvatar}
-            variant="outlined"
-            color="error"
-            size="small"
-            sx={{ fontSize: "0.75rem" }}
-          >
-            Remove Avatar
-          </Button>
-        </Stack>
+      )}
+
+      {hasAvatar && !selectedFile && (
+        <Button
+          className="avatar-remove-button"
+          onClick={handleRemoveAvatar}
+          variant="text"
+          color="error"
+          size="small"
+          startIcon={<DeleteOutlineIcon />}
+          disabled={isWorking}
+        >
+          {isWorking ? "Removing…" : "Remove current photo"}
+        </Button>
+      )}
+
+      {errorMessage && (
+        <p className="avatar-upload-error" role="alert">
+          {errorMessage}
+        </p>
       )}
     </div>
   );

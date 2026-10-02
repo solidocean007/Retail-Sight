@@ -42,50 +42,6 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
         createdByFirstName: currentUser.firstName,
         createdByLastName: currentUser.lastName,
       });
-      // --------------------------------------------------
-      // 📧 Transactional email: goal created
-      // --------------------------------------------------
-      if (goal.notifications?.emailOnCreate && goal.goalAssignments?.length) {
-        const uniqueUserIds = Array.from(
-          new Set(goal.goalAssignments.map((a) => a.uid)),
-        );
-
-        for (const uid of uniqueUserIds) {
-          const userSnap = await getDoc(doc(db, "users", uid));
-          if (!userSnap.exists()) continue;
-
-          const user = userSnap.data() as UserType;
-          if (!user.email) continue;
-
-          await addDoc(collection(db, "mail"), {
-            to: user.email,
-            from: "support@displaygram.com",
-            category: "transactional",
-
-            message: {
-              subject: `🎯 New Goal Assigned: ${goal.goalTitle}`,
-              text: `You have been assigned a new goal.\n\n${goal.goalTitle}\n\n${goal.goalDescription}`,
-              html: `
-          <div style="font-family: sans-serif; font-size: 15px; color: #333;">
-            <p>You have been assigned a new goal:</p>
-            <h3>${goal.goalTitle}</h3>
-            <h4>Created by ${currentUser.firstName} ${currentUser.lastName}</h4>
-            <p>${goal.goalDescription}</p>
-            <p>
-              <strong>Start:</strong> ${goal.goalStartDate}<br/>
-              <strong>End:</strong> ${goal.goalEndDate}
-            </p>
-          </div>
-        `,
-            },
-
-            goalId: goalRef.id,
-            companyId: goal.companyId,
-            createdAt: serverTimestamp(),
-          });
-        }
-      }
-
       console.log("✅ Goal created with ID:", goalRef.id);
       return {
         ...goal,

@@ -18,7 +18,7 @@ import {
   GoalAssignmentType,
 } from "../../utils/types";
 import CloseIcon from "@mui/icons-material/Close";
-import "./AssignmentsPreview.css";
+import "./assignmentsPreview.css";
 import { TableVirtuoso } from "react-virtuoso";
 import UserAssignmentModal from "./UserAssignmentModal";
 

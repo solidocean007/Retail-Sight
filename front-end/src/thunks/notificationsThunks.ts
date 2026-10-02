@@ -5,10 +5,7 @@ import {
   getDocs,
   query,
   orderBy,
-  updateDoc,
   deleteDoc,
-  Timestamp,
-  serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "../utils/firebase";
 
@@ -26,27 +23,11 @@ export const fetchUserNotifications = createAsyncThunk(
     const snapshot = await getDocs(q);
 
     return snapshot.docs.map((docSnap) =>
-      normalizeUserNotification(docSnap.data() as UserNotificationType),
+      normalizeUserNotification({
+        id: docSnap.id,
+        ...(docSnap.data() as UserNotificationType),
+      }),
     );
-  },
-);
-
-// -------------------------------------------------
-// Mark notification read (user notifications ONLY)
-// -------------------------------------------------
-export const markNotificationRead = createAsyncThunk(
-  "notifications/markNotificationRead",
-  async ({ notificationId, uid }: { notificationId: string; uid: string }) => {
-    const notifRef = doc(db, `users/${uid}/notifications/${notificationId}`);
-
-    await updateDoc(notifRef, {
-      readAt: serverTimestamp(),
-    });
-
-    return {
-      notificationId,
-      readAt: new Date().toISOString(),
-    };
   },
 );
 

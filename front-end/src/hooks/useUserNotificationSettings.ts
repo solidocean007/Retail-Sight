@@ -49,6 +49,18 @@ export const defaultNotificationSettings: UserNotificationSettings = {
   emailWeeklySummary: false,
 };
 
+const ALLOWED_KEYS: (keyof UserNotificationSettings)[] = [
+  "likes",
+  "comments",
+  "commentLikes",
+  "goalAssignmentPush",
+  "supervisorDisplayAlerts",
+  "developerAnnouncements",
+  "emailComments",
+  "emailGoalAssignments",
+  "emailWeeklySummary",
+];
+
 // --------------------------------------------------
 // Hook
 // --------------------------------------------------
@@ -57,6 +69,10 @@ export function useUserNotificationSettings() {
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [savingKey, setSavingKey] = useState<
+    keyof UserNotificationSettings | null
+  >(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Load settings
   const loadSettings = useCallback(async () => {
@@ -64,53 +80,68 @@ export function useUserNotificationSettings() {
     if (!current) return;
 
     setLoading(true);
-    const ref = doc(db, `users/${current.uid}/notificationSettings/settings`);
-    const snap = await getDoc(ref);
+    setError(null);
 
-    if (!snap.exists()) {
-      // initialize with defaults
-      await setDoc(
-        ref,
-        {
+    try {
+      const ref = doc(db, `users/${current.uid}/notificationSettings/settings`);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        await setDoc(
+          ref,
+          {
+            ...defaultNotificationSettings,
+            createdAt: serverTimestamp(),
+          },
+          { merge: true },
+        );
+
+        setSettings(defaultNotificationSettings);
+      } else {
+        setSettings({
           ...defaultNotificationSettings,
-          createdAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
-
-      setSettings(defaultNotificationSettings);
-    } else {
-      setSettings(snap.data() as UserNotificationSettings);
+          ...(snap.data() as Partial<UserNotificationSettings>),
+        });
+      }
+    } catch (loadError) {
+      console.error("Failed to load notification settings:", loadError);
+      setError("Notification preferences could not be loaded.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, []);
-
-  const ALLOWED_KEYS: (keyof UserNotificationSettings)[] = [
-    "likes",
-    "comments",
-    "commentLikes",
-    "goalAssignmentPush",
-    "supervisorDisplayAlerts",
-    "developerAnnouncements",
-    "emailComments",
-    "emailGoalAssignments",
-    "emailWeeklySummary",
-  ];
 
   const updateSetting = useCallback(
     async (key: keyof UserNotificationSettings, value: boolean) => {
       if (!ALLOWED_KEYS.includes(key)) return;
 
       const current = auth.currentUser;
-      if (!current) return;
+      if (!current || savingKey) return;
 
       const ref = doc(db, `users/${current.uid}/notificationSettings/settings`);
-      await updateDoc(ref, { [key]: value });
-
+      const previousValue = settings?.[key];
+      setSavingKey(key);
+      setError(null);
       setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+
+      try {
+        await updateDoc(ref, {
+          [key]: value,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (updateError) {
+        console.error("Failed to update notification setting:", updateError);
+        setSettings((prev) =>
+          prev && typeof previousValue === "boolean"
+            ? { ...prev, [key]: previousValue }
+            : prev,
+        );
+        setError("That preference could not be saved. Please try again.");
+      } finally {
+        setSavingKey(null);
+      }
     },
-    [],
+    [savingKey, settings],
   );
 
   useEffect(() => {
@@ -125,6 +156,8 @@ export function useUserNotificationSettings() {
   return {
     settings,
     loading,
+    savingKey,
+    error,
     updateSetting,
     reload: loadSettings,
   };

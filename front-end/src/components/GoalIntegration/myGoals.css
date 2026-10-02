@@ -1,58 +1,202 @@
-.my-goals-container {
-  margin: 1rem;
+.my-goals-page {
+  --goals-surface: rgba(248, 250, 251, 0.92);
+  --goals-surface-strong: #ffffff;
+  --goals-surface-muted: #edf2f4;
+  --goals-line: rgba(33, 65, 84, 0.13);
+  --goals-line-strong: rgba(35, 126, 184, 0.25);
+  --goals-text: #152735;
+  --goals-muted: #647885;
+  --goals-shadow: rgba(22, 52, 70, 0.11);
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(1rem, 2.4vw, 2.25rem);
+  color: var(--goals-text);
 }
 
-.my-goals-title {
-  text-align: center;
-  margin-bottom: 1rem;
+[data-theme="dark"] .my-goals-page {
+  --goals-surface: rgba(13, 29, 43, 0.92);
+  --goals-surface-strong: #102335;
+  --goals-surface-muted: #0a1825;
+  --goals-line: rgba(124, 183, 217, 0.16);
+  --goals-line-strong: rgba(91, 185, 239, 0.27);
+  --goals-text: #eef8ff;
+  --goals-muted: #94aabd;
+  --goals-shadow: rgba(0, 0, 0, 0.27);
 }
 
-/* ============================
-   Goals Workspace Tabs
-   ============================ */
-
-.goals-tabs {
-  margin-bottom: 0.75rem;
-  border-bottom: 1px solid var(--divider-color);
-  min-height: unset;
+.my-goals-page__header {
+  display: flex;
+  width: min(100%, 1120px);
+  margin: 0 auto 1rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-/* Base tab */
-.goals-tab {
-  font-weight: 600;
-  font-size: 0.9rem;
+.my-goals-page__title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.my-goals-page__mark {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid var(--goals-line-strong);
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.24), transparent 48%),
+    color-mix(in srgb, var(--primary-blue) 13%, var(--goals-surface));
+  color: var(--primary-blue);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--primary-blue) 15%, transparent);
+}
+
+.my-goals-page__mark svg {
+  width: 25px;
+  height: 25px;
+}
+
+.my-goals-page__eyebrow {
+  display: block;
+  margin-bottom: 0.22rem;
+  color: var(--primary-blue);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.my-goals-page__header h1 {
+  margin: 0;
+  color: var(--goals-text);
+  font-size: clamp(1.5rem, 2.5vw, 2.05rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.my-goals-page__header p {
+  margin: 0.4rem 0 0;
+  color: var(--goals-muted);
+  font-size: 0.84rem;
+}
+
+.my-goals-page__integration-status {
+  display: inline-flex;
+  min-height: 30px;
+  padding: 0.35rem 0.62rem;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 999px;
+  background: var(--goals-surface);
+  color: var(--goals-muted);
+  font-size: 0.64rem;
+  font-weight: 750;
+}
+
+.goal-source-panel,
+.goals-content {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+}
+
+.goal-source-panel {
+  overflow: hidden;
+  border: 1px solid var(--goals-line);
+  border-radius: 17px;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--goals-surface-strong) 94%, transparent),
+      var(--goals-surface)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 12px 30px var(--goals-shadow);
+}
+
+.goal-source-tabs {
+  min-height: 48px;
+  border-bottom: 1px solid var(--goals-line);
+}
+
+.goal-source-tabs .MuiTabs-flexContainer {
+  gap: 0.35rem;
+}
+
+.goal-source-tabs .MuiTabs-indicator {
+  height: 3px;
+  border-radius: 999px 999px 0 0;
+  background: var(--primary-blue);
+}
+
+.goal-source-tab.MuiTab-root {
+  min-height: 48px;
+  padding: 0.65rem 1rem;
+  color: var(--goals-muted);
+  font-size: 0.76rem;
+  font-weight: 750;
   text-transform: none;
-  color: var(--text-muted);
-  min-height: unset;
-  padding: 0.6rem 1.4rem;
-
-  border-radius: var(--btn-border-radius) var(--btn-border-radius) 0 0;
-
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
 }
 
-/* Hover */
-.goals-tab:hover {
+.goal-source-tab.MuiTab-root svg {
+  width: 18px;
+  height: 18px;
+}
+
+.goal-source-tab.Mui-selected {
   color: var(--primary-blue);
-  background-color: var(--btn-secondary-hover);
 }
 
-/* Selected */
-.goals-tab.Mui-selected {
-  color: var(--primary-blue);
-  background-color: var(--tab-background-selected);
-
-  /* active underline without indicator */
-  box-shadow: inset 0 -3px 0 var(--primary-blue);
+.goal-source-panel__description {
+  margin: 0;
+  padding: 0.72rem 1rem;
+  color: var(--goals-muted);
+  font-size: 0.7rem;
 }
 
-/* Mobile */
+.goals-content {
+  margin-top: 1rem;
+}
+
+.my-goals-loading {
+  display: flex;
+  min-height: 14rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  border: 1px solid var(--goals-line);
+  border-radius: 17px;
+  background: var(--goals-surface);
+  color: var(--goals-muted);
+  font-size: 0.78rem;
+}
+
 @media (max-width: 600px) {
-  .goals-tab {
-    font-size: 0.85rem;
-    padding: 0.5rem 0.75rem;
+  .my-goals-page {
+    padding: 0.85rem;
+  }
+
+  .my-goals-page__header {
+    align-items: flex-start;
+  }
+
+  .my-goals-page__mark {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .my-goals-page__integration-status {
+    display: none;
+  }
+
+  .goal-source-tab.MuiTab-root {
+    min-width: 50%;
+    padding-inline: 0.7rem;
   }
 }

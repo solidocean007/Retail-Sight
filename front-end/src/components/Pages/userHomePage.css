@@ -233,6 +233,149 @@
   }
 }
 
+/* Authenticated workspace redesign — aligned with the access-page visual system. */
+.user-home-page-container {
+  --home-navy: #071a2f;
+  --home-navy-soft: #102943;
+  --home-line: #dce5ee;
+  --home-page-base: #a8b4b0;
+  --home-page-middle: #c2ccc8;
+  --home-page-top: #e0e6e3;
+  --home-page-glow: rgba(255, 255, 255, 0.58);
+  --home-page-vignette: rgba(49, 63, 58, 0.18);
+  --home-muted: #617086;
+  --home-translucent-surface: rgba(255, 255, 255, 0.76);
+  --home-mobile-toolbar: rgba(255, 255, 255, 0.88);
+  --home-feed-panel-top: rgba(250, 251, 249, 0.97);
+  --home-feed-panel-middle: rgba(228, 233, 230, 0.94);
+  --home-feed-panel-bottom: rgba(205, 213, 209, 0.9);
+  --home-feed-panel-glow: rgba(255, 255, 255, 0.82);
+  --home-feed-panel-border: rgba(74, 91, 85, 0.18);
+  --home-feed-panel-shadow: rgba(43, 57, 53, 0.14);
+  max-width: none;
+  background:
+    radial-gradient(circle at 7% 0%, var(--home-page-glow), transparent 28rem),
+    radial-gradient(
+      circle at 92% 38%,
+      var(--home-page-vignette),
+      transparent 34rem
+    ),
+    linear-gradient(
+      155deg,
+      var(--home-page-top) 0%,
+      var(--home-page-middle) 48%,
+      var(--home-page-base) 100%
+    );
+}
+
+[data-theme="dark"] .user-home-page-container {
+  --home-navy: #dbeeff;
+  --home-navy-soft: #185b91;
+  --home-line: #2d465d;
+  --home-page-base: #05090e;
+  --home-page-middle: #0a1118;
+  --home-page-top: #142029;
+  --home-page-glow: rgba(89, 114, 112, 0.16);
+  --home-page-vignette: rgba(0, 0, 0, 0.42);
+  --home-muted: #9eb1c2;
+  --home-translucent-surface: rgba(20, 34, 49, 0.78);
+  --home-mobile-toolbar: rgba(14, 25, 38, 0.9);
+  --home-feed-panel-top: rgba(32, 39, 42, 0.97);
+  --home-feed-panel-middle: rgba(19, 26, 29, 0.96);
+  --home-feed-panel-bottom: rgba(10, 16, 20, 0.98);
+  --home-feed-panel-glow: rgba(145, 160, 151, 0.12);
+  --home-feed-panel-border: rgba(151, 168, 159, 0.18);
+  --home-feed-panel-shadow: rgba(0, 0, 0, 0.36);
+}
+
+.header-bar-container {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 20;
+}
+
+.home-page-content {
+  justify-content: center;
+  gap: clamp(1.25rem, 3vw, 3rem);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.5rem clamp(0.75rem, 3vw, 2.5rem) 0;
+  background: transparent;
+}
+
+.activity-feed-container {
+  width: 100%;
+  max-width: 720px;
+  padding: 0.5rem 0 0;
+  border: 1px solid var(--home-feed-panel-border);
+  border-radius: 24px 24px 0 0;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      var(--home-feed-panel-glow),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      var(--home-feed-panel-top) 0%,
+      var(--home-feed-panel-middle) 44%,
+      var(--home-feed-panel-bottom) 100%
+    );
+  box-shadow:
+    0 18px 42px var(--home-feed-panel-shadow),
+    inset 0 1px 0 color-mix(in srgb, white 28%, transparent);
+}
+
+.feed-toolbar {
+  gap: 0.65rem;
+  padding: 0 0.35rem 0.9rem;
+}
+
+.feed-context-message {
+  color: var(--home-muted);
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transform: translateX(5px);
+  transition:
+    opacity 0.65s ease,
+    transform 0.65s ease;
+  pointer-events: none;
+}
+
+.feed-context-message.visible {
+  opacity: 0.82;
+  transform: translateX(0);
+}
+
+.feed-toggle {
+  border-color: var(--home-line);
+  background: var(--home-translucent-surface);
+}
+
+.feed-toggle-option.active {
+  background: var(--home-navy-soft);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--home-navy-soft) 24%, transparent);
+  color: #fff;
+}
+
+@media (max-width: 899px) {
+  .activity-feed-header-bar {
+    margin: 0;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--home-line);
+    background: var(--home-mobile-toolbar);
+    backdrop-filter: blur(12px);
+  }
+}
+
+@media (max-width: 600px) {
+  .home-page-content {
+    padding: 1rem 0.55rem 0;
+  }
+}
+
 @media (min-width: 415px) and (max-width: 599px) {
   .sidebar-fullscreen {
     display: block;
@@ -253,15 +396,33 @@
 }
 
 @media (min-width: 900px) {
+  .home-page-content {
+    display: grid;
+    grid-template-columns: minmax(0, 920px) clamp(360px, 26vw, 440px);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    justify-content: center;
+    gap: clamp(1.75rem, 3vw, 3.75rem);
+    max-width: 1720px;
+  }
+
   .activity-feed-container {
-    max-width: 45%;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-width: none;
   }
 
   .side-bar-container {
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
-    min-width: 400px;
-    max-width: 600px;
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    align-self: stretch;
+    overflow: hidden;
   }
 }

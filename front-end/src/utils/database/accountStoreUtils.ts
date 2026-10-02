@@ -1,7 +1,5 @@
 // accountStoreUtils.ts
-import {
-  CompanyAccountType,
-} from "../types";
+import { CompanyAccountType } from "../types";
 import { openDB } from "./indexedDBOpen";
 
 export const saveAllCompanyAccountsToIndexedDB = async (
@@ -80,23 +78,24 @@ export async function saveUserAccountsToIndexedDB(
       reject((event.target as IDBRequest).error);
     };
 
-    accounts.forEach((account, index) => {
-      if (!account.accountNumber) {
-        console.error("Missing accountNumber for account:", account);
-      } else {
-        const request = store.put(account); // Ensure account has `accountNumber` as the key
-        request.onsuccess = () => {
-          // console.log(`Account ${index} added to IndexedDB successfully:`, account);
-        };
-        request.onerror = () => {
-          console.error(
-            `Error adding account ${index} to IndexedDB:`,
-            request.error,
-          );
-          reject(request.error);
-        };
-      }
-    });
+    const clearRequest = store.clear();
+    clearRequest.onerror = () => reject(clearRequest.error);
+    clearRequest.onsuccess = () => {
+      accounts.forEach((account, index) => {
+        if (!account.accountNumber) {
+          console.error("Missing accountNumber for account:", account);
+        } else {
+          const request = store.put(account);
+          request.onerror = () => {
+            console.error(
+              `Error adding account ${index} to IndexedDB:`,
+              request.error,
+            );
+            reject(request.error);
+          };
+        }
+      });
+    };
   });
 }
 

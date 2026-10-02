@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Button, Collapse, Typography } from "@mui/material";
+import { Collapse } from "@mui/material";
 import "./../companyGoalCard.css";
 import { FireStoreGalloGoalDocType } from "../../../utils/types";
 import GoalProgressRow from "../GoalProgressRow";
@@ -8,35 +8,7 @@ import { daysFromNow, toMillisSafe } from "../utils/goalTimingUtils";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../../Slices/userSlice";
 import { useGoalAccountReports } from "../../../hooks/useGoalAccountReports";
-
-export function formatGoalDate(v?: any) {
-  if (!v) return "—";
-
-  if (typeof v?.toDate === "function") {
-    return v.toDate().toLocaleDateString();
-  }
-
-  if (v instanceof Date) {
-    return v.toLocaleDateString();
-  }
-
-  if (typeof v === "string") {
-    // Handle YYYY-MM-DD explicitly as LOCAL date
-    const parts = v.split("-");
-    if (parts.length === 3) {
-      const [year, month, day] = parts.map(Number);
-      const localDate = new Date(year, month - 1, day); // LOCAL
-      return localDate.toLocaleDateString();
-    }
-
-    const ms = Date.parse(v);
-    if (!Number.isNaN(ms)) {
-      return new Date(ms).toLocaleDateString();
-    }
-  }
-
-  return "—";
-}
+import { formatGalloGoalDate } from "../utils/getGalloGoalSummary";
 
 interface Props {
   goal: FireStoreGalloGoalDocType;
@@ -117,9 +89,11 @@ const MyGalloGoalCard: React.FC<Props> = ({
         {/* Dates */}
         <div className="company-goal-card-start-end">
           <h3>
-            Starts: {formatGoalDate(goal.programDetails.programStartDate)}
+            Starts: {formatGalloGoalDate(goal.programDetails.programStartDate)}
           </h3>
-          <h3>Ends: {formatGoalDate(goal.programDetails.programEndDate)}</h3>
+          <h3>
+            Ends: {formatGalloGoalDate(goal.programDetails.programEndDate)}
+          </h3>
         </div>
 
         {/* Title */}

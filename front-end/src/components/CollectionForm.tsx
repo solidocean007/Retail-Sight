@@ -1,20 +1,32 @@
-// CollectionForm.tsx
-import React, { useState } from "react";
-import { Box, Modal } from "@mui/material";
+import { useState } from "react";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import CollectionsBookmarkOutlinedIcon from "@mui/icons-material/CollectionsBookmarkOutlined";
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  TextField,
+} from "@mui/material";
+
 import { CreateCollectionInput } from "../utils/types";
+
 import "./collectionForm.css";
 
-interface CollectionFormProps {
+type CollectionFormProps = {
   isOpen: boolean;
   onAddCollection: (newCollection: CreateCollectionInput) => Promise<void>;
   onClose: () => void;
-}
+};
 
-const CollectionForm: React.FC<CollectionFormProps> = ({
+const CollectionForm = ({
   isOpen,
   onAddCollection,
   onClose,
-}) => {
+}: CollectionFormProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,19 +37,17 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
   };
 
   const handleClose = () => {
+    if (isSubmitting) return;
     resetForm();
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const trimmedName = name.trim();
-
     if (!trimmedName || isSubmitting) return;
 
     setIsSubmitting(true);
-
     try {
       await onAddCollection({
         name: trimmedName,
@@ -47,7 +57,6 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
         sharedWith: [],
         isShareableOutsideCompany: false,
       });
-
       resetForm();
       onClose();
     } catch (error) {
@@ -57,65 +66,90 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <Modal
+    <Dialog
       open={isOpen}
       onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ className: "collection-form-dialog" }}
       aria-labelledby="collection-modal-title"
-      aria-describedby="collection-modal-description"
     >
-      <Box
-        className="collection-form-modal"
-        sx={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "min(92vw, 420px)",
-          bgcolor: "background.paper",
-          borderRadius: "12px",
-          boxShadow: 24,
-          p: 3,
-        }}
-      >
-        <form className="collection-form" onSubmit={handleSubmit}>
-          <h3 id="collection-modal-title">Create Collection</h3>
+      <form className="collection-form" onSubmit={handleSubmit}>
+        <DialogTitle
+          className="collection-form__title"
+          id="collection-modal-title"
+        >
+          <span className="collection-form__mark" aria-hidden="true">
+            <CollectionsBookmarkOutlinedIcon />
+          </span>
+          <span>
+            <strong>Create collection</strong>
+            <small>Start a focused set of displays to revisit or share.</small>
+          </span>
+          <IconButton
+            className="collection-form__close"
+            aria-label="Close create collection dialog"
+            disabled={isSubmitting}
+            onClick={handleClose}
+          >
+            <CloseRoundedIcon />
+          </IconButton>
+        </DialogTitle>
 
-          <input
-            type="text"
+        <DialogContent className="collection-form__content">
+          <TextField
+            label="Collection name"
+            placeholder="Example: Fall reset inspiration"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Collection Name"
-            required
+            onChange={(event) => setName(event.target.value)}
+            inputProps={{ maxLength: 80 }}
             autoFocus
+            fullWidth
+            required
           />
-
-          <textarea
-            id="collection-modal-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description"
-            rows={4}
-          />
-
-          <div className="collection-form-actions">
-            <button
-              type="submit"
-              disabled={!name.trim() || isSubmitting}
-              className={!name.trim() || isSubmitting ? "disabled-button" : ""}
-            >
-              {isSubmitting ? "Creating..." : "Add Collection"}
-            </button>
-
-            <button type="button" onClick={handleClose}>
-              Cancel
-            </button>
+          <div className="collection-form__field-note">
+            <span>
+              Give the collection a recognizable project or account name.
+            </span>
+            <span>{name.length}/80</span>
           </div>
-        </form>
-      </Box>
-    </Modal>
+
+          <TextField
+            label="Description"
+            placeholder="What belongs in this collection?"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            inputProps={{ maxLength: 240 }}
+            minRows={3}
+            multiline
+            fullWidth
+          />
+          <div className="collection-form__field-note">
+            <span>
+              Optional. This is visible to anyone who can view the collection.
+            </span>
+            <span>{description.length}/240</span>
+          </div>
+        </DialogContent>
+
+        <DialogActions className="collection-form__actions">
+          <Button variant="text" disabled={isSubmitting} onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={!name.trim() || isSubmitting}
+            startIcon={
+              isSubmitting ? <CircularProgress size={15} /> : undefined
+            }
+          >
+            {isSubmitting ? "Creating" : "Create collection"}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

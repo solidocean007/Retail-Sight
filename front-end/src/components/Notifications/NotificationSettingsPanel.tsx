@@ -1,215 +1,288 @@
-import React from "react";
-import { useUserNotificationSettings } from "../../hooks/useUserNotificationSettings";
+import AlternateEmailRoundedIcon from "@mui/icons-material/AlternateEmailRounded";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
+import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
+import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
+import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
+import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
+import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
+import { CircularProgress, Switch } from "@mui/material";
+import { ReactNode } from "react";
 import { useSelector } from "react-redux";
+
 import { selectUser } from "../../Slices/userSlice";
-
-import Switch from "@mui/material/Switch";
-// import IconButton from "@mui/material/IconButton";
-
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ChatBubbleIcon from "@mui/icons-material/ChatBubble";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import FlagIcon from "@mui/icons-material/Flag";
-import GroupIcon from "@mui/icons-material/Group";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-
-import {
-  registerFcmToken,
-  // hasExistingFcmToken,
-  // hasTokenForThisDevice,
-} from "../../firebase/messaging";
-import "./notificationSettingsPanel.css";
+import { registerFcmToken } from "../../firebase/messaging";
 import { useNotificationHealth } from "../../hooks/useNotificationHealth";
+import {
+  UserNotificationSettings,
+  useUserNotificationSettings,
+} from "../../hooks/useUserNotificationSettings";
+
+import "./notificationSettingsPanel.css";
+
+type BooleanSettingKey = Exclude<keyof UserNotificationSettings, "quietHours">;
 
 const NotificationSettingsPanel = () => {
-  const { settings, loading, updateSetting } = useUserNotificationSettings();
+  const { settings, loading, savingKey, error, updateSetting, reload } =
+    useUserNotificationSettings();
   const user = useSelector(selectUser);
-
   const {
     permission,
     tokenStatus,
     notificationsBlocked,
-    notificationsUnset,
     notificationsUnsupported,
     refreshHealth,
   } = useNotificationHealth(user?.uid);
 
   const pushFullyEnabled = permission === "granted" && tokenStatus === "ok";
-
-  const pushStatusClass = pushFullyEnabled
-    ? "ok"
+  const pushTone = pushFullyEnabled
+    ? "success"
     : notificationsBlocked || tokenStatus === "error"
       ? "error"
-      : "none";
+      : "attention";
+
+  const pushStatus =
+    tokenStatus === "unknown"
+      ? "Checking this device…"
+      : pushFullyEnabled
+        ? "Push alerts are active on this device."
+        : notificationsBlocked
+          ? "Push alerts are blocked in this browser’s settings."
+          : notificationsUnsupported
+            ? "Push alerts aren’t supported on this browser or device."
+            : permission === "granted"
+              ? "This device needs to be registered again."
+              : "Push alerts haven’t been enabled on this device.";
 
   const enablePush = async () => {
-    const perm = await Notification.requestPermission();
-
-    if (perm !== "granted") {
+    if (
+      typeof Notification === "undefined" ||
+      notificationsUnsupported ||
+      notificationsBlocked
+    ) {
       await refreshHealth();
       return;
     }
 
-    try {
-      await registerFcmToken();
-      await refreshHealth();
-    } catch {
-      await refreshHealth();
+    const nextPermission = await Notification.requestPermission();
+    if (nextPermission === "granted") {
+      try {
+        await registerFcmToken();
+      } catch (pushError) {
+        console.error("Could not register this device for push:", pushError);
+      }
     }
+
+    await refreshHealth();
   };
 
-  if (loading || !settings) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="notification-preferences__state" role="status">
+        <CircularProgress size={28} />
+        <strong>Loading preferences</strong>
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <div className="notification-preferences__state">
+        <NotificationsActiveOutlinedIcon />
+        <strong>Preferences unavailable</strong>
+        <span>
+          {error || "We couldn’t load your notification preferences."}
+        </span>
+        <button type="button" onClick={() => void reload()}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const renderSetting = (
+    key: BooleanSettingKey,
+    icon: ReactNode,
+    label: string,
+    description: string,
+  ) => (
+    <SettingSwitch
+      key={key}
+      icon={icon}
+      label={label}
+      description={description}
+      value={Boolean(settings[key])}
+      disabled={savingKey !== null}
+      saving={savingKey === key}
+      onChange={(value) => void updateSetting(key, value)}
+    />
+  );
 
   return (
-    <div className="notif-settings-container">
-      <h2 className="notif-settings-title">Notification Settings</h2>
-
-      {/* Push Status */}
-      <div className="push-status-card">
-        <NotificationsActiveIcon className="push-status-icon" />
-
-        <div className="push-status-content">
-          <strong>Push Notifications:</strong>
-          <div className={`push-status-text ${pushStatusClass}`}>
-            {tokenStatus === "unknown" && "Checking this device..."}
-
-            {pushFullyEnabled && "Enabled on this device"}
-
-            {permission === "default" && "Not enabled on this browser/device"}
-
-            {notificationsBlocked && "Blocked in browser/device settings"}
-
-            {notificationsUnsupported &&
-              "Not supported on this device or browser"}
-
-            {permission === "granted" &&
-              tokenStatus === "none" &&
-              "Permission granted, but this device needs to be registered again"}
-
-            {permission === "granted" &&
-              tokenStatus === "error" &&
-              "Could not verify this device"}
+    <div className="notification-preferences">
+      <section className="notification-preferences__section">
+        <div className="notification-preferences__section-heading">
+          <div>
+            <h2>Delivery on this device</h2>
+            <p>Browser permission and device registration are managed here.</p>
           </div>
         </div>
 
-        {tokenStatus !== "unknown" &&
-          !pushFullyEnabled &&
-          !notificationsBlocked &&
-          !notificationsUnsupported && (
-            <button className="push-enable-btn" onClick={enablePush}>
-              Enable
-            </button>
-          )}
+        <div
+          className={`notification-device-card notification-device-card--${pushTone}`}
+        >
+          <span className="notification-device-card__icon" aria-hidden="true">
+            <NotificationsActiveOutlinedIcon />
+          </span>
+          <div>
+            <strong>Push notifications</strong>
+            <p>{pushStatus}</p>
+          </div>
+          {!pushFullyEnabled &&
+            !notificationsBlocked &&
+            !notificationsUnsupported &&
+            tokenStatus !== "unknown" && (
+              <button type="button" onClick={() => void enablePush()}>
+                {permission === "granted" ? "Register again" : "Enable"}
+              </button>
+            )}
+        </div>
+
         {notificationsBlocked && (
-          <p className="push-help-text">
-            Enable notifications in your browser or device settings, then return
-            here.
+          <p className="notification-preferences__notice">
+            Allow notifications in your browser or device settings, then return
+            here. On iPhone, Displaygram may need to be installed on the Home
+            Screen first.
           </p>
         )}
-      </div>
+      </section>
 
-      <p className="push-help-text">
-        Push notifications depend on your device and browser. On iPhone, you may
-        need to add Displaygram to your Home Screen before enabling push
-        notifications.
-      </p>
+      <section className="notification-preferences__section">
+        <div className="notification-preferences__section-heading">
+          <div>
+            <h2>Display activity</h2>
+            <p>
+              Choose which interactions should create an in-app and push alert.
+            </p>
+          </div>
+        </div>
+        <div className="notification-preferences__rows">
+          {renderSetting(
+            "likes",
+            <FavoriteBorderRoundedIcon />,
+            "Likes",
+            "When someone likes one of your displays.",
+          )}
+          {renderSetting(
+            "comments",
+            <ChatBubbleOutlineRoundedIcon />,
+            "Comments and replies",
+            "When someone comments on your display or replies to you.",
+          )}
+          {renderSetting(
+            "commentLikes",
+            <ThumbUpOutlinedIcon />,
+            "Comment likes",
+            "When someone likes one of your comments.",
+          )}
+        </div>
+      </section>
 
-      {/* Posts */}
-      <h3 className="notif-settings-section">Posts</h3>
+      <section className="notification-preferences__section">
+        <div className="notification-preferences__section-heading">
+          <div>
+            <h2>Goals</h2>
+            <p>Stay informed when new work is assigned.</p>
+          </div>
+        </div>
+        <div className="notification-preferences__rows">
+          {renderSetting(
+            "goalAssignmentPush",
+            <FlagOutlinedIcon />,
+            "Goal assignments",
+            "In-app and push alerts when a goal is assigned to you.",
+          )}
+        </div>
+      </section>
 
-      <SettingSwitch
-        icon={<FavoriteIcon className="notif-icon heart" />}
-        label="Likes"
-        value={settings.likes}
-        onChange={(v) => updateSetting("likes", v)}
-      />
+      <section className="notification-preferences__section">
+        <div className="notification-preferences__section-heading">
+          <div>
+            <h2>Email</h2>
+            <p>Email can reach you when this device is offline.</p>
+          </div>
+        </div>
+        <div className="notification-preferences__rows">
+          {renderSetting(
+            "emailComments",
+            <AlternateEmailRoundedIcon />,
+            "Comment email",
+            "Send an email for new comments and replies.",
+          )}
+        </div>
+      </section>
 
-      <SettingSwitch
-        icon={<ChatBubbleIcon className="notif-icon" />}
-        label="Comments"
-        value={settings.comments}
-        onChange={(v) => updateSetting("comments", v)}
-      />
-
-      <SettingSwitch
-        icon={<ThumbUpIcon className="notif-icon" />}
-        label="Comment Likes"
-        value={settings.commentLikes}
-        onChange={(v) => updateSetting("commentLikes", v)}
-      />
-
-      {/* Goals */}
-      <h3 className="notif-settings-section">Goals</h3>
-
-      <SettingSwitch
-        icon={<FlagIcon className="notif-icon" />}
-        label="Goal Assignment Notifications"
-        value={settings.goalAssignmentPush}
-        onChange={(v) => updateSetting("goalAssignmentPush", v)}
-      />
-
-      <h3 className="notif-settings-section">Email</h3>
-
-      <p className="notif-section-helper">
-        Email notifications help you stay updated even when push notifications
-        are not available on this device.
-      </p>
-
-      <SettingSwitch
-        icon={<ChatBubbleIcon className="notif-icon" />}
-        label="Email me when someone comments on my displays"
-        value={settings.emailComments ?? true}
-        onChange={(v) => updateSetting("emailComments", v)}
-      />
-
-      <SettingSwitch
-        icon={<FlagIcon className="notif-icon" />}
-        label="Email me when I’m assigned a goal"
-        value={settings.emailGoalAssignments ?? true}
-        onChange={(v) => updateSetting("emailGoalAssignments", v)}
-      />
-
-      {/* Supervisor */}
       {user?.role === "supervisor" && (
-        <>
-          <h3 className="notif-settings-section">Team</h3>
-
-          <SettingSwitch
-            icon={<GroupIcon className="notif-icon" />}
-            label="New Display Posts From My Team"
-            value={settings.supervisorDisplayAlerts}
-            onChange={(v) => updateSetting("supervisorDisplayAlerts", v)}
-          />
-        </>
+        <section className="notification-preferences__section">
+          <div className="notification-preferences__section-heading">
+            <div>
+              <h2>Team</h2>
+              <p>Supervisor-only alerts about team activity.</p>
+            </div>
+          </div>
+          <div className="notification-preferences__rows">
+            {renderSetting(
+              "supervisorDisplayAlerts",
+              <GroupOutlinedIcon />,
+              "New team displays",
+              "Alert me when someone on my team creates a display.",
+            )}
+          </div>
+        </section>
       )}
+
+      {error && <p className="notification-preferences__error">{error}</p>}
     </div>
   );
 };
 
-interface SwitchProps {
-  icon: React.ReactNode;
+type SettingSwitchProps = {
+  icon: ReactNode;
   label: string;
+  description: string;
   value: boolean;
+  disabled: boolean;
+  saving: boolean;
   onChange: (value: boolean) => void;
-}
+};
 
-const SettingSwitch: React.FC<SwitchProps> = ({
+const SettingSwitch = ({
   icon,
   label,
+  description,
   value,
+  disabled,
+  saving,
   onChange,
-}) => (
-  <div className="notif-row">
-    <div className="notif-left">
+}: SettingSwitchProps) => (
+  <div className="notification-setting-row">
+    <span className="notification-setting-row__icon" aria-hidden="true">
       {icon}
-      <span>{label}</span>
+    </span>
+    <div>
+      <strong>{label}</strong>
+      <p>{description}</p>
     </div>
-
-    <Switch
-      checked={value}
-      onChange={(e) => onChange(e.target.checked)}
-      color="primary"
-    />
+    {saving ? (
+      <CircularProgress size={19} />
+    ) : (
+      <Switch
+        checked={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+        inputProps={{ "aria-label": label }}
+        size="small"
+      />
+    )}
   </div>
 );
 

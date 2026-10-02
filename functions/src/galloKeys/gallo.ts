@@ -170,10 +170,16 @@ export const galloFetchPrograms = onCall(
     // -------------------------------
     const existingSnap = await db
       .collection(`companies/${companyId}/galloPrograms`)
-      .select(admin.firestore.FieldPath.documentId())
+      .select("firstAvailableAt")
       .get();
 
     const existingIds = new Set(existingSnap.docs.map((d) => d.id));
+    const firstAvailableAtByProgram = new Map(
+      existingSnap.docs.map((d) => [
+        d.id,
+        d.get("firstAvailableAt") ?? d.createTime,
+      ])
+    );
 
     let newPrograms = 0;
 
@@ -182,7 +188,8 @@ export const galloFetchPrograms = onCall(
     for (const p of programs) {
       if (!p.programId) continue;
 
-      if (!existingIds.has(p.programId)) newPrograms++;
+      const isNewProgram = !existingIds.has(p.programId);
+      if (isNewProgram) newPrograms++;
 
       const ref = db.doc(`companies/${companyId}/galloPrograms/${p.programId}`);
 
@@ -194,6 +201,12 @@ export const galloFetchPrograms = onCall(
             p.endDate && new Date(p.endDate).getTime() < Date.now()
               ? "expired"
               : "active",
+          // New programs use server time. Existing legacy records use their
+          // immutable Firestore creation time, which safely backfills the
+          // arrival audit without mistaking a later sync for first arrival.
+          firstAvailableAt:
+            firstAvailableAtByProgram.get(p.programId) ??
+            admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -417,10 +430,16 @@ export async function syncGalloProgramsForCompany(
 
     const existingSnap = await db
       .collection(`companies/${companyId}/galloPrograms`)
-      .select(admin.firestore.FieldPath.documentId())
+      .select("firstAvailableAt")
       .get();
 
     const existingIds = new Set(existingSnap.docs.map((d) => d.id));
+    const firstAvailableAtByProgram = new Map(
+      existingSnap.docs.map((d) => [
+        d.id,
+        d.get("firstAvailableAt") ?? d.createTime,
+      ])
+    );
 
     let newPrograms = 0;
 
@@ -429,7 +448,8 @@ export async function syncGalloProgramsForCompany(
     for (const p of programs) {
       if (!p.programId) continue;
 
-      if (!existingIds.has(p.programId)) newPrograms++;
+      const isNewProgram = !existingIds.has(p.programId);
+      if (isNewProgram) newPrograms++;
 
       const ref = db.doc(`companies/${companyId}/galloPrograms/${p.programId}`);
 
@@ -441,6 +461,11 @@ export async function syncGalloProgramsForCompany(
             p.endDate && new Date(p.endDate).getTime() < Date.now()
               ? "expired"
               : "active",
+          // Preserve a recorded arrival. For legacy records, Firestore's
+          // immutable creation time supplies an accurate one-time backfill.
+          firstAvailableAt:
+            firstAvailableAtByProgram.get(p.programId) ??
+            admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }

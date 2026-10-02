@@ -1,50 +1,46 @@
-// FilterSummaryBanner.tsx
-import React from "react";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+
 import "./filterSummaryBanner.css";
 
 interface FilterSummaryBannerProps {
-  filteredCount: number;
-  filterText: string;
   onClear: () => void;
-  fetchedAt: string | null;
+  onEdit: () => void;
+  isLoading?: boolean;
 }
 
-const FilterSummaryBanner: React.FC<FilterSummaryBannerProps> = ({
-  filteredCount,
-  filterText,
+const FilterSummaryBanner = ({
   onClear,
-  fetchedAt,
-}) => {
-  if (filteredCount === 0) {
-    return (
-      <div className="filter-summary-banner">
-        <span>No posts match the selected filters.</span>
-        <button className="btn-outline clear-filter-btn" onClick={onClear}>
-          Clear
+  onEdit,
+  isLoading = false,
+}: FilterSummaryBannerProps) => {
+  return (
+    <section
+      className={`filter-summary-banner${isLoading ? " is-loading" : ""}`}
+      aria-live="polite"
+      aria-busy={isLoading}
+      aria-label={isLoading ? "Updating filtered feed" : "Filters are active"}
+    >
+      <div className="filter-summary-banner__state">
+        <span className="filter-summary-banner__icon" aria-hidden="true">
+          {isLoading ? <RefreshRoundedIcon /> : <TuneRoundedIcon />}
+        </span>
+        <strong>{isLoading ? "Updating…" : "Filters active"}</strong>
+      </div>
+
+      <div className="filter-summary-banner__actions">
+        <button type="button" className="filter-summary-edit" onClick={onEdit}>
+          Adjust filters
+        </button>
+        <button
+          type="button"
+          className="filter-summary-clear"
+          onClick={onClear}
+        >
+          Clear all
         </button>
       </div>
-    );
-  }
-
-  return (
-    <div className="filter-summary-banner">
-      <div className="filter-summary-text">
-        <span>
-          Showing filtered post{filteredCount !== 1 && "s"} for:
-          {filterText && ` ${filterText}`}
-        </span>
-        {fetchedAt && (
-          <div className="fetched-at">
-            as of {new Date(fetchedAt).toLocaleString()}
-          </div>
-        )}
-        {!fetchedAt && <span className="loading-text">Updating…</span>}
-      </div>
-
-      <button className="btn-outline clear-filter-btn" onClick={onClear}>
-        Clear
-      </button>
-    </div>
+    </section>
   );
 };
 

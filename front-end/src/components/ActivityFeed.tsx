@@ -39,6 +39,7 @@ import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVaria
 import { selectUser } from "../Slices/userSlice";
 
 const POSTS_BATCH_SIZE = 5;
+const STARTUP_LOADER_MS = 4000;
 
 export type FeedImageSet = {
   feedSrc: string | null;
@@ -68,6 +69,7 @@ interface ActivityFeedProps {
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   virtuosoRef,
   setCurrentHashtag,
+  setCurrentStarTag,
   activeCompanyPostSet,
   setActiveCompanyPostSet,
   setIsSearchActive,
@@ -77,7 +79,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const initialLoaded = useSelector(selectPostsInitialLoaded);
-  const [showLoader, setShowLoader] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts,
@@ -111,10 +113,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   }, [activeCompanyPostSet]);
 
   useEffect(() => {
-    setShowLoader(true);
     const timeout = setTimeout(() => {
       setShowLoader(false);
-    }, 1000); // 1 sec for animation effect
+    }, STARTUP_LOADER_MS);
 
     return () => clearTimeout(timeout);
   }, []);
@@ -197,7 +198,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           }}
         >
           <BeerCaseStackAnimation
-            minDuration={4000}
+            minDuration={STARTUP_LOADER_MS}
             maxStagger={2200}
             dropMs={900}
             loop
@@ -225,6 +226,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                   style={{ height: "100%" }}
                   data={{ post, getPostsByTag, getPostsByStarTag }}
                   setCurrentHashtag={setCurrentHashtag}
+                  setCurrentStarTag={setCurrentStarTag}
                   setActivePostSet={setActiveCompanyPostSet}
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}
@@ -285,6 +287,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                       maxStagger={1800}
                       dropMs={800}
                       loop={false}
+                      size="compact"
                     />
                   </div>
                 );

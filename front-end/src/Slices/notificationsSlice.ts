@@ -51,6 +51,11 @@ const notificationsSlice = createSlice({
         notif.readAt = action.payload.readAt;
       }
     },
+    markAllAsReadLocal(state, action: PayloadAction<string>) {
+      state.notifications.forEach((notification) => {
+        if (!notification.readAt) notification.readAt = action.payload;
+      });
+    },
     setLoading(state, action: PayloadAction<boolean>) {
       state.loading = action.payload;
     },
@@ -67,6 +72,7 @@ export const {
   addNotification,
   deleteNotification,
   markAsReadLocal,
+  markAllAsReadLocal,
   setLoading,
   setError,
 } = notificationsSlice.actions;

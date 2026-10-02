@@ -1,10 +1,11 @@
 // components/Gallo/GalloProgramImportCard.tsx
 import React, { useState } from "react";
 import { Typography, Collapse, Divider, Button } from "@mui/material";
-import { GalloProgramType } from "../../../utils/types";
+import { DisplayGalloProgram } from "../../../utils/types";
+import type { GalloProgramImportAudit } from "./GalloProgramManager";
 import "./galloProgramImportCard.css";
 
-type EnrichedGalloProgram = GalloProgramType & {
+type AuditableGalloProgram = DisplayGalloProgram & {
   __debug?: {
     hasMarketId: boolean;
     startDateUnix?: number;
@@ -14,17 +15,27 @@ type EnrichedGalloProgram = GalloProgramType & {
 };
 
 interface Props {
-  program: EnrichedGalloProgram;
+  program: AuditableGalloProgram;
   alreadyImported: boolean;
+  importAudit?: GalloProgramImportAudit;
   expired: boolean;
   canContinue: boolean;
   isLoading: boolean;
   onContinue: () => void;
 }
 
+const formatAuditDate = (timestamp?: number) =>
+  timestamp === undefined
+    ? "Not recorded"
+    : new Date(timestamp).toLocaleString([], {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+
 const GalloProgramImportCard: React.FC<Props> = ({
   program,
   alreadyImported,
+  importAudit,
   expired,
   canContinue,
   isLoading,
@@ -75,6 +86,29 @@ const GalloProgramImportCard: React.FC<Props> = ({
       {program.programDesc && (
         <div className="gallo-program-desc">{program.programDesc}</div>
       )}
+
+      <dl className="gallo-program-audit">
+        <div>
+          <dt>Available in Displaygram</dt>
+          <dd>{formatAuditDate(program.firstAvailableAtMs)}</dd>
+        </div>
+        <div>
+          <dt>Imported</dt>
+          <dd>
+            {alreadyImported
+              ? formatAuditDate(importAudit?.importedAtMs)
+              : "Not yet"}
+          </dd>
+        </div>
+        <div>
+          <dt>Imported by</dt>
+          <dd>
+            {alreadyImported
+              ? importAudit?.importedByName ?? "Not recorded"
+              : "—"}
+          </dd>
+        </div>
+      </dl>
 
       <Divider sx={{ my: 1 }} />
 

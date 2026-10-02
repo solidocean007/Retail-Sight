@@ -37,14 +37,15 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
 
   const hydrateFromCache = useCallback(async () => {
     if (!companyId) return;
-
-    const cached = await getCollectionsFromIndexedDB();
-
-    const scoped = cached.filter((collection) => {
-      return collection.companyId === companyId;
-    });
-
-    setCollections(scoped);
+    try {
+      const cached = await getCollectionsFromIndexedDB();
+      const scoped = cached.filter(
+        (collection) => collection.companyId === companyId,
+      );
+      setCollections(scoped);
+    } catch (error) {
+      console.warn("[useCompanyCollections] Cache unavailable:", error);
+    }
   }, [companyId]);
 
   const fetchCollections = useCallback(async () => {
@@ -83,7 +84,7 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
     async (newCollection: CreateCollectionInput) => {
       if (!companyId || !uid) {
         dispatch(showMessage("You must be signed in to create a collection."));
-        return;
+        throw new Error("Missing collection owner context.");
       }
 
       const payload = {
@@ -119,8 +120,12 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
   useEffect(() => {
     if (!companyId) return;
 
-    hydrateFromCache();
-    fetchCollections();
+    const syncCollections = async () => {
+      await hydrateFromCache();
+      await fetchCollections();
+    };
+
+    void syncCollections();
   }, [companyId, hydrateFromCache, fetchCollections]);
 
   return {

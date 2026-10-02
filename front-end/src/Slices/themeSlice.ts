@@ -6,7 +6,9 @@ interface ThemeState {
 }
 
 const initialState: ThemeState = {
-  isDarkMode: false, // Default to light mode
+  // Dark is the default for new devices. App initialization still restores a
+  // saved light/dark choice when one exists.
+  isDarkMode: true,
 };
 
 const themeSlice = createSlice({

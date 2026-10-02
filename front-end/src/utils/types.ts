@@ -2,12 +2,7 @@ import { serverTimestamp, Timestamp } from "firebase/firestore";
 export type NotificationAudienceType = "user" | "company" | "role" | "global";
 
 export type NotificationCategory =
-  | "like"
-  | "comment"
-  | "system"
-  | "reminder"
-  | "goal"
-  | "announcement";
+  "like" | "comment" | "system" | "reminder" | "goal" | "announcement";
 
 export type PriorityType = "high" | "normal";
 
@@ -729,11 +724,14 @@ export type GalloProgramType = {
 
 export type FirestoreGalloProgramType = GalloProgramType & {
   status: "active" | "expired";
+  /** First time Retail-Sight received this program from Axis. */
+  firstAvailableAt?: Timestamp;
   updatedAt: Timestamp;
 };
 
 // UI-level enriched type
 export type DisplayGalloProgram = FirestoreGalloProgramType & {
+  firstAvailableAtMs?: number;
   updatedAtMs: number;
   hasGoals: boolean;
 };
@@ -895,6 +893,9 @@ export interface FireStoreGalloGoalDocType {
   createdByUserId?: string;
   createdByFirstName?: string;
   createdByLastName?: string;
+
+  /** First import only. Legacy imported goals may not have this value. */
+  importedAt?: Timestamp | string;
 }
 
 export type CompanyAccountType = {
@@ -911,6 +912,8 @@ export type CompanyAccountType = {
   typeOfAccount?: string;
   chain?: string; // e.g., "Food Lion" or "Walmart" or "Target"
   chainType?: "chain" | "independent"; // e.g., "Chain" or "Independent"
+  isTestAccount?: boolean;
+  testOwnerUid?: string;
   createdAt?: string;
   updatedAt?: string;
 };

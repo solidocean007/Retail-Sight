@@ -1,5 +1,5 @@
 import React from "react";
-import "./LoadingIndicator.css";
+import "./loadingIndicator.css";
 // import { Box, CircularProgress, LinearProgress, Typography } from "@mui/material";
 import { Box, LinearProgress, Typography } from "@mui/material";
 

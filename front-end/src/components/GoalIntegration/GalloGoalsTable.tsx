@@ -1,24 +1,28 @@
-import React, { useState } from "react";
-import "./galloGoalsTable.css";
-import { FireStoreGalloGoalDocType } from "../../utils/types";
-import { formatGoalDate } from "./GalloIntegration/MyGalloGoalCard";
-import { GoalActionsMenu } from "./GoalActionsMenu";
+import { useState } from "react";
+
 import { FireStoreGalloGoalWithId } from "../../Slices/galloGoalsSlice";
+import { FireStoreGalloGoalDocType } from "../../utils/types";
 import GalloGoalFeedback from "../GoalReports/GalloGoalFeedback";
+import { GoalActionsMenu } from "./GoalActionsMenu";
+import {
+  formatGalloGoalDate,
+  getGalloGoalSummary,
+} from "./utils/getGalloGoalSummary";
+
+import "./galloGoalsTable.css";
 
 type Props = {
   goals: FireStoreGalloGoalWithId[];
   employeeMap: Record<string, string>;
   onViewPostModal: (postId: string) => void;
-
   canManage: boolean;
-
   onEdit: (goal: FireStoreGalloGoalDocType) => void;
   onArchive: (goal: FireStoreGalloGoalDocType) => void;
   onDisable: (goal: FireStoreGalloGoalDocType) => void;
+  compact?: boolean;
 };
 
-export default function GalloGoalsTable({
+const GalloGoalsTable = ({
   goals,
   employeeMap,
   onViewPostModal,
@@ -26,44 +30,38 @@ export default function GalloGoalsTable({
   onEdit,
   onArchive,
   onDisable,
-}: Props) {
+  compact = false,
+}: Props) => {
   const [openRow, setOpenRow] = useState<string | null>(null);
-  
+
   return (
-    <div className="gallo-table">
-      {/* Header */}
-      <div className="gallo-table-header">
+    <div className={`gallo-table ${compact ? "gallo-table--compact" : ""}`}>
+      <div className="gallo-table-header" aria-hidden="true">
         <div />
         <div>Program</div>
         <div>Dates</div>
         <div>Progress</div>
-        <div className="align-right">Manage</div>
+        <div className="align-right">Actions</div>
       </div>
 
       {goals.map((goal) => {
-        const activeAccounts = goal.accounts.filter(
-          (a) => a.status === "active",
-        );
-
-        const inActiveAccounts = goal.accounts.filter(
-          (a) => a.status !== "active",
-        );
-
-        const submittedCount = activeAccounts.filter(
-          (a) => a.submittedPostId,
-        ).length;
-
+        const summary = getGalloGoalSummary(goal);
         const isOpen = openRow === goal.id;
 
         return (
           <div key={goal.id} className="gallo-table-row-wrapper">
-            {/* Main Row */}
             <div className="gallo-table-row">
               <div>
                 <button
+                  type="button"
                   className={`expand-btn ${isOpen ? "open" : ""}`}
+                  aria-expanded={isOpen}
+                  aria-controls={`gallo-goal-details-${goal.id}`}
+                  aria-label={`${isOpen ? "Collapse" : "Expand"} ${goal.programDetails.programTitle}`}
                   onClick={() =>
-                    setOpenRow((prev) => (prev === goal.id ? null : goal.id))
+                    setOpenRow((previous) =>
+                      previous === goal.id ? null : goal.id,
+                    )
                   }
                 >
                   ▾
@@ -77,54 +75,89 @@ export default function GalloGoalsTable({
                 <div className="program-id">ID: {goal.goalDetails.goalId}</div>
               </div>
 
-              {/* <div>
-                <span className={`status-pill status-${goal.lifeCycleStatus}`}>
-                  {goal.lifeCycleStatus.toUpperCase()}
-                </span>
-              </div> */}
-
               <div className="gallo-goals-table-dates">
+                <span>
+                  {formatGalloGoalDate(goal.programDetails.programStartDate)}
+                </span>
+                <span aria-hidden="true">→</span>
+                <span>
+                  {formatGalloGoalDate(goal.programDetails.programEndDate)}
+                </span>
+              </div>
+
+              <div className="gallo-goals-table-progress">
                 <div>
-                  Start: {formatGoalDate(goal.programDetails.programStartDate)}
+                  <strong>{summary.percent}%</strong>
+                  <span>
+                    {summary.submittedCount}/{summary.totalAccounts} submitted
+                  </span>
                 </div>
-                <div>
-                  End: {formatGoalDate(goal.programDetails.programEndDate)}
+                <div
+                  className="gallo-goals-progress-track"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={summary.percent}
+                  aria-label={`${goal.programDetails.programTitle} completion`}
+                >
+                  <span style={{ width: `${summary.percent}%` }} />
                 </div>
               </div>
 
-              <div className="gallo-goals-table-submitted-count">
-                <strong>{submittedCount}</strong> / {activeAccounts.length}
-                {/* Reps can file feedback on Gallo goals too — without this
-                    the reports had nowhere to surface for an admin. */}
-                <GalloGoalFeedback
-                  galloGoalDocId={goal.id}
-                  reportGoalId={goal.goalDetails.goalId}
-                  goalTitle={goal.programDetails?.programTitle}
-                  disabledOppIds={inActiveAccounts.map((a) => a.oppId)}
-                />
-              </div>
-
-              {/* Manage */}
               <div className="align-right manage-cell">
                 {canManage && (
-                  <div className="manage-menu-popover">
-                    <button onClick={() => onEdit(goal)}>Edit</button>
-                  </div>
+                  <GoalActionsMenu
+                    status={goal.lifeCycleStatus}
+                    onEdit={() => onEdit(goal)}
+                    onArchive={() => onArchive(goal)}
+                    onDisable={() => onDisable(goal)}
+                  />
                 )}
               </div>
             </div>
 
-            {/* Expanded Content */}
             {isOpen && (
-              <div className="gallo-row-expanded">
-                <div className="goal-summary">
-                  <strong>Goal:</strong> {goal.goalDetails.goal}
+              <div
+                id={`gallo-goal-details-${goal.id}`}
+                className="gallo-row-expanded"
+              >
+                <div className="gallo-row-expanded__summary">
+                  <div>
+                    <span>Goal</span>
+                    <strong>{goal.goalDetails.goal}</strong>
+                  </div>
+                  <div>
+                    <span>Measure</span>
+                    <strong>
+                      {goal.goalDetails.goalValueMin}{" "}
+                      {goal.goalDetails.goalMetric}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Excluded</span>
+                    <strong>{summary.excludedAccounts.length} accounts</strong>
+                  </div>
+                  {(summary.importedAtLabel || summary.importedByLabel) && (
+                    <div>
+                      <span>Imported</span>
+                      <strong>
+                        {summary.importedAtLabel || "Date unavailable"}
+                        {summary.importedByLabel
+                          ? ` · ${summary.importedByLabel}`
+                          : ""}
+                      </strong>
+                    </div>
+                  )}
                 </div>
 
-                <div className="goal-metric">
-                  Metric: {goal.goalDetails.goalMetric} | Min:{" "}
-                  {goal.goalDetails.goalValueMin}
-                </div>
+                <GalloGoalFeedback
+                  galloGoalDocId={goal.id}
+                  reportGoalId={goal.goalDetails.goalId}
+                  goalTitle={goal.programDetails.programTitle}
+                  disabledOppIds={summary.excludedAccounts.map(
+                    (account) => account.oppId,
+                  )}
+                />
 
                 <div className="accounts-table">
                   <div className="accounts-header">
@@ -134,37 +167,38 @@ export default function GalloGoalsTable({
                     <div>Status</div>
                   </div>
 
-                  {activeAccounts.map((account, idx) => {
-                    const route = Array.isArray(account.salesRouteNums)
-                      ? account.salesRouteNums.join(", ")
-                      : account.salesRouteNums;
-
-                    const rep =
-                      employeeMap[
-                        Array.isArray(account.salesRouteNums)
-                          ? account.salesRouteNums[0]
-                          : account.salesRouteNums
-                      ] || "Unknown";
+                  {summary.activeAccounts.map((account) => {
+                    const routes = Array.isArray(account.salesRouteNums)
+                      ? account.salesRouteNums
+                      : [account.salesRouteNums];
+                    const routeLabel = routes.filter(Boolean).join(", ") || "—";
+                    const representative =
+                      employeeMap[routes[0]] || "Unassigned";
 
                     return (
-                      <div key={idx} className="accounts-row">
-                        <div>{account.accountName}</div>
-                        <div>{route}</div>
-                        <div>{rep}</div>
+                      <div
+                        key={account.oppId || account.distributorAcctId}
+                        className="accounts-row"
+                      >
+                        <div>
+                          <strong>{account.accountName}</strong>
+                          <small>{account.distributorAcctId}</small>
+                        </div>
+                        <div>{routeLabel}</div>
+                        <div>{representative}</div>
                         <div>
                           {account.submittedPostId ? (
                             <button
+                              type="button"
                               className="link-btn"
                               onClick={() =>
                                 onViewPostModal(account.submittedPostId!)
                               }
                             >
-                              View
+                              View display
                             </button>
                           ) : (
-                            <span className="status-pending">
-                              Not Submitted
-                            </span>
+                            <span className="status-pending">Pending</span>
                           )}
                         </div>
                       </div>
@@ -178,4 +212,6 @@ export default function GalloGoalsTable({
       })}
     </div>
   );
-}
+};
+
+export default GalloGoalsTable;

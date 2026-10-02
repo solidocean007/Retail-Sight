@@ -1,5 +1,5 @@
 import { PrivacyPolicyHelmet } from "../../utils/helmetConfigurations";
-import "./PrivacyPolicy.css";
+import "./privacyPolicy.css";
 
 const PrivacyPolicy = () => {
   return (

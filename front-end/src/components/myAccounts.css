@@ -1,0 +1,296 @@
+.my-accounts-page {
+  --accounts-surface: rgba(248, 250, 251, 0.92);
+  --accounts-surface-strong: #ffffff;
+  --accounts-surface-muted: #edf2f4;
+  --accounts-line: rgba(33, 65, 84, 0.13);
+  --accounts-line-strong: rgba(35, 126, 184, 0.25);
+  --accounts-text: #152735;
+  --accounts-muted: #647885;
+  --accounts-shadow: rgba(22, 52, 70, 0.11);
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(1rem, 2.4vw, 2.25rem);
+  color: var(--accounts-text);
+}
+
+[data-theme="dark"] .my-accounts-page {
+  --accounts-surface: rgba(13, 29, 43, 0.92);
+  --accounts-surface-strong: #102335;
+  --accounts-surface-muted: #0a1825;
+  --accounts-line: rgba(124, 183, 217, 0.16);
+  --accounts-line-strong: rgba(91, 185, 239, 0.27);
+  --accounts-text: #eef8ff;
+  --accounts-muted: #94aabd;
+  --accounts-shadow: rgba(0, 0, 0, 0.27);
+}
+
+.my-accounts-page__header,
+.my-accounts-panel {
+  width: min(100%, 1120px);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.my-accounts-page__header {
+  display: flex;
+  margin-bottom: 1rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.my-accounts-page__title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.my-accounts-page__mark {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid var(--accounts-line-strong);
+  border-radius: 15px;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 255, 255, 0.24),
+      transparent 48%
+    ),
+    color-mix(in srgb, var(--primary-blue) 13%, var(--accounts-surface));
+  color: var(--primary-blue);
+  box-shadow: 0 10px 26px
+    color-mix(in srgb, var(--primary-blue) 15%, transparent);
+}
+
+.my-accounts-page__eyebrow {
+  display: block;
+  margin-bottom: 0.22rem;
+  color: var(--primary-blue);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.my-accounts-page__header h1 {
+  margin: 0;
+  color: var(--accounts-text);
+  font-size: clamp(1.5rem, 2.5vw, 2.05rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.my-accounts-page__header p {
+  margin: 0.4rem 0 0;
+  color: var(--accounts-muted);
+  font-size: 0.84rem;
+}
+
+.my-accounts-refresh.MuiButton-root {
+  border-color: var(--accounts-line-strong);
+  border-radius: 10px;
+  color: var(--accounts-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.my-accounts-panel {
+  padding: clamp(0.8rem, 2vw, 1.25rem);
+  border: 1px solid var(--accounts-line);
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--primary-blue) 7%, transparent),
+      transparent 34%
+    ),
+    var(--accounts-surface);
+  box-shadow: 0 16px 42px var(--accounts-shadow);
+}
+
+.my-accounts-panel__heading,
+.my-accounts-panel__heading > div {
+  display: flex;
+  align-items: center;
+}
+
+.my-accounts-panel__heading {
+  margin-bottom: 0.85rem;
+  justify-content: space-between;
+}
+
+.my-accounts-panel__heading > div {
+  gap: 0.65rem;
+}
+
+.my-accounts-panel__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accounts-surface-muted);
+  color: var(--primary-blue);
+}
+
+.my-accounts-panel__icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.my-accounts-panel h2 {
+  margin: 0;
+  color: var(--accounts-text);
+  font-size: 1rem;
+}
+
+.my-accounts-panel__heading p {
+  margin: 0.18rem 0 0;
+  color: var(--accounts-muted);
+  font-size: 0.72rem;
+}
+
+.my-accounts-toolbar {
+  display: grid;
+  margin-bottom: 0.45rem;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.32fr);
+  gap: 0.75rem;
+}
+
+.my-accounts-toolbar .MuiInputBase-root {
+  margin: 0;
+  border-radius: 11px;
+  background: var(--accounts-surface-strong);
+  color: var(--accounts-text);
+}
+
+.my-accounts-toolbar .MuiOutlinedInput-input {
+  padding-top: 8.5px;
+  padding-bottom: 8.5px;
+  background: transparent;
+  color: var(--accounts-text);
+  box-shadow: none;
+}
+
+.my-accounts-toolbar .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accounts-line-strong);
+}
+
+.my-accounts-toolbar
+  .MuiOutlinedInput-root:hover
+  .MuiOutlinedInput-notchedOutline {
+  border-color: color-mix(
+    in srgb,
+    var(--primary-blue) 52%,
+    var(--accounts-line)
+  );
+}
+
+.my-accounts-toolbar
+  .MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary-blue);
+}
+
+.my-accounts-toolbar .MuiInputLabel-root {
+  color: var(--accounts-muted);
+}
+
+.my-accounts-toolbar .MuiInputLabel-root.Mui-focused {
+  color: var(--primary-blue);
+}
+
+.my-accounts-search .MuiInputAdornment-root {
+  margin-right: 0.2rem;
+  color: var(--accounts-muted);
+}
+
+.my-accounts-search .MuiInputAdornment-root .MuiSvgIcon-root {
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+}
+
+.my-accounts-state {
+  display: flex;
+  min-height: 13rem;
+  padding: 2rem 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--accounts-muted);
+  text-align: center;
+}
+
+.my-accounts-state > svg {
+  width: 34px;
+  height: 34px;
+  color: var(--primary-blue);
+}
+
+.my-accounts-state strong {
+  color: var(--accounts-text);
+  font-size: 0.92rem;
+}
+
+.my-accounts-state span {
+  font-size: 0.76rem;
+}
+
+.my-accounts-state--error {
+  min-height: auto;
+  margin: 0.75rem 0;
+  padding: 0.8rem;
+  border: 1px solid
+    color-mix(in srgb, var(--error-color, #d14343) 34%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--error-color, #d14343) 8%, transparent);
+}
+
+@media (max-width: 720px) {
+  .my-accounts-page__header {
+    align-items: center;
+  }
+
+  .my-accounts-page__mark {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .my-accounts-page__header p {
+    display: none;
+  }
+
+  .my-accounts-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-accounts-page {
+    padding: 0.6rem 0.25rem 1rem;
+  }
+
+  .my-accounts-page__header {
+    padding: 0 0.35rem;
+  }
+
+  .my-accounts-page__eyebrow,
+  .my-accounts-refresh .MuiButton-startIcon {
+    display: none;
+  }
+
+  .my-accounts-page__header h1 {
+    font-size: 1.25rem;
+  }
+
+  .my-accounts-panel {
+    border-radius: 14px;
+  }
+}

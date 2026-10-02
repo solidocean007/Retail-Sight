@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
-import "./ImageModal.css";
+import "./imageModal.css";
 // import { resolvePostImage } from "../utils/PostLogic/derivePostImageVariants";
 import FadeImage from "./FadeImage";
 import CloseIcon from "@mui/icons-material/Close";

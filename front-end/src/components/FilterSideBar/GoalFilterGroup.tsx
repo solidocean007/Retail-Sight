@@ -2,11 +2,18 @@
 import React, { useMemo } from "react";
 import { Autocomplete, TextField, CircularProgress } from "@mui/material";
 import { createFilterOptions } from "@mui/material/Autocomplete";
-import { CompanyGoalWithIdType } from "../../utils/types";
 import "./goalFilterGroup.css";
 
+type GoalFilterOption = {
+  id: string;
+  goalTitle: string;
+  goalStartDate?: string;
+  createdAt?: string;
+  originCompanyName?: string;
+};
+
 interface GoalFilterGroupProps {
-  goals: CompanyGoalWithIdType[];
+  goals: GoalFilterOption[];
   selectedGoalId?: string | null;
   onChange: (goalId: string | null, goalTitle: string | null) => void;
   loading?: boolean;
@@ -61,7 +68,7 @@ const GoalFilterGroup: React.FC<GoalFilterGroupProps> = ({
   const filterOptions = createFilterOptions({
     matchFrom: "any",
     stringify: (
-      option: CompanyGoalWithIdType & {
+      option: GoalFilterOption & {
         year: string;
         originCompanyName?: string;
       },

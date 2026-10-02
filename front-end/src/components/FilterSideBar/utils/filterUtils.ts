@@ -1,6 +1,7 @@
 // filterUtils.ts
 
 import { PostQueryFilters, PostWithID, UserType } from "../../../utils/types";
+import { sortPostsNewestFirst } from "../../../utils/sortPosts";
 import {
   formatDateInputForDisplay,
   getDateRangeBounds,
@@ -36,6 +37,36 @@ const isEmptyValue = (value: unknown): boolean => {
 
   return false;
 };
+
+const FILTER_METADATA_FIELDS = new Set<keyof PostQueryFilters>([
+  "feedType",
+  "companyId",
+  "accountNumber",
+  "brandId",
+  "companyGoalTitle",
+  "galloGoalTitle",
+  "distributorCompanyName",
+]);
+
+export const getActiveFilterCount = (
+  filters: PostQueryFilters | null | undefined,
+): number => {
+  if (!filters) return 0;
+
+  return Object.entries(filters).reduce((count, [key, value]) => {
+    if (FILTER_METADATA_FIELDS.has(key as keyof PostQueryFilters)) return count;
+    return isEmptyValue(value) ? count : count + 1;
+  }, 0);
+};
+
+export const hasActiveFilters = (
+  filters: PostQueryFilters | null | undefined,
+): boolean => getActiveFilterCount(filters) > 0;
+
+export const arePostFiltersEqual = (
+  first: PostQueryFilters | null | undefined,
+  second: PostQueryFilters | null | undefined,
+): boolean => JSON.stringify(first ?? null) === JSON.stringify(second ?? null);
 
 const toMillis = (value: any): number => {
   if (!value) return 0;
@@ -258,9 +289,8 @@ export function locallyFilterPosts(
 ): PostWithID[] {
   const normalizedBrandFilter = normalizeBrand(filters.brand);
   const normalizedAccountNameFilter = normalizeLoose(filters.accountName);
-  const selectedAccountNumber = String(filters.accountNumber ?? "");
 
-  return posts.filter((post) => {
+  const filteredPosts = posts.filter((post) => {
     if (
       filters.distributorCompanyId &&
       post.companyId !== filters.distributorCompanyId
@@ -296,9 +326,9 @@ export function locallyFilterPosts(
       );
       const matchesBrandName = Boolean(
         filters.brand &&
-          post.brands?.some(
-        (brand) => normalizeBrand(brand) === normalizedBrandFilter,
-          ),
+        post.brands?.some(
+          (brand) => normalizeBrand(brand) === normalizedBrandFilter,
+        ),
       );
 
       // Older posts predate brandIds, so retain the normalized-name fallback.
@@ -345,7 +375,7 @@ export function locallyFilterPosts(
 
     if (
       filters.accountType &&
-      (post.accountType ?? post.account?.accountType) !== filters.accountType
+      (post.accountType ?? post.account?.typeOfAccount) !== filters.accountType
     ) {
       return false;
     }
@@ -364,10 +394,7 @@ export function locallyFilterPosts(
       return false;
     }
 
-    if (
-      filters.companyId &&
-      post.postUserCompanyId !== filters.companyId
-    ) {
+    if (filters.companyId && post.postUserCompanyId !== filters.companyId) {
       return false;
     }
 
@@ -411,6 +438,8 @@ export function locallyFilterPosts(
 
     return true;
   });
+
+  return sortPostsNewestFirst(filteredPosts);
 }
 
 export function getFilterHash(filters: PostQueryFilters): string {

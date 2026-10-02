@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, Button, Divider } from "@mui/material";
+import { Box, Typography, Divider } from "@mui/material";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 // import "./confirmEditGalloGoalModal.css";
 import { GalloGoalAccountDiffType } from "./utils/diffGalloGoalAccounts";
@@ -22,9 +22,7 @@ const ConfirmEditGalloGoalModal: React.FC<Props> = ({
   if (!open) return null;
 
   const hasChanges =
-    diff.activated.length ||
-    diff.deactivated.length ||
-    diff.reassigned.length;
+    diff.activated.length || diff.deactivated.length || diff.reassigned.length;
 
   if (!hasChanges) return null;
 
@@ -44,8 +42,8 @@ const ConfirmEditGalloGoalModal: React.FC<Props> = ({
         </div>
 
         <Typography variant="body2" sx={{ mb: 2 }}>
-          You are about to update the goal <strong>{goalTitle}</strong>.
-          These changes will immediately affect reporting and submissions.
+          You are about to update the goal <strong>{goalTitle}</strong>. These
+          changes will immediately affect reporting and submissions.
         </Typography>
 
         <Divider sx={{ mb: 2 }} />
@@ -92,16 +90,10 @@ const ConfirmEditGalloGoalModal: React.FC<Props> = ({
         )}
 
         <div className="custom-confirmation-actions">
-          <button
-            className="custom-confirmation-cancel"
-            onClick={onCancel}
-          >
+          <button className="custom-confirmation-cancel" onClick={onCancel}>
             Cancel
           </button>
-          <button
-            className="custom-confirmation-confirm"
-            onClick={onConfirm}
-          >
+          <button className="custom-confirmation-confirm" onClick={onConfirm}>
             Apply Changes
           </button>
         </div>

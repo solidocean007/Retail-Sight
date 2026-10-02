@@ -1,8 +1,79 @@
-.gallo-edit-row.inactive {
-  opacity: 0.6;
+.edit-gallo-goal-dialog {
+  overflow: hidden;
+  border: 1px solid var(--card-outline);
+  border-radius: 16px !important;
+  background: var(--dashboard-card) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34) !important;
 }
 
-.gallo-edit-row.invalid {
-  border-color: var(--warning-color);
-  background: var(--warning-bg);
+.edit-gallo-goal-dialog__header {
+  padding: 1rem 1.25rem 0.85rem !important;
+  border-bottom: 1px solid var(--card-outline);
+  background: color-mix(in srgb, var(--dashboard-card) 90%, #8b3658 10%);
+}
+
+.edit-gallo-goal-dialog__eyebrow {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--accent-color);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.edit-gallo-goal-dialog__filters {
+  display: flex;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.edit-gallo-goal-dialog__content {
+  max-height: 68vh;
+  padding: 1rem !important;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--dashboard-card) 95%, transparent);
+}
+
+.edit-gallo-goal-dialog__actions {
+  display: flex;
+  padding: 0.8rem 1rem !important;
+  border-top: 1px solid var(--card-outline);
+  justify-content: space-between !important;
+  gap: 0.75rem;
+  background: var(--dashboard-card);
+}
+
+.edit-gallo-goal-dialog__lifecycle-actions,
+.edit-gallo-goal-dialog__save-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 700px) {
+  .edit-gallo-goal-dialog {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .edit-gallo-goal-dialog__content {
+    max-height: none;
+  }
+
+  .edit-gallo-goal-dialog__actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .edit-gallo-goal-dialog__lifecycle-actions,
+  .edit-gallo-goal-dialog__save-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

@@ -1,35 +1,166 @@
-/* UserAccountsTable.css */
-
 .accounts-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: var(--card-bg, #fff);
 }
 
 .accounts-table {
   width: 100%;
-  /* min-width: 600px; */
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 0.55rem;
 }
 
-.accounts-table th,
-.accounts-table td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+.accounts-table th {
+  padding: 0 0.85rem 0.2rem;
+  color: var(--accounts-muted);
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
   text-align: left;
-  font-size: 0.9rem;
+  text-transform: uppercase;
 }
 
-.accounts-table thead {
-  background-color: #f4f4f4;
+.accounts-table td {
+  padding: 0.8rem 0.85rem;
+  border-top: 1px solid var(--accounts-line);
+  border-bottom: 1px solid var(--accounts-line);
+  background: var(--accounts-surface-strong);
+  color: var(--accounts-text);
+  font-size: 0.82rem;
+  vertical-align: middle;
 }
 
-@media (max-width: 600px) {
-  .accounts-table th,
+.accounts-table td:first-child {
+  border-left: 1px solid var(--accounts-line);
+  border-radius: 12px 0 0 12px;
+}
+
+.accounts-table td:last-child {
+  border-right: 1px solid var(--accounts-line);
+  border-radius: 0 12px 12px 0;
+}
+
+.accounts-table tbody tr {
+  transition:
+    transform 160ms ease,
+    filter 160ms ease;
+}
+
+.accounts-table tbody tr:hover {
+  filter: brightness(1.02);
+  transform: translateY(-1px);
+}
+
+.account-identity,
+.account-location,
+.account-network {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.account-identity strong,
+.account-location strong,
+.account-network strong {
+  color: var(--accounts-text);
+  font-size: 0.82rem;
+}
+
+.account-identity span,
+.account-location span,
+.account-network span {
+  color: var(--accounts-muted);
+  font-size: 0.72rem;
+}
+
+.account-identity em {
+  width: fit-content;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 34%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-blue) 10%, transparent);
+  color: var(--primary-blue);
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.account-type-pill {
+  display: inline-flex;
+  min-height: 25px;
+  padding: 0.25rem 0.52rem;
+  align-items: center;
+  border: 1px solid var(--accounts-line-strong);
+  border-radius: 999px;
+  background: var(--accounts-surface-muted);
+  color: var(--accounts-text);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+@media (max-width: 720px) {
+  .accounts-table,
+  .accounts-table tbody,
+  .accounts-table tr,
   .accounts-table td {
-    font-size: 0.75rem;
-    padding: 6px 8px;
+    display: block;
+    width: 100%;
+  }
+
+  .accounts-table {
+    border-spacing: 0;
+  }
+
+  .accounts-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .accounts-table tr {
+    display: grid;
+    margin-bottom: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--accounts-line);
+    border-radius: 14px;
+    background: var(--accounts-surface-strong);
+    overflow: hidden;
+  }
+
+  .accounts-table td,
+  .accounts-table td:first-child,
+  .accounts-table td:last-child {
+    min-width: 0;
+    padding: 0.72rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .accounts-table td:first-child,
+  .accounts-table td:nth-child(2) {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--accounts-line);
+  }
+
+  .accounts-table td::before {
+    display: block;
+    margin-bottom: 0.28rem;
+    color: var(--accounts-muted);
+    content: attr(data-label);
+    font-size: 0.58rem;
+    font-weight: 850;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accounts-table tbody tr {
+    transition: none;
   }
 }

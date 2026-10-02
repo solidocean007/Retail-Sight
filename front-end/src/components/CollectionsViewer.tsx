@@ -1,198 +1,264 @@
-// CollectionsViewer.tsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { CircularProgress, IconButton } from "@mui/material";
-import { Delete, Share } from "@mui/icons-material";
-import { useDispatch, useSelector } from "react-redux";
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "../utils/firebase";
-
-import CollectionForm from "./CollectionForm";
-import CustomConfirmation from "./CustomConfirmation";
+import { useMemo, useState } from "react";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import CollectionsBookmarkOutlinedIcon from "@mui/icons-material/CollectionsBookmarkOutlined";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import {
-  CollectionWithId,
-  CreateCollectionInput,
-  DashboardModeType,
-} from "../utils/types";
+  Button,
+  CircularProgress,
+  InputAdornment,
+  TextField,
+} from "@mui/material";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
 import { showMessage } from "../Slices/snackbarSlice";
 import { selectUser } from "../Slices/userSlice";
 import { useCompanyCollections } from "../hooks/useCompanyCollections";
+import { db } from "../utils/firebase";
+import { CreateCollectionInput } from "../utils/types";
+import CollectionCard from "./CollectionCard";
+import CollectionForm from "./CollectionForm";
+import CustomConfirmation from "./CustomConfirmation";
 
 import "./collectionsViewer.css";
 
-const CollectionsViewer = ({
-  setDashboardMode,
-}: {
-  setDashboardMode: React.Dispatch<React.SetStateAction<DashboardModeType>>;
-}) => {
+const CollectionsViewer = () => {
   const user = useSelector(selectUser);
-  const { collections, loading, createCollection, deleteCollection } =
-    useCompanyCollections(user);
-
+  const {
+    collections,
+    loading,
+    fetchCollections,
+    createCollection,
+    deleteCollection,
+  } = useCompanyCollections(user);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [searchTerm, setSearchTerm] = useState("");
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(
     null,
   );
+  const [sharingCollectionId, setSharingCollectionId] = useState<string | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
   const [showCreateCollectionDialog, setShowCreateCollectionDialog] =
     useState(false);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const visibleCollections = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    return [...collections]
+      .filter(
+        (collection) =>
+          !search ||
+          [collection.name, collection.description].some((value) =>
+            value?.toLowerCase().includes(search),
+          ),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [collections, searchTerm]);
 
-  const handleAddCollection = async (newCollection: CreateCollectionInput) => {
+  const totalPostCount = useMemo(
+    () =>
+      collections.reduce(
+        (total, collection) => total + (collection.posts?.length ?? 0),
+        0,
+      ),
+    [collections],
+  );
+
+  const handleAddCollection = async (input: CreateCollectionInput) => {
     try {
-      await createCollection(newCollection);
-      setShowCreateCollectionDialog(false);
+      await createCollection(input);
     } catch (error) {
       console.error("Error adding collection:", error);
       dispatch(showMessage("Could not create collection."));
+      throw error;
     }
   };
 
   const handleDeleteCollectionConfirmed = async () => {
-    if (!collectionToDelete) return;
-
+    if (!collectionToDelete || deleting) return;
+    setDeleting(true);
     try {
       await deleteCollection(collectionToDelete);
       setCollectionToDelete(null);
+      dispatch(showMessage("Collection deleted."));
     } catch (error) {
       console.error("Error deleting collection:", error);
       dispatch(showMessage("Could not delete collection."));
     } finally {
-      setIsConfirmationOpen(false);
+      setDeleting(false);
     }
   };
 
   const handleCollectionClick = (collectionId: string, postCount: number) => {
-    if (postCount > 0) {
-      navigate(`/view-collection/${collectionId}`, {
-        state: { returnToDashboard: true },
-      });
-    } else {
-      dispatch(showMessage("No posts are in this collection yet."));
+    if (postCount === 0) {
+      dispatch(showMessage("Add a post before opening this collection."));
+      return;
     }
+    navigate(`/view-collection/${collectionId}`, {
+      state: { returnToDashboard: true },
+    });
   };
 
-  const handleCopyLink = async (id: string) => {
+  const handleCopyLink = async (id: string, alreadyShareable: boolean) => {
+    if (sharingCollectionId) return;
+    setSharingCollectionId(id);
     try {
-      await updateDoc(doc(db, "collections", id), {
-        isShareableOutsideCompany: true,
-        updatedAt: serverTimestamp(),
-      });
-
+      if (!alreadyShareable) {
+        await updateDoc(doc(db, "collections", id), {
+          isShareableOutsideCompany: true,
+          updatedAt: serverTimestamp(),
+        });
+        await fetchCollections();
+      }
       await navigator.clipboard.writeText(
         `${window.location.origin}/view-collection/${id}`,
       );
-
       dispatch(
-        showMessage("Share link copied. Anyone with the link can view it."),
+        showMessage(
+          alreadyShareable
+            ? "Public collection link copied."
+            : "Public link enabled and copied.",
+        ),
       );
     } catch (error) {
       console.error("Error enabling collection sharing:", error);
       dispatch(showMessage("Could not create share link."));
+    } finally {
+      setSharingCollectionId(null);
     }
   };
 
-  return (
-    <div className="collections-viewer-container">
-      <div className="collections-header">
-        <h2>Your Collections</h2>
+  const selectedCollectionName = collections.find(
+    (collection) => collection.id === collectionToDelete,
+  )?.name;
 
-        <button
-          className="create-btn"
+  return (
+    <main className="collections-page">
+      <header className="collections-page__header">
+        <div className="collections-page__title-group">
+          <span className="collections-page__mark" aria-hidden="true">
+            <CollectionsBookmarkOutlinedIcon />
+          </span>
+          <div>
+            <span className="collections-page__eyebrow">Workspace</span>
+            <h1>Collections</h1>
+            <p>Organize useful displays into focused, shareable sets.</p>
+          </div>
+        </div>
+        <Button
+          className="collections-create-button"
+          variant="contained"
+          size="small"
+          startIcon={<AddRoundedIcon />}
           onClick={() => setShowCreateCollectionDialog(true)}
         >
-          Create Collection
-        </button>
-      </div>
+          New collection
+        </Button>
+      </header>
 
-      {loading ? (
-        <CircularProgress />
-      ) : collections.length === 0 ? (
-        <div className="collections-empty-state">
-          <h3>No collections yet</h3>
-          <p>Create a collection to organize posts for your company.</p>
+      <section
+        className="collections-library"
+        aria-labelledby="collections-library-title"
+      >
+        <div className="collections-library__heading">
+          <div>
+            <h2 id="collections-library-title">Collection library</h2>
+            <p>
+              {collections.length.toLocaleString()} collection
+              {collections.length === 1 ? "" : "s"} ·{" "}
+              {totalPostCount.toLocaleString()} saved post
+              {totalPostCount === 1 ? "" : "s"}
+            </p>
+          </div>
+          {loading && collections.length > 0 && (
+            <span className="collections-sync-status" role="status">
+              <CircularProgress size={13} /> Refreshing
+            </span>
+          )}
         </div>
-      ) : (
-        <div className="collections-grid">
-          {collections.map((collection) => {
-            const sampleImages = (collection.previewImages || []).slice(0, 6);
-            const postCount = collection.posts?.length ?? 0;
 
-            return (
-              <div className="collection-card" key={collection.id}>
-                <div className="collection-images">
-                  {sampleImages.map((url, index) => (
-                    <img
-                      key={url}
-                      src={url}
-                      alt={`${collection.name} preview ${index + 1}`}
-                      className="collection-thumbnail"
-                      style={{
-                        transform: `rotate(${index * -1.5 - 5}deg)`,
-                        marginLeft: index === 0 ? 0 : -20,
-                        zIndex: sampleImages.length - index,
-                      }}
-                    />
-                  ))}
-                </div>
+        {collections.length > 0 && (
+          <TextField
+            className="collections-search"
+            label="Search collections"
+            placeholder="Name or description…"
+            size="small"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlinedIcon aria-hidden="true" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        )}
 
-                <div className="collection-content">
-                  <h4>{collection.name}</h4>
-
-                  <p>
-                    {postCount} post{postCount !== 1 ? "s" : ""}
-                  </p>
-
-                  <div className="collection-actions">
-                    <button
-                      onClick={() =>
-                        handleCollectionClick(collection.id, postCount)
-                      }
-                    >
-                      View
-                    </button>
-
-                    <IconButton
-                      aria-label={`Copy share link for ${collection.name}`}
-                      onClick={() => handleCopyLink(collection.id)}
-                    >
-                      <Share />
-                    </IconButton>
-
-                    <IconButton
-                      aria-label={`Delete ${collection.name}`}
-                      onClick={() => {
-                        setCollectionToDelete(collection.id);
-                        setIsConfirmationOpen(true);
-                      }}
-                    >
-                      <Delete />
-                    </IconButton>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        {loading && collections.length === 0 ? (
+          <div className="collections-state" role="status">
+            <CircularProgress size={30} />
+            <strong>Loading collections</strong>
+            <span>Gathering your company’s saved displays.</span>
+          </div>
+        ) : collections.length === 0 ? (
+          <div className="collections-state collections-state--empty">
+            <CollectionsBookmarkOutlinedIcon aria-hidden="true" />
+            <strong>No collections yet</strong>
+            <span>
+              Create a collection to group displays for a project, account, or
+              presentation.
+            </span>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<AddRoundedIcon />}
+              onClick={() => setShowCreateCollectionDialog(true)}
+            >
+              Create your first collection
+            </Button>
+          </div>
+        ) : visibleCollections.length === 0 ? (
+          <div className="collections-state">
+            <SearchOutlinedIcon aria-hidden="true" />
+            <strong>No matching collections</strong>
+            <span>Try a broader name or description.</span>
+          </div>
+        ) : (
+          <div className="collections-grid">
+            {visibleCollections.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                sharing={sharingCollectionId === collection.id}
+                onView={handleCollectionClick}
+                onShare={handleCopyLink}
+                onDelete={setCollectionToDelete}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       <CollectionForm
         isOpen={showCreateCollectionDialog}
         onAddCollection={handleAddCollection}
         onClose={() => setShowCreateCollectionDialog(false)}
       />
-
       <CustomConfirmation
-        isOpen={isConfirmationOpen}
-        onClose={() => setIsConfirmationOpen(false)}
+        isOpen={Boolean(collectionToDelete)}
+        onClose={() => {
+          if (!deleting) setCollectionToDelete(null);
+        }}
         onConfirm={handleDeleteCollectionConfirmed}
-        message={`Are you sure you want to delete "${
-          collections.find((c) => c.id === collectionToDelete)?.name ||
-          "this collection"
-        }"?`}
+        loading={deleting}
+        title="Delete collection?"
+        message={`Delete “${selectedCollectionName || "this collection"}”? The posts will remain in the activity feed.`}
       />
-    </div>
+    </main>
   );
 };
 

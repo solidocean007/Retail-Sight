@@ -100,6 +100,8 @@ function AppContent() {
     pathname.startsWith("/new-company-invite");
 
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
+  const isStandalonePostRoute =
+    pathname.startsWith("/post/") || pathname.startsWith("/p/");
 
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
@@ -143,14 +145,16 @@ function AppContent() {
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    const unsubscribe = subscribeToForegroundMessages((payload: PushPayload) => {
-      const d = payload?.data || {};
-      const title = payload?.notification?.title || d.title || "";
-      const body = payload?.notification?.body || d.body || "";
-      const text = [title, body].filter(Boolean).join(" — ");
+    const unsubscribe = subscribeToForegroundMessages(
+      (payload: PushPayload) => {
+        const d = payload?.data || {};
+        const title = payload?.notification?.title || d.title || "";
+        const body = payload?.notification?.body || d.body || "";
+        const text = [title, body].filter(Boolean).join(" — ");
 
-      if (text) dispatch(showMessage(text));
-    });
+        if (text) dispatch(showMessage(text));
+      },
+    );
 
     return () => {
       unsubscribe();
@@ -233,7 +237,9 @@ function AppContent() {
           {/* Main layout frame */}
           <div className="page-layout-frame">
             <AppRoutes />
-            {!isPublicRoute && !isAuthRoute && <Footer />}
+            {!isPublicRoute && !isAuthRoute && !isStandalonePostRoute && (
+              <Footer />
+            )}
           </div>
 
           {snackbar.current && (

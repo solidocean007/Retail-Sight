@@ -196,3 +196,115 @@
     display: flex;
   }
 }
+
+/* Access-page inspired authenticated navigation. */
+.header-bar {
+  min-height: 72px;
+  padding: 0.6rem clamp(0.8rem, 3vw, 2.5rem);
+  border-bottom: 1px solid rgba(115, 221, 255, 0.16);
+  background:
+    linear-gradient(145deg, rgba(34, 108, 170, 0.25), transparent 42%),
+    linear-gradient(165deg, #0b2946 0%, #071a2f 72%, #061321 100%);
+  box-shadow: 0 10px 30px rgba(7, 26, 47, 0.18);
+  color: #fff;
+}
+
+.website-title {
+  width: auto;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: default;
+}
+
+.header-brand-button {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.header-brand-button:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid rgba(115, 221, 255, 0.72);
+  outline-offset: 3px;
+}
+
+.header-brand-logo {
+  height: 46px;
+}
+
+.header-details {
+  max-width: 55%;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.header-buttons {
+  gap: 0.65rem;
+}
+
+.header-buttons .button-primary {
+  min-height: 38px;
+  padding: 0.55rem 1rem;
+  border: 1px solid rgba(115, 221, 255, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  color: #f5fbff;
+  font-weight: 750;
+}
+
+.capture-display-btn .button-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #1677c8, #299eea);
+  box-shadow: 0 7px 18px rgba(22, 119, 200, 0.32);
+}
+
+.hamburger-menu-button,
+.notification-box .MuiIconButton-root {
+  color: #fff;
+}
+
+.version-text,
+.up-to-date-message {
+  color: rgba(222, 239, 252, 0.66);
+}
+
+.company-name-app-state h5 {
+  max-width: 160px;
+  margin: 0;
+  color: #f7fbff;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .header-bar {
+    min-height: 62px;
+    padding-inline: 0.75rem;
+  }
+
+  .header-brand-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .company-name-app-state {
+    align-items: flex-start;
+  }
+
+  .company-name-app-state h5 {
+    max-width: 145px;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

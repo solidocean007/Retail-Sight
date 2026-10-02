@@ -1,14 +1,19 @@
 import { useMemo, useState } from "react";
-import { DisplayGalloProgram, GalloProgramType } from "../../../utils/types";
-import { EnrichedGalloProgram } from "./GalloGoalImporter";
+import { DisplayGalloProgram } from "../../../utils/types";
 import "./galloProgramManager.css";
+
+export type GalloProgramImportAudit = {
+  importedAtMs?: number;
+  importedByName?: string;
+};
 
 interface Props {
   selectedEnv: "prod" | "dev" | null;
   programs: DisplayGalloProgram[]; // already normalized upstream
   importedProgramIds: Set<string>;
-  selectedProgram: GalloProgramType | null;
-  onSelectProgram: (program: GalloProgramType | null) => void;
+  importedProgramAudit: Map<string, GalloProgramImportAudit>;
+  selectedProgram: DisplayGalloProgram | null;
+  onSelectProgram: (program: DisplayGalloProgram | null) => void;
 }
 
 const PAGE_SIZE = 15;
@@ -16,13 +21,26 @@ const PAGE_SIZE = 15;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const NEW_WINDOW_MS = 7 * DAY_MS; // ← tweakable UX lever
 
-const isRecent = (p: DisplayGalloProgram) =>
-  Date.now() - p.updatedAtMs < NEW_WINDOW_MS;
+const isRecent = (p: DisplayGalloProgram) => {
+  if (p.firstAvailableAtMs === undefined) return false;
+
+  const age = Date.now() - p.firstAvailableAtMs;
+  return age >= 0 && age < NEW_WINDOW_MS;
+};
+
+const formatAuditDate = (timestamp?: number) =>
+  timestamp === undefined
+    ? "Not recorded"
+    : new Date(timestamp).toLocaleString([], {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
 
 const GalloProgramManager: React.FC<Props> = ({
   selectedEnv,
   programs,
   importedProgramIds,
+  importedProgramAudit,
   selectedProgram,
   onSelectProgram,
 }) => {
@@ -45,7 +63,11 @@ const GalloProgramManager: React.FC<Props> = ({
       p.programTitle.toLowerCase().includes(search.toLowerCase())
     );
 
-    const sorted = [...filtered].sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+    const sorted = [...filtered].sort(
+      (a, b) =>
+        (b.firstAvailableAtMs ?? b.updatedAtMs) -
+        (a.firstAvailableAtMs ?? a.updatedAtMs)
+    );
 
     const active = sorted.filter((p) => p.status === "active");
     const expired = sorted.filter((p) => p.status === "expired");
@@ -97,6 +119,7 @@ const GalloProgramManager: React.FC<Props> = ({
             {visible.map((p) => {
               const selected = selectedProgram?.programId === p.programId;
               const imported = importedProgramIds.has(p.programId);
+              const importAudit = importedProgramAudit.get(p.programId);
 
               return (
                 <div
@@ -111,7 +134,7 @@ const GalloProgramManager: React.FC<Props> = ({
                       <div className="program-title">{p.programTitle}</div>
                       {isRecent(p) && (
                         <span className="badge badge-new">
-                          Added · {new Date(p.updatedAtMs).toLocaleDateString()}
+                          New arrival · {formatAuditDate(p.firstAvailableAtMs)}
                         </span>
                       )}
                     </div>
@@ -149,6 +172,29 @@ const GalloProgramManager: React.FC<Props> = ({
                     <div>Start: {p.startDate}</div>
                     <div>End: {p.endDate}</div>
                   </div>
+
+                  <dl className="program-audit">
+                    <div>
+                      <dt>Available in Displaygram</dt>
+                      <dd>{formatAuditDate(p.firstAvailableAtMs)}</dd>
+                    </div>
+                    <div>
+                      <dt>Imported</dt>
+                      <dd>
+                        {imported
+                          ? formatAuditDate(importAudit?.importedAtMs)
+                          : "Not yet"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Imported by</dt>
+                      <dd>
+                        {imported
+                          ? importAudit?.importedByName ?? "Not recorded"
+                          : "—"}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
               );
             })}

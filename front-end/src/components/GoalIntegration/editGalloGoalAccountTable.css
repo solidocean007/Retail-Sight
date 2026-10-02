@@ -1,82 +1,95 @@
 .edit-goal-accounts-root {
   display: flex;
+  min-width: 0;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.edit-goal-accounts-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.edit-goal-accounts-tools__result {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .edit-goal-accounts-warning {
-  background: #fff8e1;
-  border: 1px solid #ffe08a;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 12px;
-  font-size: 13px;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--warning-border, #d69e2e);
+  border-radius: 9px;
+  background: var(--warning-bg, rgba(214, 158, 46, 0.12));
+  color: var(--text-color);
+  font-size: 0.76rem;
 }
 
-.edit-goal-accounts-search {
-  margin-bottom: 12px;
+.edit-goal-accounts-empty {
+  display: grid;
+  min-height: 130px;
+  border: 1px dashed var(--card-outline);
+  border-radius: 10px;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.edit-goal-accounts-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--card-outline);
+  background: var(--surface-elevated) !important;
+}
+
+.edit-goal-accounts-table-wrap .MuiTableCell-root {
+  border-color: var(--card-outline);
+  color: var(--text-color);
+}
+
+.edit-goal-accounts-row-unresolved {
+  background: var(--warning-bg, rgba(214, 158, 46, 0.1));
+  box-shadow: inset 3px 0 0 var(--warning-color, #d69e2e);
+}
+
+.edit-goal-account-number,
+.edit-gallo-card-account-header small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.68rem;
 }
 
 .edit-goal-accounts-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  gap: 0.7rem;
 }
 
-.edit-goal-accounts-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
-  background: #fff;
-}
-
-.edit-gallo-card-account-user {
-  display: flex;
-  width: 100%;
-}
-
-.edit-gallo-goal-card, .edit-gallo-card-account-status {
-  display: flex;
-  width: 100%;
+.edit-gallo-goal-card {
+  display: grid;
+  padding: 0.8rem;
+  border: 1px solid var(--card-outline);
+  border-radius: 10px;
+  gap: 0.7rem;
+  background: var(--surface-elevated);
 }
 
 .edit-gallo-card-account-header {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.edit-goal-accounts-row-resolved {
-  background: none;
-  border-color: none;
-  border-bottom: 1px solid black;
-  margin-bottom: 1rem;
+.edit-gallo-card-account-user {
+  display: grid;
+  gap: 0.35rem;
 }
 
-.edit-goal-accounts-row-unresolved {
-  background: var(--warning-bg);
-  border-left: 4px solid var(--warning-color);
+@media (max-width: 700px) {
+  .edit-goal-accounts-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
-
-.edit-goal-accounts-card .card-row {
-  margin-bottom: 8px;
-}
-
-.edit-goal-accounts-card .card-row.title {
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.edit-goal-accounts-card .label {
-  font-size: 11px;
-  color: #666;
-  display: block;
-  margin-bottom: 2px;
-}
-
-.gallo-edit-row.inactive {
-  opacity: var(--inactive-opacity);
-}
-
-.gallo-edit-row.invalid {
-  background: var(--warning-bg);
-  border-color: var(--warning-border);
-}
-

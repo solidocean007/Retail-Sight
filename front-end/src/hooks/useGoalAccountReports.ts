@@ -1,6 +1,14 @@
 // src/hooks/useGoalAccountReports.ts
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  type QueryConstraint,
+} from "firebase/firestore";
+import { useSelector } from "react-redux";
+import { selectUser } from "../Slices/userSlice";
 import { db } from "../utils/firebase";
 import { GoalAccountReport } from "../types/goalReports";
 
@@ -18,20 +26,34 @@ export const useGoalAccountReports = (
   goalId: string | undefined,
   enabled = true,
 ) => {
+  const currentUser = useSelector(selectUser);
   const [reports, setReports] = useState<GoalAccountReport[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!goalId || !enabled) {
+    if (!goalId || !enabled || !currentUser?.uid) {
       setReports([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
+    const canReviewCompanyReports = [
+      "admin",
+      "super-admin",
+      "developer",
+    ].includes(currentUser.role ?? "");
+    const constraints: QueryConstraint[] = [where("goalId", "==", goalId)];
+
+    // Firestore rules now keep candid feedback scoped to the author, their
+    // direct supervisor, and company admins. Personal goal cards only need
+    // the signed-in rep's report, so constrain that query at the source.
+    if (!canReviewCompanyReports) {
+      constraints.push(where("userId", "==", currentUser.uid));
+    }
 
     const unsubscribe = onSnapshot(
-      query(collection(db, "goalAccountReports"), where("goalId", "==", goalId)),
+      query(collection(db, "goalAccountReports"), ...constraints),
       (snap) => {
         setReports(
           snap.docs.map((d) => ({
@@ -48,7 +70,7 @@ export const useGoalAccountReports = (
     );
 
     return unsubscribe;
-  }, [goalId, enabled]);
+  }, [currentUser?.role, currentUser?.uid, enabled, goalId]);
 
   return { reports, loading };
 };
