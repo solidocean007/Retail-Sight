@@ -1,63 +1,31 @@
-import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 
 import "./filterSummaryBanner.css";
 
 interface FilterSummaryBannerProps {
-  filteredCount: number;
-  filterText: string;
   onClear: () => void;
   onEdit: () => void;
-  fetchedAt: string | null;
   isLoading?: boolean;
 }
 
-const formatFetchedAt = (value: string | null): string | null => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-};
-
 const FilterSummaryBanner = ({
-  filteredCount,
-  filterText,
   onClear,
   onEdit,
-  fetchedAt,
   isLoading = false,
 }: FilterSummaryBannerProps) => {
-  const updatedAt = formatFetchedAt(fetchedAt);
-  const isEmpty = !isLoading && filteredCount === 0;
-
   return (
     <section
-      className={`filter-summary-banner${isLoading ? " is-loading" : ""}${
-        isEmpty ? " is-empty" : ""
-      }`}
+      className={`filter-summary-banner${isLoading ? " is-loading" : ""}`}
       aria-live="polite"
       aria-busy={isLoading}
+      aria-label={isLoading ? "Updating filtered feed" : "Filters are active"}
     >
-      <div className="filter-summary-banner__icon" aria-hidden="true">
-        {isLoading ? <RefreshRoundedIcon /> : <FilterAltOutlinedIcon />}
-      </div>
-
-      <div className="filter-summary-banner__copy">
-        <strong>
-          {isLoading
-            ? "Updating displays…"
-            : isEmpty
-              ? "No displays match"
-              : `${filteredCount} display${filteredCount === 1 ? "" : "s"} match`}
-        </strong>
-        {filterText && <span>{filterText}</span>}
-        {!isLoading && updatedAt && <small>Updated {updatedAt}</small>}
+      <div className="filter-summary-banner__state">
+        <span className="filter-summary-banner__icon" aria-hidden="true">
+          {isLoading ? <RefreshRoundedIcon /> : <TuneRoundedIcon />}
+        </span>
+        <strong>{isLoading ? "Updating…" : "Filters active"}</strong>
       </div>
 
       <div className="filter-summary-banner__actions">

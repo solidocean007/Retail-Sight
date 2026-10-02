@@ -60,6 +60,19 @@ interface EnhancedFilterSideBarProps {
 const summarize = (values: Array<string | null | undefined>): string =>
   values.filter(Boolean).join(" · ");
 
+const formatResultUpdatedAt = (value: string | null): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+};
+
 const EnhancedFilterSidebar = ({
   appliedFilters,
   onFiltersApplied,
@@ -87,6 +100,18 @@ const EnhancedFilterSidebar = ({
   ) as CompanyAccountType[];
   const galloGoals = useSelector(
     (state: RootState) => state.galloGoals.galloGoals,
+  );
+  const companyResultCount = useSelector(
+    (state: RootState) => state.posts.filteredPostCount,
+  );
+  const sharedResultCount = useSelector(
+    (state: RootState) => state.sharedPosts.filteredSharedPostCount,
+  );
+  const companyResultFetchedAt = useSelector(
+    (state: RootState) => state.posts.filteredPostFetchedAt,
+  );
+  const sharedResultFetchedAt = useSelector(
+    (state: RootState) => state.sharedPosts.filteredSharedPostFetchedAt,
   );
 
   const sourcePosts = isSharedFeed ? sharedPosts : companyPosts;
@@ -201,7 +226,7 @@ const EnhancedFilterSidebar = ({
     useNetworkAccountFilters,
   ]);
 
-  const { applyFilters } = useFeedFilterResults({
+  const { applyFilters, isApplying } = useFeedFilterResults({
     companyId,
     feedType,
     newestPostDate,
@@ -299,6 +324,11 @@ const EnhancedFilterSidebar = ({
 
   const activeFilterCount = getActiveFilterCount(draftFilters);
   const hasDraftFilters = hasActiveFilters(draftFilters);
+  const resultCount = isSharedFeed ? sharedResultCount : companyResultCount;
+  const resultFetchedAt = isSharedFeed
+    ? sharedResultFetchedAt
+    : companyResultFetchedAt;
+  const formattedResultFetchedAt = formatResultUpdatedAt(resultFetchedAt);
 
   const updateFilters = (
     changes: Partial<PostQueryFilters>,
@@ -408,6 +438,30 @@ const EnhancedFilterSidebar = ({
         </div>
         <span className="filter-count-badge">{activeFilterCount} active</span>
       </header>
+
+      {(activeFilterCount > 0 || isApplying) && (
+        <div
+          className={`filter-panel-result-status${
+            isApplying ? " is-loading" : ""
+          }`}
+          aria-live="polite"
+          aria-busy={isApplying}
+        >
+          <span className="filter-panel-result-status__dot" aria-hidden="true" />
+          <div>
+            <strong>
+              {isApplying
+                ? "Updating results…"
+                : resultCount === 0
+                  ? "No displays match"
+                  : `${resultCount} display${resultCount === 1 ? "" : "s"} match`}
+            </strong>
+            {!isApplying && formattedResultFetchedAt && (
+              <small>Updated {formattedResultFetchedAt}</small>
+            )}
+          </div>
+        </div>
+      )}
 
       {activeFilterCount > 0 ? (
         <FilterChips
@@ -693,7 +747,7 @@ const EnhancedFilterSidebar = ({
           className="filter-panel-done"
           onClick={handleViewResults}
         >
-          Done
+          Show results
         </button>
       </footer>
     </aside>

@@ -22,13 +22,10 @@ import {
   PostQueryFilters,
   PostWithID,
 } from "../../utils/types";
-import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
+import { selectUser } from "../../Slices/userSlice";
 import FilterSummaryBanner from "./../FilterSummaryBanner";
 import EnhancedFilterSidebar from "./../FilterSideBar/EnhancedFilterSideBar";
-import {
-  clearAllFilters,
-  getFilterSummaryText,
-} from "./../FilterSideBar/utils/filterUtils";
+import { clearAllFilters } from "./../FilterSideBar/utils/filterUtils";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredPostsBatch } from "../../thunks/postsThunks";
 import { fetchFilteredSharedPostsBatch } from "../../thunks/sharedPostsThunks";
@@ -83,7 +80,6 @@ const UserHomePage = () => {
   const navigate = useNavigate();
   // const companyId = useSelector(selectUser)?.companyId;
   const effectiveCompanyId = useSelector(selectEffectiveCompanyId);
-  const companyUsers = useSelector(selectCompanyUsers);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -112,13 +108,6 @@ const UserHomePage = () => {
     Record<FeedType, boolean>
   >({ company: false, shared: false });
   const appliedFilters = appliedFiltersByFeed[activeFeedType];
-  const filterText = useMemo(
-    () =>
-      appliedFilters
-        ? getFilterSummaryText(appliedFilters, companyUsers || [])
-        : "",
-    [appliedFilters, companyUsers],
-  );
   // const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
   const [postViewerOptions, setPostViewerOptions] =
     useState<OpenPostViewerOptions | null>(null);
@@ -128,30 +117,11 @@ const UserHomePage = () => {
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
 
-  // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
-  const filteredCount = useSelector(
-    (state: RootState) => state.posts.filteredPostCount,
-  );
-  const fetchedAt = useSelector(
-    (s: RootState) => s.posts.filteredPostFetchedAt,
-  );
-  const sharedFetchedAt = useSelector(
-    (s: RootState) => s.sharedPosts.filteredSharedPostFetchedAt,
-  );
-  const displayFetchedAt =
-    activeFeedType === "shared" ? sharedFetchedAt : fetchedAt;
-
-  const filteredSharedPostCount = useSelector(
-    (s: RootState) => s.sharedPosts.filteredSharedPostCount,
-  );
-
   const isFilteredMode =
     activeFeedType === "shared"
       ? activeSharedPostSet === "filteredPosts"
       : activeCompanyPostSet === "filteredPosts";
 
-  const displayCount =
-    activeFeedType === "shared" ? filteredSharedPostCount : filteredCount;
   const filtersApplying = filtersApplyingByFeed[activeFeedType];
 
   const feedContextLabel =
@@ -592,11 +562,8 @@ const UserHomePage = () => {
           <div className="activity-feed-container">
             {(isFilteredMode || filtersApplying) && (
               <FilterSummaryBanner
-                filteredCount={displayCount}
-                filterText={filterText}
                 onClear={clearSearch}
                 onEdit={toggleFilterMenu}
-                fetchedAt={displayFetchedAt}
                 isLoading={filtersApplying}
               />
             )}
