@@ -201,13 +201,14 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   return (
     <>
       <header className="header-bar">
-        <button
-          type="button"
-          className="website-title"
-          onClick={() => navigate("/")}
-          aria-label="Go to Displaygram home"
-        >
-          <div className="title-and-version">
+        <div className="website-title">
+          <button
+            type="button"
+            className="header-brand-button"
+            onClick={() => navigate("/splash")}
+            aria-label="View the Displaygram website"
+          >
+            <div className="title-and-version">
             <img
               src={
                 isMobileLogo
@@ -232,7 +233,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 </Tooltip>
               </div>
             )}
-          </div>
+            </div>
+          </button>
           <div className="company-name-app-state">
             <h5>{currentCompany}</h5>
             {!upToDate ? (
@@ -251,7 +253,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               <p className="up-to-date-message">✅ App is up to date</p>
             )}
           </div>
-        </button>
+        </div>
 
         {!currentUser ? (
           <button onClick={goToLogin}>Login</button>

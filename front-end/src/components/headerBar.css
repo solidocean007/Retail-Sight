@@ -217,7 +217,24 @@
   background: transparent;
   color: #fff;
   font: inherit;
+  cursor: default;
+}
+
+.header-brand-button {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
+}
+
+.header-brand-button:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid rgba(115, 221, 255, 0.72);
+  outline-offset: 3px;
 }
 
 .header-brand-logo {
