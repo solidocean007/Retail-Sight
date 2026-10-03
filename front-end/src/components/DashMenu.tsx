@@ -34,6 +34,7 @@ import {
   selectIsSupplier,
 } from "../Slices/currentCompanySlice";
 import { selectUser } from "../Slices/userSlice";
+import { useTeamFeedbackCount } from "../hooks/useTeamFeedbackCount";
 
 type DashMenuProps = {
   activeMode: DashboardModeType;
@@ -94,6 +95,7 @@ const DashMenu = ({
   const currentCompany = useSelector(selectCurrentCompany);
   const isSupplier = useSelector(selectIsSupplier);
   const pendingImports = useSelector(selectPendingAccountImports);
+  const teamFeedbackCount = useTeamFeedbackCount();
   const role = user?.role;
   const companyName =
     currentCompany?.companyName || user?.company || "Displaygram";
@@ -215,6 +217,13 @@ const DashMenu = ({
               {canAccessMode("SupervisorFeedbackMode") && (
                 <DashboardNavItem
                   active={activeMode === "SupervisorFeedbackMode"}
+                  badge={
+                    teamFeedbackCount > 0
+                      ? teamFeedbackCount > 99
+                        ? "99+"
+                        : String(teamFeedbackCount)
+                      : undefined
+                  }
                   icon={<FlagIcon />}
                   label="Team Feedback"
                   onClick={() => selectMode("SupervisorFeedbackMode")}

@@ -103,11 +103,38 @@
   text-transform: none;
 }
 
+.team-feedback-live {
+  display: inline-flex;
+  min-height: 32px;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--feedback-line-strong);
+  border-radius: 999px;
+  align-items: center;
+  gap: 0.38rem;
+  background: color-mix(in srgb, var(--feedback-surface-strong) 82%, transparent);
+  color: var(--feedback-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.team-feedback-live > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #23aa78;
+  box-shadow: 0 0 0 4px color-mix(in srgb, #23aa78 14%, transparent);
+}
+
 .team-feedback-summary {
   display: grid;
   margin-bottom: 1rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.team-feedback-page--admin .team-feedback-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .team-feedback-summary > div {
@@ -137,6 +164,21 @@
       circle at 100% 0%,
       var(--feedback-warning-soft),
       transparent 50%
+    ),
+    var(--feedback-surface);
+}
+
+.team-feedback-summary > div.has-help {
+  border-color: color-mix(
+    in srgb,
+    var(--primary-blue) 38%,
+    var(--feedback-line)
+  );
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--primary-blue) 14%, transparent),
+      transparent 52%
     ),
     var(--feedback-surface);
 }
@@ -266,6 +308,7 @@
   border: 1px solid var(--feedback-line);
   border-radius: 12px;
   background: var(--feedback-surface-muted);
+  flex-wrap: wrap;
 }
 
 .team-feedback-filters button {
@@ -393,6 +436,11 @@
   color: var(--feedback-warning);
 }
 
+.team-feedback-returned-badge.is-help {
+  background: color-mix(in srgb, var(--primary-blue) 11%, transparent);
+  color: var(--primary-blue);
+}
+
 .team-feedback-returned-badge svg {
   width: 12px;
   height: 12px;
@@ -475,6 +523,52 @@
   margin: 0;
   color: var(--feedback-text);
   font-size: 0.93rem;
+}
+
+.team-feedback-card__state {
+  display: inline-flex;
+  min-height: 22px;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--feedback-line);
+  border-radius: 999px;
+  align-items: center;
+  background: var(--feedback-surface-muted);
+  color: var(--feedback-muted);
+  font-size: 0.61rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.team-feedback-card__state.state-open {
+  border-color: color-mix(in srgb, var(--primary-blue) 35%, var(--feedback-line));
+  background: color-mix(in srgb, var(--primary-blue) 9%, var(--feedback-surface));
+  color: var(--primary-blue);
+}
+
+.team-feedback-card__state.state-returned {
+  border-color: color-mix(in srgb, var(--feedback-warning) 35%, var(--feedback-line));
+  background: var(--feedback-warning-soft);
+  color: var(--feedback-warning);
+}
+
+.team-feedback-card__state.state-routed {
+  border-color: color-mix(in srgb, #7656ad 35%, var(--feedback-line));
+  background: color-mix(in srgb, #7656ad 10%, var(--feedback-surface));
+  color: color-mix(in srgb, #7656ad 78%, var(--feedback-text));
+}
+
+[data-theme="dark"] .team-feedback-card__state.state-routed {
+  color: #c1a1f0;
+}
+
+.team-feedback-card__state.state-resolved {
+  border-color: color-mix(in srgb, #16845b 35%, var(--feedback-line));
+  background: color-mix(in srgb, #16845b 9%, var(--feedback-surface));
+  color: color-mix(in srgb, #16845b 78%, var(--feedback-text));
+}
+
+[data-theme="dark"] .team-feedback-card__state.state-resolved {
+  color: #72ddb5;
 }
 
 .team-feedback-card__identity p {
@@ -826,6 +920,10 @@
     gap: 0.45rem;
   }
 
+  .team-feedback-page--admin .team-feedback-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .team-feedback-summary > div {
     min-height: 82px;
     padding: 0.7rem;
@@ -844,7 +942,7 @@
   }
 
   .team-feedback-filters button {
-    flex: 1;
+    flex: 1 1 auto;
   }
 
   .team-feedback-group__meta .team-feedback-age {
@@ -894,6 +992,11 @@
 
   .team-feedback-refresh .MuiButton-startIcon {
     margin: 0;
+  }
+
+  .team-feedback-live {
+    padding-inline: 0.5rem;
+    font-size: 0;
   }
 
   .team-feedback-panel {

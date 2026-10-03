@@ -11,12 +11,14 @@ import {
   getDoc,
   getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
   updateDoc,
   where,
+  type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { stripUndefined } from "../firestore/stripUndefined";
@@ -306,6 +308,123 @@ export const fetchFollowUpsForSupervisor = async (
   }
 
   return results;
+};
+
+type ReportsListener = (reports: GoalAccountReport[]) => void;
+type ReportsErrorListener = (error: Error) => void;
+
+const newestFirst = (a: GoalAccountReport, b: GoalAccountReport) =>
+  new Date(b.updatedAt || b.createdAt).getTime() -
+  new Date(a.updatedAt || a.createdAt).getTime();
+
+/**
+ * Live, company-wide report history for the admin inbox.
+ *
+ * The companyId constraint is required both for query cost and so Firestore
+ * rules can prove the reader is not asking for another company's feedback.
+ */
+export const subscribeToCompanyGoalAccountReports = (
+  companyId: string,
+  onReports: ReportsListener,
+  onError: ReportsErrorListener,
+): Unsubscribe =>
+  onSnapshot(
+    query(
+      collection(db, COLLECTION),
+      where("companyId", "==", companyId),
+      orderBy("createdAt", "desc"),
+      limit(500),
+    ),
+    (snapshot) =>
+      onReports(
+        snapshot.docs.map((report) => ({
+          ...(report.data() as GoalAccountReport),
+          id: report.id,
+        })),
+      ),
+    (error) => onError(error),
+  );
+
+/** Live unresolved count source for the dashboard navigation badge. */
+export const subscribeToCompanyOpenGoalAccountReports = (
+  companyId: string,
+  onReports: ReportsListener,
+  onError: ReportsErrorListener,
+): Unsubscribe =>
+  onSnapshot(
+    query(
+      collection(db, COLLECTION),
+      where("companyId", "==", companyId),
+      where("resolvedAt", "==", null),
+      orderBy("createdAt", "desc"),
+      limit(500),
+    ),
+    (snapshot) =>
+      onReports(
+        snapshot.docs.map((report) => ({
+          ...(report.data() as GoalAccountReport),
+          id: report.id,
+        })),
+      ),
+    (error) => onError(error),
+  );
+
+/**
+ * Live follow-ups for a supervisor's active direct reports.
+ *
+ * Firestore limits `in` filters to 30 values. Each chunk owns one listener;
+ * results are merged by document id so a reporting-structure refresh cannot
+ * duplicate a card.
+ */
+export const subscribeToSupervisorFollowUps = (
+  companyId: string,
+  repUids: string[],
+  onReports: ReportsListener,
+  onError: ReportsErrorListener,
+): Unsubscribe => {
+  if (!companyId || !repUids.length) {
+    onReports([]);
+    return () => undefined;
+  }
+
+  const CHUNK = 30;
+  const chunks: string[][] = [];
+  for (let index = 0; index < repUids.length; index += CHUNK) {
+    chunks.push(repUids.slice(index, index + CHUNK));
+  }
+
+  const reportsByChunk = new Map<number, GoalAccountReport[]>();
+  const emit = () => {
+    const reportsById = new Map<string, GoalAccountReport>();
+    reportsByChunk.forEach((reports) =>
+      reports.forEach((report) => reportsById.set(report.id, report)),
+    );
+    onReports([...reportsById.values()].sort(newestFirst));
+  };
+
+  const unsubscribes = chunks.map((uids, chunkIndex) =>
+    onSnapshot(
+      query(
+        collection(db, COLLECTION),
+        where("companyId", "==", companyId),
+        where("userId", "in", uids),
+        where("resolution", "==", "follow_up"),
+      ),
+      (snapshot) => {
+        reportsByChunk.set(
+          chunkIndex,
+          snapshot.docs.map((report) => ({
+            ...(report.data() as GoalAccountReport),
+            id: report.id,
+          })),
+        );
+        emit();
+      },
+      (error) => onError(error),
+    ),
+  );
+
+  return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
 };
 
 /** Undo triage — puts reports back in the open queue. */

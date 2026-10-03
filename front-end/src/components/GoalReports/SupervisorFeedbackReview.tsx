@@ -17,7 +17,7 @@ import {
   InputAdornment,
   TextField,
 } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { showMessage } from "../../Slices/snackbarSlice";
@@ -29,11 +29,12 @@ import {
 } from "../../types/goalReports";
 import {
   confirmReportAsSupervisor,
-  fetchFollowUpsForSupervisor,
   keepWorkingReport,
   notifyReportDecision,
+  subscribeToSupervisorFollowUps,
 } from "../../utils/goalReports/goalAccountReportHelpers";
 import { useAppDispatch } from "../../utils/store";
+import AdminTeamFeedbackInbox from "./AdminTeamFeedbackInbox";
 
 import "./supervisorFeedbackReview.css";
 
@@ -43,13 +44,13 @@ type PendingAction = {
   scopeLabel: string;
 };
 
-type QueueFilter = "all" | "new" | "returned";
+type QueueFilter = "all" | "help" | "aging";
 
 type RepGroup = {
   uid: string;
   name: string;
   reports: GoalAccountReport[];
-  revisitCount: number;
+  helpCount: number;
   oldestWaitingDays: number;
 };
 
@@ -91,19 +92,18 @@ const buildGroups = (
             Number(Boolean(a.supervisorConfirmedAt)) ||
           waitingDays(b) - waitingDays(a),
       ),
-      revisitCount: list.filter((report) => report.supervisorConfirmedAt)
-        .length,
+      helpCount: list.filter(isHelpRequest).length,
       oldestWaitingDays: Math.max(...list.map(waitingDays), 0),
     }))
     .sort(
       (a, b) =>
-        b.revisitCount - a.revisitCount ||
+        b.helpCount - a.helpCount ||
         b.oldestWaitingDays - a.oldestWaitingDays ||
         a.name.localeCompare(b.name),
     );
 };
 
-const SupervisorFeedbackReview = () => {
+const SupervisorFollowUpReview = () => {
   const me = useSelector(selectUser);
   const selectedCompanyUsers = useSelector(selectCompanyUsers);
   const companyUsers = useMemo(
@@ -121,6 +121,7 @@ const SupervisorFeedbackReview = () => {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<QueueFilter>("all");
+  const [refreshVersion, setRefreshVersion] = useState(0);
 
   const nameByUid = useMemo(() => {
     const names: Record<string, string> = {};
@@ -143,7 +144,7 @@ const SupervisorFeedbackReview = () => {
     [companyUsers, me?.uid],
   );
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (!me?.companyId || !myRepUids.length) {
       setReports([]);
       setError(null);
@@ -153,19 +154,20 @@ const SupervisorFeedbackReview = () => {
 
     setLoading(true);
     setError(null);
-    try {
-      setReports(await fetchFollowUpsForSupervisor(me.companyId, myRepUids));
-    } catch (loadError) {
-      console.error("Failed to load supervisor follow-ups:", loadError);
-      setError("Team feedback could not be loaded. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [me?.companyId, myRepUids]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+    return subscribeToSupervisorFollowUps(
+      me.companyId,
+      myRepUids,
+      (nextReports) => {
+        setReports(nextReports);
+        setLoading(false);
+      },
+      (loadError) => {
+        console.error("Failed to load supervisor follow-ups:", loadError);
+        setError("Team feedback could not be loaded. Please try again.");
+        setLoading(false);
+      },
+    );
+  }, [me?.companyId, myRepUids, refreshVersion]);
 
   const allGroups = useMemo(
     () => buildGroups(reports, nameByUid),
@@ -176,9 +178,8 @@ const SupervisorFeedbackReview = () => {
     const term = search.trim().toLowerCase();
 
     return reports.filter((report) => {
-      const isReturned = Boolean(report.supervisorConfirmedAt);
-      if (filter === "new" && isReturned) return false;
-      if (filter === "returned" && !isReturned) return false;
+      if (filter === "help" && !isHelpRequest(report)) return false;
+      if (filter === "aging" && waitingDays(report) < 3) return false;
       if (!term) return true;
 
       const searchable = [
@@ -219,9 +220,7 @@ const SupervisorFeedbackReview = () => {
     );
   }, [groups]);
 
-  const revisitCount = reports.filter((report) =>
-    Boolean(report.supervisorConfirmedAt),
-  ).length;
+  const helpCount = reports.filter(isHelpRequest).length;
 
   const openAction = (
     actionReports: GoalAccountReport[],
@@ -295,7 +294,6 @@ const SupervisorFeedbackReview = () => {
       }
 
       setPending(null);
-      await load();
     } catch (actionError) {
       console.error("Supervisor action failed:", actionError);
       dispatch(
@@ -316,7 +314,7 @@ const SupervisorFeedbackReview = () => {
           <div>
             <span className="team-feedback-eyebrow">Management</span>
             <h1>Team feedback</h1>
-            <p>Review account feedback routed to you by an admin.</p>
+            <p>Review account follow-ups routed to your direct reports.</p>
           </div>
         </div>
         <Button
@@ -327,7 +325,7 @@ const SupervisorFeedbackReview = () => {
             loading ? <CircularProgress size={15} /> : <RefreshRoundedIcon />
           }
           disabled={loading || !myRepUids.length}
-          onClick={() => void load()}
+          onClick={() => setRefreshVersion((current) => current + 1)}
         >
           Refresh
         </Button>
@@ -345,10 +343,10 @@ const SupervisorFeedbackReview = () => {
             <strong>{allGroups.length.toLocaleString()}</strong>
             <small>Reps in the queue</small>
           </div>
-          <div className={revisitCount > 0 ? "has-returned" : ""}>
-            <span>Returned</span>
-            <strong>{revisitCount.toLocaleString()}</strong>
-            <small>Need another look</small>
+          <div className={helpCount > 0 ? "has-help" : ""}>
+            <span>Needs help</span>
+            <strong>{helpCount.toLocaleString()}</strong>
+            <small>Active requests</small>
           </div>
         </section>
       )}
@@ -385,7 +383,10 @@ const SupervisorFeedbackReview = () => {
             title="Team feedback is unavailable"
             message={error}
             action={
-              <Button variant="outlined" onClick={() => void load()}>
+              <Button
+                variant="outlined"
+                onClick={() => setRefreshVersion((current) => current + 1)}
+              >
                 Try again
               </Button>
             }
@@ -417,8 +418,8 @@ const SupervisorFeedbackReview = () => {
                 {(
                   [
                     ["all", "All"],
-                    ["new", "New"],
-                    ["returned", "Returned"],
+                    ["help", "Help requested"],
+                    ["aging", "Waiting 3+ days"],
                   ] as [QueueFilter, string][]
                 ).map(([value, label]) => (
                   <button
@@ -474,10 +475,9 @@ const SupervisorFeedbackReview = () => {
                           </small>
                         </span>
                         <span className="team-feedback-group__meta">
-                          {group.revisitCount > 0 && (
-                            <span className="team-feedback-returned-badge">
-                              <ReplayRoundedIcon />
-                              {group.revisitCount} returned
+                          {group.helpCount > 0 && (
+                            <span className="team-feedback-returned-badge is-help">
+                              {group.helpCount} need help
                             </span>
                           )}
                           <span
@@ -800,5 +800,14 @@ const EmptyFeedbackState = ({
     )}
   </div>
 );
+
+const SupervisorFeedbackReview = () => {
+  const user = useSelector(selectUser);
+  const isAdmin = ["admin", "super-admin", "developer"].includes(
+    user?.role ?? "",
+  );
+
+  return isAdmin ? <AdminTeamFeedbackInbox /> : <SupervisorFollowUpReview />;
+};
 
 export default SupervisorFeedbackReview;
