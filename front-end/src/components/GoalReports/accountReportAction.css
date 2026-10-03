@@ -6,63 +6,153 @@
    classes (0,2,0) so it wins on class count without needing !important. */
 
 .account-report-actions {
+  --account-report-surface: var(
+    --goal-table-surface,
+    var(--goals-surface-strong, #ffffff)
+  );
+  --account-report-surface-muted: var(
+    --goal-table-surface-muted,
+    var(--goals-surface-muted, #edf2f4)
+  );
+  --account-report-line: var(
+    --goal-table-line-strong,
+    var(--goals-line-strong, rgba(35, 126, 184, 0.25))
+  );
+  --account-report-text: var(
+    --goal-table-text,
+    var(--goals-text, var(--text-color, #152735))
+  );
+  --account-report-muted: var(
+    --goal-table-muted,
+    var(--goals-muted, #647885)
+  );
+  --account-report-help: #7656ad;
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
   margin-top: 0.35rem;
 }
 
+[data-theme="dark"] .account-report-actions {
+  --account-report-surface: var(
+    --goal-table-surface,
+    var(--goals-surface-strong, #102335)
+  );
+  --account-report-surface-muted: var(
+    --goal-table-surface-muted,
+    var(--goals-surface-muted, #0a1825)
+  );
+  --account-report-line: var(
+    --goal-table-line-strong,
+    var(--goals-line-strong, rgba(91, 185, 239, 0.27))
+  );
+  --account-report-text: var(
+    --goal-table-text,
+    var(--goals-text, #eef8ff)
+  );
+  --account-report-muted: var(
+    --goal-table-muted,
+    var(--goals-muted, #94aabd)
+  );
+  --account-report-help: #c1a1f0;
+}
+
 .account-report-actions .account-report-chip {
-  padding: 0.2rem 0.6rem;
+  min-height: 31px;
+  padding: 0.3rem 0.68rem;
+  border: 1px solid var(--account-report-line);
   border-radius: 999px;
-  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.5));
-  background-color: transparent;
-  color: var(--text-secondary, #666);
-  font-size: 0.75rem;
-  line-height: 1.5;
+  background: color-mix(
+    in srgb,
+    var(--account-report-surface-muted) 58%,
+    transparent
+  );
+  color: var(--account-report-text);
   cursor: pointer;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1.3;
   white-space: nowrap;
   transition:
+    background-color 0.15s ease,
     border-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .account-report-actions .account-report-chip:hover {
-  background-color: transparent;
-  border-color: var(--primary-blue, #1976d2);
-  color: var(--primary-blue, #1976d2);
+  border-color: color-mix(in srgb, var(--primary-blue, #1976d2) 62%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--primary-blue, #1976d2) 11%,
+    var(--account-report-surface)
+  );
+  color: color-mix(
+    in srgb,
+    var(--primary-blue, #1976d2) 82%,
+    var(--account-report-text)
+  );
+  transform: translateY(-1px);
+}
+
+.account-report-actions .account-report-chip:focus-visible {
+  outline: 3px solid
+    color-mix(in srgb, var(--primary-blue, #1976d2) 24%, transparent);
+  outline-offset: 2px;
 }
 
 /* Help — visually distinct because it means someone must act, unlike a
    reason report which is informational. */
 .account-report-actions .account-report-chip.help:hover {
-  border-color: var(--secondary-main, #9c27b0);
-  color: var(--secondary-main, #9c27b0);
+  border-color: color-mix(in srgb, var(--account-report-help) 62%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--account-report-help) 11%,
+    var(--account-report-surface)
+  );
+  color: var(--account-report-help);
 }
 
 /* Already reported — reads as recorded effort, not an error state. */
 .account-report-actions .account-report-chip.reported {
-  background-color: var(--primary-blue, #1976d2);
-  border-color: var(--primary-blue, #1976d2);
-  color: #fff;
+  border-color: color-mix(in srgb, var(--primary-blue, #1976d2) 50%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--primary-blue, #1976d2) 20%,
+    var(--account-report-surface)
+  );
+  color: var(--account-report-text);
   white-space: normal;
   text-align: left;
 }
 
 .account-report-actions .account-report-chip.reported:hover {
-  background-color: var(--primary-blue, #1565c0);
-  color: #fff;
+  background: color-mix(
+    in srgb,
+    var(--primary-blue, #1976d2) 28%,
+    var(--account-report-surface)
+  );
+  color: var(--account-report-text);
 }
 
 /* An outstanding ask, not just a note. */
 .account-report-actions .account-report-chip.reported.help {
-  background-color: var(--secondary-main, #9c27b0);
-  border-color: var(--secondary-main, #9c27b0);
+  border-color: color-mix(in srgb, var(--account-report-help) 52%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--account-report-help) 20%,
+    var(--account-report-surface)
+  );
 }
 
 .account-report-actions .account-report-chip.reported.help:hover {
-  background-color: var(--secondary-main, #7b1fa2);
-  color: #fff;
+  background: color-mix(
+    in srgb,
+    var(--account-report-help) 28%,
+    var(--account-report-surface)
+  );
+  color: var(--account-report-text);
 }
 
 /* ----------------------------------------------------
@@ -101,28 +191,36 @@
   gap: 0.15rem;
   margin-top: 0.4rem;
   padding: 0.45rem 0.65rem;
-  border-left: 3px solid var(--secondary-main, #9c27b0);
+  border-left: 3px solid var(--account-report-help, #7656ad);
   border-radius: 6px;
-  background: rgba(156, 39, 176, 0.08);
+  background: color-mix(
+    in srgb,
+    var(--account-report-help, #7656ad) 10%,
+    transparent
+  );
 }
 
 .account-report-followup-title {
   font-size: 0.75rem;
   font-weight: 650;
-  color: var(--secondary-main, #7b1fa2);
+  color: var(--account-report-help, #7656ad);
 }
 
 .account-report-followup-note {
   font-size: 0.75rem;
   line-height: 1.4;
-  color: var(--text-secondary, #6b7280);
+  color: var(--account-report-muted, var(--goals-muted, #647885));
 }
 
 /* The chip itself takes the follow-up colour so the state is legible even
    when the notice scrolls out of view. */
 .account-report-actions .account-report-chip.reported.follow-up {
-  background-color: var(--secondary-main, #9c27b0);
-  border-color: var(--secondary-main, #9c27b0);
+  border-color: color-mix(in srgb, var(--account-report-help) 52%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--account-report-help) 20%,
+    var(--account-report-surface)
+  );
 }
 
 /* ====================================================
@@ -130,27 +228,43 @@
    ==================================================== */
 
 .account-report-paper {
+  --account-report-dialog-surface: #ffffff;
+  --account-report-dialog-surface-muted: #edf2f4;
+  --account-report-dialog-line: rgba(33, 65, 84, 0.16);
+  --account-report-dialog-text: #152735;
+  --account-report-dialog-muted: #647885;
   border-radius: 14px !important;
   overflow: hidden;
+  border: 1px solid var(--account-report-dialog-line);
+  background: var(--account-report-dialog-surface) !important;
+  color: var(--account-report-dialog-text) !important;
+  box-shadow: 0 24px 72px rgba(16, 41, 59, 0.28) !important;
+}
+
+[data-theme="dark"] .account-report-paper {
+  --account-report-dialog-surface: #102335;
+  --account-report-dialog-surface-muted: #0a1825;
+  --account-report-dialog-line: rgba(124, 183, 217, 0.2);
+  --account-report-dialog-text: #eef8ff;
+  --account-report-dialog-muted: #a6b8c7;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.52) !important;
 }
 
 /* Colored banner so the two flows are instantly distinguishable —
    blue for reporting an issue, purple for asking for help. */
 .account-report-header {
   padding: 1rem 1.5rem 0.75rem;
-  background: linear-gradient(
-    135deg,
-    var(--primary-blue, #1976d2),
-    #1565c0
-  );
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.2), transparent 32%),
+    linear-gradient(135deg, var(--primary-blue, #1976d2), #155f9f);
   color: #fff;
 }
 
 .account-report-header.help {
   background: linear-gradient(
     135deg,
-    var(--secondary-main, #9c27b0),
-    #6a1b9a
+    #7656ad,
+    #53377d
   );
 }
 
@@ -172,9 +286,12 @@
 
 .account-report-content {
   padding-top: 1.25rem !important;
+  background: var(--account-report-dialog-surface);
+  color: var(--account-report-dialog-text);
 }
 
 .account-report-prompt {
+  color: var(--account-report-dialog-text);
   font-size: 0.9rem !important;
   font-weight: 500 !important;
   margin-bottom: 0.85rem !important;
@@ -192,12 +309,27 @@
   box-shadow: none !important;
   font-size: 0.9rem;
   line-height: 1.5;
+  color: var(--account-report-dialog-text) !important;
+  -webkit-text-fill-color: var(--account-report-dialog-text) !important;
 }
 
 .account-report-field .MuiOutlinedInput-root {
   border-radius: 10px;
-  background: var(--background-light, #fafafa);
+  background: var(--account-report-dialog-surface-muted);
   padding: 0.5rem 0.75rem;
+  color: var(--account-report-dialog-text);
+}
+
+.account-report-field .MuiOutlinedInput-notchedOutline {
+  border-color: var(--account-report-dialog-line) !important;
+}
+
+.account-report-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: color-mix(
+    in srgb,
+    var(--primary-blue, #1976d2) 55%,
+    var(--account-report-dialog-line)
+  ) !important;
 }
 
 .account-report-field .MuiOutlinedInput-input {
@@ -206,4 +338,35 @@
 
 .account-report-field .MuiInputLabel-root {
   font-size: 0.85rem;
+  color: var(--account-report-dialog-muted);
+}
+
+.account-report-field .MuiFormHelperText-root {
+  color: var(--account-report-dialog-muted);
+}
+
+.account-report-paper .MuiChip-root {
+  border-color: var(--account-report-dialog-line);
+  color: var(--account-report-dialog-text);
+}
+
+.account-report-paper .MuiChip-root:not(.MuiChip-filledPrimary):not(.MuiChip-filledSecondary) {
+  background: color-mix(
+    in srgb,
+    var(--account-report-dialog-surface-muted) 72%,
+    transparent
+  );
+}
+
+.account-report-paper .MuiDialogActions-root {
+  border-top: 1px solid var(--account-report-dialog-line);
+  background: color-mix(
+    in srgb,
+    var(--account-report-dialog-surface-muted) 50%,
+    var(--account-report-dialog-surface)
+  );
+}
+
+.account-report-paper .MuiButton-text:not(.MuiButton-textError) {
+  color: var(--account-report-dialog-text);
 }
