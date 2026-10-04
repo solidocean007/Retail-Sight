@@ -5,6 +5,9 @@
   --goal-table-line-strong: var(--goals-line-strong, rgba(35, 126, 184, 0.25));
   --goal-table-text: var(--goals-text, var(--text-color, #152735));
   --goal-table-muted: var(--goals-muted, #647885);
+  --goal-table-card-shadow:
+    0 4px 12px rgba(22, 52, 70, 0.1),
+    0 1px 2px rgba(22, 52, 70, 0.07);
   width: 100%;
   color: var(--goal-table-text);
 }
@@ -16,6 +19,9 @@
   --goal-table-line-strong: var(--goals-line-strong, rgba(91, 185, 239, 0.27));
   --goal-table-text: var(--goals-text, #eef8ff);
   --goal-table-muted: var(--goals-muted, #94aabd);
+  --goal-table-card-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .goal-users-toolbar {
@@ -113,7 +119,8 @@
   overflow: hidden;
   border: 1px solid var(--goal-table-line);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--goal-table-surface) 94%, transparent);
+  background-color: var(--goal-table-surface);
+  box-shadow: var(--goal-table-card-shadow);
 }
 
 .goal-user-row__header {
