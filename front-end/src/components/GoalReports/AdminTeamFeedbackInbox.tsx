@@ -404,26 +404,62 @@ const AdminTeamFeedbackInbox = () => {
 
       {!loading && !error && (
         <section className="team-feedback-summary" aria-label="Inbox summary">
-          <div>
+          <button
+            type="button"
+            className={filter === "needs_review" ? "is-active" : ""}
+            aria-pressed={filter === "needs_review"}
+            onClick={() => {
+              setSearch("");
+              setFilter("needs_review");
+            }}
+          >
             <span>Needs review</span>
             <strong>{counts.needsReview.toLocaleString()}</strong>
             <small>New decisions</small>
-          </div>
-          <div className={counts.help > 0 ? "has-help" : ""}>
+          </button>
+          <button
+            type="button"
+            className={`${counts.help > 0 ? "has-help" : ""} ${
+              filter === "help" ? "is-active" : ""
+            }`.trim()}
+            aria-pressed={filter === "help"}
+            onClick={() => {
+              setSearch("");
+              setFilter("help");
+            }}
+          >
             <span>Help requested</span>
             <strong>{counts.help.toLocaleString()}</strong>
             <small>Reps waiting</small>
-          </div>
-          <div className={counts.returned > 0 ? "has-returned" : ""}>
+          </button>
+          <button
+            type="button"
+            className={`${counts.returned > 0 ? "has-returned" : ""} ${
+              filter === "returned" ? "is-active" : ""
+            }`.trim()}
+            aria-pressed={filter === "returned"}
+            onClick={() => {
+              setSearch("");
+              setFilter("returned");
+            }}
+          >
             <span>Returned</span>
             <strong>{counts.returned.toLocaleString()}</strong>
             <small>Supervisor evidence</small>
-          </div>
-          <div>
+          </button>
+          <button
+            type="button"
+            className={filter === "routed" ? "is-active" : ""}
+            aria-pressed={filter === "routed"}
+            onClick={() => {
+              setSearch("");
+              setFilter("routed");
+            }}
+          >
             <span>With supervisors</span>
             <strong>{counts.routed.toLocaleString()}</strong>
             <small>In follow-up</small>
-          </div>
+          </button>
         </section>
       )}
 

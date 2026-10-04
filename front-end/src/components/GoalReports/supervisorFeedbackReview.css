@@ -137,7 +137,8 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.team-feedback-summary > div {
+.team-feedback-summary > div,
+.team-feedback-summary > button {
   display: grid;
   min-height: 92px;
   padding: 0.85rem 1rem;
@@ -153,7 +154,36 @@
   box-shadow: 0 10px 28px var(--feedback-shadow);
 }
 
-.team-feedback-summary > div.has-returned {
+.team-feedback-summary > button {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.team-feedback-summary > button:hover {
+  border-color: color-mix(in srgb, var(--primary-blue) 48%, var(--feedback-line));
+  transform: translateY(-1px);
+}
+
+.team-feedback-summary > button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary-blue) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.team-feedback-summary > button.is-active {
+  border-color: color-mix(in srgb, var(--primary-blue) 68%, var(--feedback-line));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--primary-blue) 28%, transparent),
+    0 12px 30px var(--feedback-shadow);
+}
+
+.team-feedback-summary > :is(div, button).has-returned {
   border-color: color-mix(
     in srgb,
     var(--feedback-warning) 34%,
@@ -168,7 +198,7 @@
     var(--feedback-surface);
 }
 
-.team-feedback-summary > div.has-help {
+.team-feedback-summary > :is(div, button).has-help {
   border-color: color-mix(
     in srgb,
     var(--primary-blue) 38%,
@@ -924,7 +954,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .team-feedback-summary > div {
+  .team-feedback-summary > div,
+  .team-feedback-summary > button {
     min-height: 82px;
     padding: 0.7rem;
   }
