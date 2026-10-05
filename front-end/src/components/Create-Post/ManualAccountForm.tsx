@@ -26,6 +26,7 @@ const ManualAccountForm: React.FC<{
   const [selectedMatch, setSelectedMatch] = useState<CompanyAccountType | null>(
     null
   );
+  const [formError, setFormError] = useState("");
 
   const [form, setForm] = useState<ManualFormState>({
     accountName: initialValues?.accountName || "",
@@ -67,6 +68,18 @@ const ManualAccountForm: React.FC<{
   if (!open) return null;
 
   const handleSave = () => {
+    const requiredValues = [
+      form.accountName,
+      form.accountAddress,
+      form.city,
+      form.state,
+    ];
+    if (requiredValues.some((value) => !value.trim())) {
+      setFormError("Store name, street address, city, and state are required.");
+      return;
+    }
+    setFormError("");
+
     // Check if this account already exists in our customAccounts
     const matched = customAccounts.find(
       (acc) =>
@@ -91,10 +104,10 @@ const ManualAccountForm: React.FC<{
     const manualAccount: CompanyAccountType = {
       accountNumber: `manual-${Date.now()}`,
       accountName: form.accountName,
-      accountAddress: `${form.accountAddress}, ${form.city}, ${form.state}`,
-      streetAddress: form.accountAddress,
-      city: form.city,
-      state: form.state,
+      accountAddress: `${form.accountAddress.trim()}, ${form.city.trim()}, ${form.state.trim().toUpperCase()}`,
+      streetAddress: form.accountAddress.trim(),
+      city: form.city.trim(),
+      state: form.state.trim().toUpperCase(),
       salesRouteNums: [],
       typeOfAccount: "manual",
       chain,
@@ -221,6 +234,11 @@ const ManualAccountForm: React.FC<{
         </div>
       </div>
 
+      {formError && (
+        <p className="manual-account-error" role="alert">
+          {formError}
+        </p>
+      )}
       <button className="button-primary" onClick={handleSave}>
         Save Store
       </button>

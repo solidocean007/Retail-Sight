@@ -15,6 +15,7 @@ interface GoalPickerModalProps<T> {
   selectedId?: string | null;
   onClose: () => void;
   onSelect: (goal: T) => void;
+  onClear?: () => void;
 }
 
 export function GoalPickerModal<T>({
@@ -26,6 +27,7 @@ export function GoalPickerModal<T>({
   selectedId,
   onClose,
   onSelect,
+  onClear,
 }: GoalPickerModalProps<T>) {
   const [query, setQuery] = useState("");
 
@@ -81,6 +83,19 @@ export function GoalPickerModal<T>({
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
+
+          {selectedId && onClear && (
+            <button
+              type="button"
+              className="goal-picker-clear"
+              onClick={() => {
+                onClear();
+                onClose();
+              }}
+            >
+              Continue without this goal
+            </button>
+          )}
 
           {/* List */}
           {filteredGoals.map((g, index) => {

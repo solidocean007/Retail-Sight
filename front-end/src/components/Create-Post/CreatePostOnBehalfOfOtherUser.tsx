@@ -22,10 +22,10 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
   handleFieldChange,
 }) => {
   const userData = useSelector(selectUser)!; // this is the supervisor.. he should be set to postedBy
-  const companyUsers = useSelector(selectCompanyUsers) || [];
+  const companyUsers = useSelector(selectCompanyUsers);
   // Build sorted list (including current user)
  const options = useMemo(() => {
-  const filtered = companyUsers.filter(
+  const filtered = (companyUsers || []).filter(
     (u) =>
       u.status !== "inactive" && u.uid !== userData.uid
   );
@@ -53,8 +53,9 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
         display: "flex",
         flexDirection: "column",
         gap: 1,
-        width: 320,
-        marginTop: "15px",
+        width: "100%",
+        maxWidth: 360,
+        marginTop: 0,
       }}
     >
       <Autocomplete
@@ -73,7 +74,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
         clearOnEscape={false}
         disableClearable
         sx={{
-          width: 320,
+          width: "100%",
           // background behind the input box
           backgroundColor: "var(--input-bg)",
 

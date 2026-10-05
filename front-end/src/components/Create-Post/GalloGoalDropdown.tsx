@@ -84,6 +84,7 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
           getLabel={(g) => g.goalDetails.goal}
           onClose={() => setOpenModal(false)}
           onSelect={onSelect}
+          onClear={() => onSelect(undefined)}
         />
       </>
     );
@@ -114,6 +115,7 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
           )
         }
       >
+        <MenuItem value="">No Gallo goal</MenuItem>
         {dedupedGoals.length === 0 && (
           <MenuItem disabled value="">
             No Gallo goals available

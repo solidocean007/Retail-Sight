@@ -3,18 +3,48 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: start;
-  gap: 2rem;
-  height: 50%;
-  padding: 0 3rem;
+  justify-content: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid
+    color-mix(in srgb, var(--border-color) 72%, var(--text-color) 28%);
+}
+
+.display-description-instructions {
+  width: 100%;
+  text-align: left;
+}
+
+.display-description-instructions h2 {
+  display: inline;
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.display-description-instructions h3 {
+  display: inline;
+  margin-left: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.display-description-instructions p {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .text-area-container {
   margin-top: 10px;
   width: 100%;
   position: relative;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid
+    color-mix(in srgb, var(--border-color) 70%, var(--text-color) 30%);
+  border-radius: 10px;
+  background: var(--input-background);
   transition: border-color 0.3s;
 }
 
@@ -23,7 +53,9 @@
 }
 
 .text-area-container.focused {
-  border-color: #3f51b5; /* Darker border for focus */
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--primary-blue) 12%, transparent);
 }
 
 .description-text-area {
@@ -40,7 +72,7 @@
 .placeholder {
   position: absolute;
   top: 0;
-  left: 0px;
+  left: 10px;
   transition: all 0.3s;
   color: #aaa;
   pointer-events: none;
@@ -48,8 +80,8 @@
 
 .placeholder.active {
   transform: translateY(-50%) scale(0.75);
-  color: #3f51b5; /* Placeholder color change on focus */
-  background-color: var(--form-background-color);
+  color: var(--primary-blue);
+  background-color: var(--input-background);
   padding: 0 9px; /* Avoids clipping */
 }
 
@@ -57,7 +89,7 @@
   width: 100%;
   padding: 1rem;
   border: 1px solid color-mix(in srgb, var(--primary-blue) 40%, transparent);
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--input-background);
 }
 

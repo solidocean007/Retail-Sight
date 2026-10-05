@@ -30,31 +30,12 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { setAllAccounts } from "../../Slices/allAccountsSlice";
 import ManualAccountForm from "./ManualAccountForm";
 import { showMessage } from "../../Slices/snackbarSlice";
-import { ResetTvOutlined } from "@mui/icons-material";
-import NoResults from "../NoResults";
-import { GoalPickerModal } from "./GoalPickerModal";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
-import DebugValues from "./DebugValues";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../../utils/firebase";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
-
-// Keep connected store reads to one per partner during a posting session.
-const connectedStoreCache = new Map<string, { accounts: CompanyAccountType[]; loadedAt: number }>();
-const getConnectedStores = async (companyId: string) => {
-  const cached = connectedStoreCache.get(companyId);
-  if (cached && Date.now() - cached.loadedAt < 5 * 60 * 1000) return cached.accounts;
-  const request = httpsCallable<
-    { distributorCompanyId: string },
-    { stores: CompanyAccountType[] }
-  >(functions, "getConnectedDistributorStores");
-  const response = await request({ distributorCompanyId: companyId });
-  const accounts = response.data.stores ?? [];
-  if (accounts.length > 0) {
-    connectedStoreCache.set(companyId, { accounts, loadedAt: Date.now() });
-  }
-  return accounts;
-};
+import {
+  getConnectedStores,
+  NearbyStoreCandidate,
+} from "./storeDiscovery";
 
 // Normalize abbreviations and compare address similarity
 const normalizeCache = new Map<string, string>();
@@ -128,7 +109,9 @@ interface PickStoreProps {
   ) => void;
   setSelectedCompanyAccount: (account: CompanyAccountType | null) => void;
   setSelectedGalloGoal: (goal: FireStoreGalloGoalDocType | null) => void;
-  userLocation: { lat: number; lng: number } | null;
+  prefetchedNearbyStores: NearbyStoreCandidate[] | null;
+  isPrefetchingNearbyStores: boolean;
+  nearbyStorePrefetchError?: string;
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
@@ -137,17 +120,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
   handleFieldChange,
   setSelectedCompanyAccount,
   setSelectedGalloGoal,
-  userLocation,
+  prefetchedNearbyStores,
+  isPrefetchingNearbyStores,
+  nearbyStorePrefetchError,
 }) => {
-  const [showDebug, setShowDebug] = useState(false);
-
-  const handleDebug = () => setShowDebug((prev) => !prev);
-
-  const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY!;
-  const [locationChecked, setLocationChecked] = useState(false);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
-  const companyUsers = useSelector(selectCompanyUsers) || [];
+  const companyUsers = useSelector(selectCompanyUsers);
   const isAdminOrAbove = ["admin", "super-admin"].includes(user?.role || "");
   const [openManualAccountForm, setOpenManualAccountForm] = useState(false);
   const salesRouteNum = user?.salesRouteNum;
@@ -216,16 +195,18 @@ export const PickStore: React.FC<PickStoreProps> = ({
     });
     return () => { cancelled = true; };
   }, [isSupplier, partnerCompanies]);
-  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
-  const [manualAccountAdded, setManualAccountAdded] = useState(false);
   const [nearbyStores, setNearbyStores] = useState<
     { name: string; address: string; placeId?: string }[]
   >([]);
   // Raw Places API results stored separately so matching can retry after accounts load
   const [fetchedPlaces, setFetchedPlaces] = useState<
-    { name: string; address: string; placeId?: string }[] | null
-  >(null);
+    NearbyStoreCandidate[] | null
+  >(prefetchedNearbyStores);
+  const [suggestedAccount, setSuggestedAccount] =
+    useState<CompanyAccountType | null>(null);
+  const [nearbyLookupComplete, setNearbyLookupComplete] = useState(false);
   const [selectedNearbyStore, setSelectedNearbyStore] = useState<{
     name: string;
     address: string;
@@ -239,26 +220,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const userAccounts = useSelector(
     (state: RootState) => state.userAccounts.accounts,
   );
-  const customAccounts = useSelector(
-    (state: RootState) => state.customAccounts.accounts,
-  );
-  const supplierManualAccounts = useMemo(
-    () => customAccounts.filter((account) =>
-      !account.originCompanyId ||
-      partnerCompanies.some((partner) => partner.id === account.originCompanyId),
-    ),
-    [customAccounts, partnerCompanies],
-  );
-
   const [isAllStoresShown, setIsAllStoresShown] = useState(
     isAdminOrAbove || user?.role === "supervisor",
   );
 
   const combinedAccounts = useMemo(
     () => isSupplier
-      ? [...partnerAccounts, ...supplierManualAccounts]
+      ? partnerAccounts
       : (isAllStoresShown ? allCompanyAccounts : userAccounts),
-    [isSupplier, partnerAccounts, supplierManualAccounts, isAllStoresShown, allCompanyAccounts, userAccounts],
+    [isSupplier, partnerAccounts, isAllStoresShown, allCompanyAccounts, userAccounts],
   );
   const resolvePartnerForStore = (account: CompanyAccountType) => {
     if (account.originCompanyId && partnerCompanies.some((partner) =>
@@ -275,20 +245,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const [loadingAccounts, setLoadingAccounts] = useState(true);
-  const [isFetchingGoal, setIsFetchingGoal] = useState(false);
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
 
   const usersGalloGoals = useSelector((state: RootState) =>
     selectUsersGalloGoals(state, salesRouteNum),
   );
 
-  const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
-    null,
-  );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType>();
   const allGalloGoals = useSelector(selectAllGalloGoals);
-  const [openAccountModal, setOpenAccountModal] = useState(true);
+  const [openAccountModal, setOpenAccountModal] = useState(false);
   const onlyUsersStores = !isAllStoresShown;
 
   const usersActiveGalloGoals = galloEnabled
@@ -336,7 +302,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
       // 🧑‍🏫 Supervisor — only supervisor goals
       if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
-        const repsReportingToMe = companyUsers.filter(
+        const repsReportingToMe = (companyUsers || []).filter(
           (u) => u.reportsTo === user?.uid && u.salesRouteNum,
         );
         const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
@@ -367,89 +333,34 @@ export const PickStore: React.FC<PickStoreProps> = ({
     if (post.account) setOpenManualAccountForm(false);
   }, [post.account]);
 
-  // ✅ New Places API (v1)
-  const getNearbyStores = async (lat: number, lng: number) => {
-    try {
-      const res = await fetch(
-        "https://places.googleapis.com/v1/places:searchNearby",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": GOOGLE_KEY,
-            "X-Goog-FieldMask":
-              "places.displayName,places.formattedAddress,places.id,places.types,places.primaryType",
-          },
-          body: JSON.stringify({
-            includedTypes: [
-              "store",
-              "convenience_store",
-              "supermarket",
-              "grocery_store",
-              "liquor_store",
-              "department_store",
-            ],
-            maxResultCount: 5,
-            rankPreference: "DISTANCE",
-            locationRestriction: {
-              circle: {
-                center: { latitude: lat, longitude: lng },
-                radius: 2000,
-              },
-            },
-          }),
-        },
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        console.error("Nearby stores API error:", res.status, data?.error?.message);
-        return [];
-      }
-
-      if (data?.places?.length) {
-        return data.places.map((p: any) => ({
-          name: p.displayName.text,
-          address: p.formattedAddress,
-          placeId: p.id,
-        }));
-      } else {
-        return [];
-      }
-    } catch (err) {
-      console.error("Failed to fetch nearby stores:", err);
-      return [];
-    }
-  };
-
-  // 🧭 Effect 1: kick off Places fetch as soon as location is available
   useEffect(() => {
-    if (locationChecked || !userLocation) return;
-    if (!GOOGLE_KEY) {
-      dispatch(showMessage("Store locator is missing the Google Maps API key."));
-      return;
+    if (prefetchedNearbyStores !== null) {
+      setFetchedPlaces(prefetchedNearbyStores);
     }
-    setLocationChecked(true);
-    getNearbyStores(userLocation.lat, userLocation.lng).then((places) => {
-      setFetchedPlaces(places ?? []);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userLocation, locationChecked]);
+  }, [prefetchedNearbyStores]);
 
   // 🎯 Effect 2: run account matching once BOTH places AND accounts are ready
   // This fixes the race where Places returned before accounts finished loading.
   useEffect(() => {
-    if (fetchedPlaces === null || loadingAccounts || loadingPartnerAccounts || post.account) return;
+    if (
+      fetchedPlaces === null ||
+      loadingAccounts ||
+      loadingPartnerAccounts ||
+      post.account ||
+      suggestedAccount
+    ) {
+      return;
+    }
 
     if (!fetchedPlaces.length) {
-      // Places API returned nothing — leave modal open for manual selection
-      setOpenAccountModal(true);
+      setNearbyLookupComplete(true);
       return;
     }
 
     if (!combinedAccounts.length) {
       // No company accounts — show raw Google places for manual account creation
       setNearbyStores(fetchedPlaces);
+      setNearbyLookupComplete(true);
       return;
     }
 
@@ -494,16 +405,21 @@ export const PickStore: React.FC<PickStoreProps> = ({
           normalizeAddress(bestMatch.account?.streetAddress || bestMatch.account?.accountAddress || ""),
       );
     if (bestMatch?.score > 0.45 && bestMatch.account && !ambiguousDistributor) {
-      handleAccountSelect(bestMatch.account);
-      dispatch(
-        showMessage(`Auto-detected store: ${bestMatch.account.accountName}`),
-      );
+      setSuggestedAccount(bestMatch.account);
+      setNearbyLookupComplete(true);
       setOpenAccountModal(false);
     } else {
-      setOpenAccountModal(true);
+      setNearbyLookupComplete(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchedPlaces, combinedAccounts, loadingAccounts, loadingPartnerAccounts, post.account]);
+  }, [
+    fetchedPlaces,
+    combinedAccounts,
+    loadingAccounts,
+    loadingPartnerAccounts,
+    post.account,
+    suggestedAccount,
+  ]);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -524,7 +440,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
   }, [isSupplier, isAllStoresShown, user?.role, user?.companyId, dispatch]);
 
   const handleCompanyGoalSelection = (goal?: CompanyGoalWithIdType) => {
-    if (!goal) return;
+    if (!goal) {
+      setSelectedCompanyGoal(undefined);
+      setPost((previous) => ({
+        ...previous,
+        companyGoalId: undefined,
+        companyGoalDescription: undefined,
+        companyGoalTitle: undefined,
+      }));
+      return;
+    }
     setSelectedCompanyGoal(goal);
     handleFieldChange("companyGoalId", goal.id);
     handleFieldChange("companyGoalDescription", goal.goalDescription);
@@ -532,7 +457,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const handleGalloGoalSelection = (goal?: FireStoreGalloGoalDocType) => {
-    if (!goal || !post.account) return;
+    if (!goal) {
+      setSelectedGalloGoal(null);
+      setPost((previous) => ({
+        ...previous,
+        galloGoal: undefined,
+      }));
+      return;
+    }
+    if (!post.account) return;
 
     const match = goal.accounts.find(
       (a) => a.distributorAcctId === post.account?.accountNumber,
@@ -556,7 +489,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }));
   };
 
-  const handleAccountSelect = (account: CompanyAccountType) => {
+  const handleAccountSelect = (
+    account: CompanyAccountType,
+    keepNearbySuggestion = false,
+  ) => {
     const partner = isSupplier ? resolvePartnerForStore(account) : null;
     const originCompanyId = isSupplier ? partner?.id : account.originCompanyId;
     const originCompanyName = isSupplier ? partner?.name : account.originCompanyName;
@@ -578,6 +514,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
       brands: [],
       brandIds: [],
       productType: [],
+      companyGoalId: undefined,
+      companyGoalDescription: undefined,
+      companyGoalTitle: undefined,
+      galloGoal: undefined,
       account: {
         accountName,
         accountAddress,
@@ -597,66 +537,41 @@ export const PickStore: React.FC<PickStoreProps> = ({
       chain,
       chainType,
     }));
-    setManualAccountAdded(true);
+    setSuggestedAccount(keepNearbySuggestion ? account : null);
+    setSelectedCompanyGoal(undefined);
+    setSelectedGalloGoal(null);
     setSelectedCompanyAccount(account);
   };
 
-  const handleClearAccount = () => {
-    setManualAccountAdded(false);
-    setPost((p) => ({
-      ...p,
-      account: null,
-      brands: [],
-      brandIds: [],
-      productType: [],
-      accountNumber: "",
-      city: "",
-      state: "",
-    }));
-    setSelectedCompanyAccount(null);
-    setSelectedGalloGoalId(null);
-    setSelectedCompanyGoal(undefined);
+  useEffect(() => {
+    if (!suggestedAccount || post.account) return;
+    handleAccountSelect(suggestedAccount, true);
+    // The nearby suggestion changes only when a completed lookup finds a match.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestedAccount, post.account]);
+
+  const openManualEntry = () => {
+    const nearbyStore = nearbyStores[0];
+    if (nearbyStore) {
+      const { city, state } = extractCityState(nearbyStore.address);
+      setSelectedNearbyStore({
+        name: nearbyStore.name,
+        address: nearbyStore.address,
+        city,
+        state,
+      });
+    } else {
+      setSelectedNearbyStore(null);
+    }
+    setOpenAccountModal(false);
+    setSuggestedAccount(null);
+    setOpenManualAccountForm(true);
   };
 
   if (loadingAccounts || loadingPartnerAccounts) return <CircularProgress />;
 
   return (
     <div className="pick-store">
-      {/* Header */}
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mt={0}
-        px={3}
-      >
-        {post.account && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleClearAccount}
-            sx={{ minWidth: "80px" }}
-          >
-            Clear
-          </Button>
-        )}
-      </Box>
-      {showDebug && (
-        <>
-          <DebugValues
-            userRoute={salesRouteNum}
-            galloEnabled={galloEnabled}
-            isAllStoresShown={isAllStoresShown}
-            allGalloGoalsCount={allGalloGoals.length}
-            usersGalloGoalsCount={usersGalloGoals.length}
-            usersActiveGalloGoalsCount={usersActiveGalloGoals.length}
-            allActiveGalloGoalsCount={allActiveGalloGoals.length}
-            finalDropdownCount={galloGoals.length}
-            selectedAccountNumber={post.account?.accountNumber?.toString()}
-          />
-        </>
-      )}
-
       {isSupplier && partnerCompanies.length === 0 && (
         <Typography variant="body2" color={connectionsError ? "error" : "textSecondary"} px={3} mt={2}>
           {connectionsLoading
@@ -671,168 +586,106 @@ export const PickStore: React.FC<PickStoreProps> = ({
           {partnerStoreProblem}
         </Typography>
       )}
+      {post.account && (
+        <section className="store-suggestion" aria-live="polite">
+          <span className="store-suggestion__eyebrow">
+            {suggestedAccount ? "Nearby account selected" : "Selected account"}
+          </span>
+          <strong>{post.account.accountName}</strong>
+          <span>{post.account.accountAddress}</span>
+          {isSupplier && post.account.originCompanyId && (
+            <span className="store-suggestion__partner">
+              Connected distributor: {post.account.originCompanyName ||
+                partnerCompanies.find((partner) =>
+                  partner.id === post.account?.originCompanyId)?.name}
+            </span>
+          )}
+          <div className="store-suggestion__actions">
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setSuggestedAccount(null);
+                if (combinedAccounts.length > 0) {
+                  setOpenAccountModal(true);
+                } else {
+                  openManualEntry();
+                }
+              }}
+            >
+              Change account
+            </Button>
+          </div>
+        </section>
+      )}
+      {!post.account && isPrefetchingNearbyStores && (
+        <Typography className="store-prefetch-status" variant="body2">
+          Finding nearby accounts while you work…
+        </Typography>
+      )}
+      {!post.account && nearbyStorePrefetchError && !nearbyLookupComplete && (
+        <Typography className="store-prefetch-status" variant="body2">
+          Nearby lookup is unavailable. Search your account list instead.
+        </Typography>
+      )}
+      {!post.account &&
+        !isPrefetchingNearbyStores &&
+        (nearbyLookupComplete || !!nearbyStorePrefetchError) && (
+        <section className="store-fallback" aria-live="polite">
+          <span className="store-suggestion__eyebrow">No nearby account matched</span>
+          <strong>
+            {isSupplier
+              ? "Choose a connected distributor account"
+              : "Choose an account from your store list"}
+          </strong>
+          <p>
+            {isSupplier
+              ? "If this store is outside a connected distributor’s market, add it manually and select the distributor it belongs to."
+              : "Search your available accounts, or add this store manually."}
+          </p>
+          <div className="store-suggestion__actions">
+            {combinedAccounts.length > 0 && (
+              <Button variant="contained" onClick={() => setOpenAccountModal(true)}>
+                {isSupplier ? "Choose distributor account" : "Choose account"}
+              </Button>
+            )}
+            <Button variant="outlined" onClick={openManualEntry}>
+              Add store manually
+            </Button>
+          </div>
+        </section>
+      )}
 
-      <Box className="store-selection">
-        {combinedAccounts.length > 0 && (
-          <Button
-            onClick={() => setOpenAccountModal(true)}
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={!combinedAccounts.length}
-            sx={{
-              maxWidth: 400,
-              mx: "auto",
-              my: 1,
-              fontWeight: 600,
-              fontSize: "1rem",
-              backgroundColor: "#1976d2",
-              color: "#fff",
-              "&:hover": { backgroundColor: "#1565c0" },
+      {post.account && isSupplier && !post.account.originCompanyId && partnerCompanies.length > 0 && (
+        <FormControl fullWidth sx={{ mt: 2 }}>
+          <InputLabel id="unmatched-store-partner-label">Connected distributor</InputLabel>
+          <Select
+            labelId="unmatched-store-partner-label"
+            value=""
+            label="Connected distributor"
+            onChange={(event) => {
+              const partner = partnerCompanies.find((item) => item.id === event.target.value);
+              if (!partner) return;
+              setPost((previous) => ({
+                ...previous,
+                brands: [],
+                brandIds: [],
+                productType: [],
+                account: previous.account ? {
+                  ...previous.account,
+                  originCompanyId: partner.id,
+                  originCompanyName: partner.name,
+                } : null,
+              }));
             }}
           >
-            {post.account ? "Change Account" : "Select Account"}
-          </Button>
-        )}
-      </Box>
-
-      {/* My Stores / All Stores toggle */}
-      {!isSupplier && !post.account?.accountNumber && combinedAccounts.length > 0 && (
-        <Box mt={3}>
-          <Box mt={0} display="flex" justifyContent="center" gap={2}>
-            <Typography
-              className={`toggle-label ${!isAllStoresShown ? "selected" : ""}`}
-              onClick={() => setIsAllStoresShown(false)}
-            >
-              My Stores
-            </Typography>
-            <Typography
-              className={`toggle-label ${isAllStoresShown ? "selected" : ""}`}
-              onClick={() => setIsAllStoresShown(true)}
-            >
-              All Stores
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
-      {/* Display selected store */}
-      {post.account && (
-        <Box mt={1} p={2} sx={{ border: "1px solid #ccc", borderRadius: 2 }}>
-          <Typography variant="h6" fontWeight="bold">
-            {post.account.accountName}
+            {partnerCompanies.map((partner) => (
+              <MenuItem key={partner.id} value={partner.id}>{partner.name}</MenuItem>
+            ))}
+          </Select>
+          <Typography variant="caption" mt={1}>
+            Select the connected distributor responsible for this manually entered store.
           </Typography>
-          <Typography variant="body2" color="textSecondary">
-            {post.account.accountAddress}
-          </Typography>
-          {isSupplier && post.account.originCompanyId && (
-            <Typography variant="body2" color="primary" mt={1}>
-              Connected distributor: {post.account.originCompanyName ||
-                partnerCompanies.find((partner) => partner.id === post.account?.originCompanyId)?.name}
-            </Typography>
-          )}
-          {isSupplier && !post.account.originCompanyId && partnerCompanies.length > 0 && (
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel id="unmatched-store-partner-label">Connected distributor</InputLabel>
-              <Select
-                labelId="unmatched-store-partner-label"
-                value=""
-                label="Connected distributor"
-                onChange={(event) => {
-                  const partner = partnerCompanies.find((item) => item.id === event.target.value);
-                  if (!partner) return;
-                  setPost((previous) => ({
-                    ...previous,
-                    brands: [],
-                    brandIds: [],
-                    productType: [],
-                    account: previous.account ? {
-                      ...previous.account,
-                      originCompanyId: partner.id,
-                      originCompanyName: partner.name,
-                    } : null,
-                  }));
-                }}
-              >
-                {partnerCompanies.map((partner) => (
-                  <MenuItem key={partner.id} value={partner.id}>{partner.name}</MenuItem>
-                ))}
-              </Select>
-              <Typography variant="caption" mt={1}>
-                We couldn't identify one connected distributor for this store. Choose one to continue.
-              </Typography>
-            </FormControl>
-          )}
-          {selectedCompanyGoal && (
-            <Typography variant="body2" color="primary" mt={1}>
-              Goal: {selectedCompanyGoal.goalTitle}
-            </Typography>
-          )}
-        </Box>
-      )}
-      {!combinedAccounts.length && nearbyStores.length > 0 && (
-        <Box mt={1} p={2}>
-          <Typography variant="subtitle1" color="textSecondary">
-            No company accounts found. Choose a nearby store to create one:
-          </Typography>
-          {/* ...store cards here */}
-        </Box>
-      )}
-
-      {/* Nearby stores (new API results) */}
-      {!combinedAccounts.length && nearbyStores.length > 0 && (
-        <Box
-          mt={1}
-          p={2}
-          className={nearbyStores.length === 0 ? "nearby-stores-hidden" : ""}
-        >
-          <Typography variant="h6">Nearby Stores</Typography>
-          {nearbyStores.map((store) => {
-            return (
-              <Box
-                key={store.placeId}
-                sx={{
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  p: 1.5,
-                  mt: 1,
-                  cursor: "pointer",
-                  transition: "background-color 0.2s ease-in-out",
-                  "&:hover": { backgroundColor: "#f3f3f3" },
-                }}
-                onClick={() => {
-                  const { city, state } = extractCityState(store.address);
-                  setSelectedNearbyStore({
-                    name: store.name,
-                    address: store.address,
-                    city,
-                    state,
-                  });
-                  setNearbyStores([]); // ✅ hide suggestions
-                  setOpenManualAccountForm(true);
-                }}
-              >
-                <Typography fontWeight="bold">{store.name}</Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {store.address}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Box>
-      )}
-      {!post.account && (!nearbyStores.length || combinedAccounts.length > 0) && (
-        <Box textAlign="center" mt={1}>
-          <Typography variant="body2" color="textSecondary" mb={1}>
-            Can’t find the store in your list?
-          </Typography>
-          <Button
-            variant="outlined"
-            onClick={() => setOpenManualAccountForm(true)}
-          >
-            + Add Store Manually
-          </Button>
-        </Box>
+        </FormControl>
       )}
 
       {/* Fallback manual form */}
@@ -866,8 +719,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
           onAccountSelect={handleAccountSelect}
           isAllStoresShown={isAllStoresShown}
           setIsAllStoresShown={setIsAllStoresShown}
-          showStoreScopeToggle={!isSupplier}
+          showStoreScopeToggle={!isSupplier && (isAdminOrAbove || user?.role === "supervisor")}
           showOriginCompany={isSupplier}
+          title={post.account ? "Change account" : "Choose account"}
+          onAddManual={openManualEntry}
         />
       )}
 
@@ -877,18 +732,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
           <CompanyGoalDropdown
             goals={goalsForAccount}
             label="Company Goals"
-            loading={isFetchingGoal}
+            loading={false}
             onSelect={handleCompanyGoalSelection}
             selectedGoal={selectedCompanyGoal}
           />
           {galloEnabled && (
             <Box mt={0}>
-              <button onClick={handleDebug}>🎯</button>
-
               <GalloGoalDropdown
                 goals={galloGoals}
                 label="Gallo Goals"
-                loading={isFetchingGoal}
+                loading={false}
                 onSelect={handleGalloGoalSelection}
                 selectedGoalId={post.galloGoal?.goalId ?? null}
               />

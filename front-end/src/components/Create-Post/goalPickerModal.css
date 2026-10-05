@@ -36,6 +36,25 @@
   color: var(--text-color);
 }
 
+.goal-picker-clear {
+  width: calc(100% - 1.5rem);
+  margin: 0.65rem 0.75rem 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.goal-picker-clear:hover {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
 /* Rows */
 .goal-picker-row {
   display: flex;

@@ -1,29 +1,45 @@
-import {
-  Backdrop,
-  Box,
-  FormHelperText,
-  IconButton,
-  MenuItem,
-  Select,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Backdrop, Box, Typography } from "@mui/material";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+
 import { PostInputType } from "../../utils/types";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LoadingIndicator from "./LoadingIndicator";
 
+import "./reviewAndSubmit.css";
+
 interface ReviewAndSubmitProps {
-  companyId?: string;
   post: PostInputType;
-  handleFieldChange: (
-    field: keyof PostInputType,
-    value: PostInputType[keyof PostInputType],
+  handleFieldChange: <K extends keyof PostInputType>(
+    field: K,
+    value: PostInputType[K],
   ) => void;
   isUploading: boolean;
-  setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   uploadProgress: number;
   uploadStatusText?: string;
+  onEditStep: (step: number) => void;
 }
+
+const ReviewSection = ({
+  title,
+  step,
+  onEditStep,
+  children,
+}: {
+  title: string;
+  step: number;
+  onEditStep: (step: number) => void;
+  children: React.ReactNode;
+}) => (
+  <section className="post-review-section">
+    <header>
+      <h3>{title}</h3>
+      <button type="button" onClick={() => onEditStep(step)}>
+        <EditOutlinedIcon />
+        Edit
+      </button>
+    </header>
+    {children}
+  </section>
+);
 
 export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   post,
@@ -31,81 +47,140 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   isUploading,
   uploadProgress,
   uploadStatusText,
+  onEditStep,
 }) => {
+  const displayName =
+    [post.postUser?.firstName, post.postUser?.lastName]
+      .filter(Boolean)
+      .join(" ") || "Current user";
   const shareNote = post.shareNote?.trim();
 
   return (
     <div className="review-and-submit">
-      {shareNote && post.account?.originCompanyId && (
-        <Box
-          mt={2}
-          p={2}
-          sx={{
-            borderRadius: 2,
-            border: "1px solid",
-            borderColor: "divider",
-            backgroundColor: "var(--input-background)",
-          }}
-        >
-          <Typography variant="subtitle2" fontWeight={700}>
-            Message for{" "}
-            {post.account.originCompanyName || "the connected distributor"}
-          </Typography>
-          <Typography
-            variant="body2"
-            mt={0.5}
-            sx={{ whiteSpace: "pre-wrap" }}
-          >
-            {shareNote}
-          </Typography>
-        </Box>
-      )}
+      <div className="post-review-intro">
+        <span>Ready to publish</span>
+        <h2>Review the display</h2>
+        <p>Confirm the store, products, and goal before publishing.</p>
+      </div>
 
-      <Box mt={2}>
-        <Typography variant="h6" display="flex" alignItems="center" gap={1}>
-          Post Visibility
-          <Tooltip
-            title={
-              <>
-                <strong>Network</strong>: Shared with connected suppliers
-                <br />
-                <strong>Company Only</strong>: Visible only inside your company
-              </>
-            }
-            placement="right"
-            arrow
-          >
-            <IconButton size="small">
-              <InfoOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Typography>
+      <ReviewSection title="Photo" step={1} onEditStep={onEditStep}>
+        <div className="post-review-photo">
+          {post.imageUrl ? (
+            <img src={post.imageUrl} alt="Selected retail display" />
+          ) : (
+            <span>No photo selected</span>
+          )}
+        </div>
+      </ReviewSection>
 
-        <Select
-          fullWidth
-          variant="outlined"
-          value={post.migratedVisibility ?? "network"}
-          onChange={(event) =>
-            handleFieldChange("migratedVisibility", event.target.value)
-          }
-        >
-          <MenuItem value="network">Network (default)</MenuItem>
-          <MenuItem value="companyOnly">Company Only</MenuItem>
-        </Select>
+      <ReviewSection title="Store and goal" step={2} onEditStep={onEditStep}>
+        <dl className="post-review-facts">
+          <div>
+            <dt>Account</dt>
+            <dd>{post.account?.accountName || "No account selected"}</dd>
+          </div>
+          <div>
+            <dt>Account number</dt>
+            <dd>{post.account?.accountNumber || "Not available"}</dd>
+          </div>
+          <div>
+            <dt>Address</dt>
+            <dd>{post.account?.accountAddress || "Not available"}</dd>
+          </div>
+          <div>
+            <dt>Posting for</dt>
+            <dd>{displayName}</dd>
+          </div>
+          <div>
+            <dt>Company goal</dt>
+            <dd>{post.companyGoalTitle || "No company goal"}</dd>
+          </div>
+          <div>
+            <dt>Gallo goal</dt>
+            <dd>{post.galloGoal?.title || "No Gallo goal"}</dd>
+          </div>
+        </dl>
+      </ReviewSection>
 
-        <FormHelperText>
-          <strong>Network</strong> = shared with connected suppliers <br />
-          <strong>Company Only</strong> = internal to only your company
-        </FormHelperText>
-      </Box>
+      <ReviewSection title="Display details" step={3} onEditStep={onEditStep}>
+        <dl className="post-review-facts">
+          <div>
+            <dt>Brands</dt>
+            <dd>{post.brands?.join(", ") || "None selected"}</dd>
+          </div>
+          <div>
+            <dt>Product types</dt>
+            <dd>{post.productType?.join(", ") || "None selected"}</dd>
+          </div>
+          <div>
+            <dt>Quantity</dt>
+            <dd>{post.totalCaseCount}</dd>
+          </div>
+          <div className="post-review-facts__wide">
+            <dt>Description</dt>
+            <dd>{post.description?.trim() || "No description"}</dd>
+          </div>
+          {shareNote && post.account?.originCompanyId && (
+            <div className="post-review-facts__wide">
+              <dt>
+                Message for{" "}
+                {post.account.originCompanyName || "connected distributor"}
+              </dt>
+              <dd>{shareNote}</dd>
+            </div>
+          )}
+        </dl>
+      </ReviewSection>
+
+      <section className="post-review-visibility">
+        <div>
+          <h3>Visibility</h3>
+          <p>
+            Network posts can be shared with approved connected companies when
+            their brand settings match.
+          </p>
+        </div>
+        <div className="post-review-visibility__options" role="radiogroup">
+          <label>
+            <input
+              type="radio"
+              name="post-visibility"
+              value="network"
+              checked={(post.migratedVisibility ?? "network") === "network"}
+              onChange={() =>
+                handleFieldChange("migratedVisibility", "network")
+              }
+            />
+            <span>
+              <strong>Network</strong>
+              <small>Eligible connected companies may see this display.</small>
+            </span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="post-visibility"
+              value="companyOnly"
+              checked={post.migratedVisibility === "companyOnly"}
+              onChange={() =>
+                handleFieldChange("migratedVisibility", "companyOnly")
+              }
+            />
+            <span>
+              <strong>Company only</strong>
+              <small>Keep this display inside your company.</small>
+            </span>
+          </label>
+        </div>
+      </section>
 
       <Backdrop
         open={isUploading}
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
-        <Box textAlign="center">
+        <Box textAlign="center" className="post-publish-progress">
           <Typography variant="h6" sx={{ mb: 2 }}>
-            {uploadStatusText}
+            {uploadStatusText || "Publishing display…"}
           </Typography>
           <LoadingIndicator progress={uploadProgress} />
           <Typography variant="body2" sx={{ mt: 2, fontWeight: "bold" }}>

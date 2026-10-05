@@ -23,6 +23,8 @@ interface AccountModalSelectorProps {
   setIsAllStoresShown: (isAllStoresShown: boolean) => void;
   showStoreScopeToggle?: boolean;
   showOriginCompany?: boolean;
+  title?: string;
+  onAddManual?: () => void;
 }
 
 const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
@@ -34,6 +36,8 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
   setIsAllStoresShown,
   showStoreScopeToggle = true,
   showOriginCompany = false,
+  title = "Choose account",
+  onAddManual,
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -54,7 +58,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
       slotProps={{
         paper: {
           sx: {
-            mt: { mt: fullScreen ? 0 : 2 }, // Margin from the top
+            mt: fullScreen ? 0 : 2,
             borderRadius: 2,
             boxShadow: 3,
           },
@@ -62,7 +66,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
       }}
     >
       <DialogTitle>
-        Select Account
+        {title}
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -73,18 +77,18 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
       </DialogTitle>
       {showStoreScopeToggle && <Box display="flex" justifyContent="center" mb={2}>
         <Button
-          variant={isAllStoresShown ? "contained" : "outlined"}
+          variant={!isAllStoresShown ? "contained" : "outlined"}
           onClick={() => setIsAllStoresShown(false)}
           sx={{ mx: 1 }}
         >
-          My Stores
+          My route
         </Button>
         <Button
-          variant={!isAllStoresShown ? "contained" : "outlined"}
+          variant={isAllStoresShown ? "contained" : "outlined"}
           onClick={() => setIsAllStoresShown(true)}
           sx={{ mx: 1 }}
         >
-          All Stores
+          Company stores
         </Button>
       </Box>}
 
@@ -135,6 +139,15 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
           )}
           fullWidth
         />
+        {onAddManual && (
+          <Button
+            variant="text"
+            onClick={onAddManual}
+            sx={{ mt: 2 }}
+          >
+            Can’t find it? Add store manually
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );

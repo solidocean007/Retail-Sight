@@ -2,8 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { Photo } from "@mui/icons-material";
-import heic2any from "heic2any";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
 import { httpsCallable, getFunctions } from "firebase/functions";
 import { storage } from "../../utils/firebase";
 import { useAppDispatch } from "../../utils/store";
@@ -16,12 +20,6 @@ interface UploadImageProps {
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   isAiFeatureEnabled?: boolean; // ✅ control default AI toggle from plan
-  setUserLocation: React.Dispatch<
-    React.SetStateAction<{
-      lat: number;
-      lng: number;
-    } | null>
-  >;
 }
 
 export const UploadImage: React.FC<UploadImageProps> = ({
@@ -29,7 +27,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   post,
   setPost,
   isAiFeatureEnabled = true, // free-tier companies can disable by default
-  setUserLocation,
 }) => {
   const dispatch = useAppDispatch();
   const functions = getFunctions();
@@ -44,15 +41,16 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       ...prev,
       aiEnabled: isAiEnabled,
     }));
-  }, [isAiEnabled]);
+  }, [isAiEnabled, setPost]);
 
   const analyzeBrandsInBackground = async (
     imageFile: File,
     requestId: number,
   ) => {
+    const path = `tempUploads/${Date.now()}_${imageFile.name}`;
+    const imageRef = ref(storage, path);
+
     try {
-      const path = "tempUploads/" + Date.now() + "_" + imageFile.name;
-      const imageRef = ref(storage, path);
       await uploadBytes(imageRef, imageFile);
       const url = await getDownloadURL(imageRef);
       const detectFn = httpsCallable(functions, "detectBrands");
@@ -100,6 +98,12 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         rawCandidates: [],
       }));
       dispatch(showMessage("AI detection failed — continuing without it."));
+    } finally {
+      try {
+        await deleteObject(imageRef);
+      } catch (cleanupError) {
+        console.warn("Temporary AI upload cleanup failed:", cleanupError);
+      }
     }
   };
   // ----------------------------
@@ -110,6 +114,10 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     const analysisRequestId = ++aiAnalysisRequestId.current;
     if (!file) {
       dispatch(showMessage("No file selected. Please choose an image."));
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      dispatch(showMessage("That image is larger than 20 MB. Choose a smaller photo."));
       return;
     }
 
@@ -142,7 +150,8 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         dispatch(showMessage("Converting HEIC image, please wait..."));
         setIsConverting(true);
 
-        const convertedBlob = await heic2any({
+        const { default: convertHeic } = await import("heic2any");
+        const convertedBlob = await convertHeic({
           blob: finalFile,
           toType: "image/jpeg",
         });
@@ -196,7 +205,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         <div className="step-one">
             {/* 📸 Upload buttons */}
       <div className="upload-buttons">
-        <button className="upload-button btn-outline">
+        <button type="button" className="upload-button btn-outline">
           <label>
             <AddAPhotoIcon /> Take Photo
             <input
@@ -209,7 +218,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
             />
           </label>
         </button>
-        <button className="upload-button btn-outline">
+        <button type="button" className="upload-button btn-outline">
           <label>
             <Photo /> Select Photo
             <input

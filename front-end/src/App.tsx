@@ -102,6 +102,7 @@ function AppContent() {
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
   const isStandalonePostRoute =
     pathname.startsWith("/post/") || pathname.startsWith("/p/");
+  const isCreatePostRoute = pathname === "/create-post";
 
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
@@ -237,7 +238,10 @@ function AppContent() {
           {/* Main layout frame */}
           <div className="page-layout-frame">
             <AppRoutes />
-            {!isPublicRoute && !isAuthRoute && !isStandalonePostRoute && (
+            {!isPublicRoute &&
+              !isAuthRoute &&
+              !isStandalonePostRoute &&
+              !isCreatePostRoute && (
               <Footer />
             )}
           </div>

@@ -13,6 +13,8 @@ interface CustomConfirmationProps {
   confirmLabel?: string;
   tone?: "default" | "warning" | "danger";
   error?: string | null;
+  children?: React.ReactNode;
+  confirmDisabled?: boolean;
 }
 
 const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
@@ -25,6 +27,8 @@ const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
   confirmLabel = "Confirm",
   tone = "default",
   error = null,
+  children,
+  confirmDisabled = false,
 }) => {
   useEffect(() => {
     if (!isOpen) return;
@@ -80,6 +84,7 @@ const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
         >
           {message}
         </div>
+        {children}
         {error && (
           <div className="custom-confirmation-error" role="alert">
             {error}
@@ -99,7 +104,7 @@ const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
             type="button"
             className="custom-confirmation-confirm"
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
           >
             {loading ? (
               <span className="custom-confirmation-loading">

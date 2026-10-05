@@ -22,6 +22,8 @@
   border: 1px solid var(--card-outline, #ccc);
   border-radius: 6px;
   box-sizing: border-box;
+  background: var(--input-background);
+  color: var(--input-text-color, var(--text-color));
 }
 
 /* City + State row layout */
@@ -59,5 +61,13 @@
 
 .button-primary:hover {
   background-color: var(--primary-hover, #1565c0);
+}
+
+.manual-account-error {
+  width: 95%;
+  margin: 0.25rem 0;
+  color: var(--error-color, #b42318);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 

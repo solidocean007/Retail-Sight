@@ -10,6 +10,7 @@ import {
   deleteObject,
   getDownloadURL,
   ref as storageRef,
+  StorageReference,
   uploadBytesResumable,
   UploadTask,
   UploadTaskSnapshot,
@@ -70,6 +71,7 @@ export const useHandlePostSubmission = () => {
     setUploadStatusText("☁️ Preparing post...");
 
     let newDocRef: DocumentReference | undefined;
+    let newlyUploadedImageRef: StorageReference | undefined;
 
     try {
       // ✅ 1. Check if image already uploaded (pre-processed in UploadImage)
@@ -90,6 +92,7 @@ export const useHandlePostSubmission = () => {
           storage,
           `images/${dateString}/${folderId}/original.jpg`,
         );
+        newlyUploadedImageRef = originalRef;
 
         const task = uploadBytesResumable(originalRef, selectedFile);
         task.on("state_changed", (snap) => {
@@ -218,12 +221,26 @@ export const useHandlePostSubmission = () => {
           `❌ Error: ${error instanceof Error ? error.message : error}`,
         ),
       );
+      let cleanupFailed = false;
+
       if (newDocRef) {
         try {
           await deleteDoc(newDocRef);
         } catch {
-          dispatch(showMessage("⚠️ Partial cleanup failed. Please try again."));
+          cleanupFailed = true;
         }
+      }
+
+      if (newlyUploadedImageRef) {
+        try {
+          await deleteObject(newlyUploadedImageRef);
+        } catch {
+          cleanupFailed = true;
+        }
+      }
+
+      if (cleanupFailed) {
+        dispatch(showMessage("⚠️ Partial cleanup failed. Please try again."));
       }
       throw error;
     } finally {

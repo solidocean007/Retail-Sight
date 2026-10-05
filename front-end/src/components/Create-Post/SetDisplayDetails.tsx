@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import "./setDisplayDetails.css";
 import TotalCaseCount from "../TotalCaseCount";
 import BrandsSelector from "../ProductsManagement/BrandsSelector";
@@ -17,12 +17,7 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
 }) => {
   const brands = post.brands ?? [];
   const productTypes = post.productType ?? [];
-  const detected = post.autoDetectedBrands ?? [];
-
-  const isValid = useMemo(
-    () => brands.length > 0 && productTypes.length > 0,
-    [brands, productTypes],
-  );
+  const isValid = brands.length > 0 && productTypes.length > 0;
 
   const getCandidateBrandName = (candidate: any): string => {
     if (typeof candidate === "string") return candidate;
@@ -67,19 +62,6 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           )}
         </div>
 
-        {/* 🧠 Beta AI Brand Detection Preview */}
-        {detected.length > 0 && (
-          <div className="beta-ai-box">
-            <h4>🧠 Beta AI Brand Detection</h4>
-            <p>Detected brands in this image:</p>
-            <ul className="ai-detected-list">
-              {detected.map((b, i) => (
-                <li key={i}>• {b}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         <BrandsSelector
           selectedBrands={brands}
           selectedProductType={productTypes}
@@ -91,6 +73,9 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
 
         <TotalCaseCount
           handleTotalCaseCountChange={handleTotalCaseCountChange}
+          initialValue={post.totalCaseCount}
+          minimum={0}
+          label="Display quantity"
         />
       </section>
     </div>

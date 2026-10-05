@@ -1,59 +1,73 @@
-// CreatePost.tsx
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Container } from "@mui/material";
+import { CancelRounded } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { selectUser } from "../../Slices/userSlice";
+
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import { fetchCompanyConnections } from "../../Slices/companyConnectionSlice";
-import { RootState } from "../../utils/store";
-import { AppBar, Box, Container } from "@mui/material";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { selectUser } from "../../Slices/userSlice";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
+import { CreatePostHelmet } from "../../utils/helmetConfigurations";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
+import { RootState, useAppDispatch } from "../../utils/store";
 import {
   CompanyAccountType,
   FireStoreGalloGoalDocType,
   PostInputType,
-  PostType,
   UserType,
 } from "../../utils/types";
-import "./createPost.css";
-import { CreatePostHelmet } from "../../utils/helmetConfigurations";
-import { PickStore } from "../Create-Post/PickStore";
-import { SetDisplayDetails } from "../Create-Post/SetDisplayDetails";
-import { DisplayDescription } from "../Create-Post/DisplayDescription";
-import { ReviewAndSubmit } from "../Create-Post/ReviewAndSubmit";
-import { showMessage } from "../../Slices/snackbarSlice";
-import { useAppDispatch } from "../../utils/store";
-import CreatePostOnBehalfOfOtherUser from "../Create-Post/CreatePostOnBehalfOfOtherUser";
-import { CancelRounded } from "@mui/icons-material";
-import { UploadImage } from "../Create-Post/UploadImage";
-import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 import { canPostOnBehalf } from "../../utils/userData/permissions";
+import CreatePostOnBehalfOfOtherUser from "../Create-Post/CreatePostOnBehalfOfOtherUser";
+import { DisplayDescription } from "../Create-Post/DisplayDescription";
+import { PickStore } from "../Create-Post/PickStore";
+import { ReviewAndSubmit } from "../Create-Post/ReviewAndSubmit";
+import { SetDisplayDetails } from "../Create-Post/SetDisplayDetails";
+import { UploadImage } from "../Create-Post/UploadImage";
+import { useEarlyStorePrefetch } from "../Create-Post/useEarlyStorePrefetch";
+import CustomConfirmation from "../CustomConfirmation";
+import TotalCaseCount from "../TotalCaseCount";
 
-  const CreatePost = () => {
+import "./createPost.css";
+
+const steps = [
+  { label: "Photo", helper: "Capture the display" },
+  { label: "Store", helper: "Confirm the account" },
+  { label: "Details", helper: "Describe what is on display" },
+  { label: "Review", helper: "Check and publish" },
+] as const;
+
+const CreatePost = () => {
   const userData = useSelector(selectUser);
   const isSupplier = useSelector(selectIsSupplier);
-  const connections = useSelector((state: RootState) => state.companyConnections.connections);
+  const connections = useSelector(
+    (state: RootState) => state.companyConnections.connections,
+  );
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const companyId = userData?.companyId;
-  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
+  const handlePostSubmission = useHandlePostSubmission();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatusText, setUploadStatusText] = useState("");
+  const [exitConfirmationOpen, setExitConfirmationOpen] = useState(false);
+  const [quantityConfirmationOpen, setQuantityConfirmationOpen] = useState(false);
+  const [quantityWasEdited, setQuantityWasEdited] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
-  const handlePostSubmission = useHandlePostSubmission();
-
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
-
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
+  const [, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
-
+  const [selectedGalloGoal, setSelectedGalloGoal] =
+    useState<FireStoreGalloGoalDocType | null>(null);
   const [post, setPost] = useState<PostInputType>(() => ({
     brands: [],
     brandIds: [],
@@ -61,22 +75,19 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
     description: "",
     imageUrl: "",
     totalCaseCount: 0,
-    // visibility: "company",
     migratedVisibility: "network",
     postUser: userData || null,
     account: null,
   }));
-  const [selectedGalloGoal, setSelectedGalloGoal] =
-    useState<FireStoreGalloGoalDocType | null>(null);
-  const navigate = useNavigate();
+
+  const storePrefetch = useEarlyStorePrefetch({ userLocation });
 
   useEffect(() => {
-    if (isSupplier && companyId) {
+    if (isSupplier && companyId && connections.length === 0) {
       dispatch(fetchCompanyConnections(companyId));
     }
-  }, [isSupplier, companyId, dispatch]);
+  }, [isSupplier, companyId, connections.length, dispatch]);
 
-  // Start location lookup immediately so it's ready when the user reaches Pick Store
   useEffect(() => {
     if (userLocation || !navigator.geolocation) return;
 
@@ -84,23 +95,18 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
       ({ coords }) => {
         setUserLocation({ lat: coords.latitude, lng: coords.longitude });
       },
-      (err) => {
-        console.warn("CreatePost location lookup failed:", err);
-        dispatch(
-          showMessage(
-            "Location lookup failed. You can still select a store manually.",
-          ),
-        );
+      (error) => {
+        console.warn("CreatePost location lookup failed:", error);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
     );
-  }, [userLocation, dispatch]);
+  }, [userLocation]);
 
   useEffect(() => {
-    setPost((prevPost) => ({
-      ...prevPost,
-      postUser: onBehalf ?? userData, // 👤 Who the post is for
-      postedBy: userData ?? null, // 🧑‍💻 Who is submitting the post
+    setPost((previous) => ({
+      ...previous,
+      postUser: onBehalf ?? userData,
+      postedBy: userData ?? null,
       postedByFirstName: userData?.firstName || null,
       postedByLastName: userData?.lastName || null,
       postedByUid: userData?.uid || null,
@@ -108,208 +114,338 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
   }, [onBehalf, userData]);
 
   const handleTotalCaseCountChange = useCallback((caseCount: number) => {
-    setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
+    setPost((previous) => ({ ...previous, totalCaseCount: caseCount }));
+    setQuantityWasEdited(true);
   }, []);
 
-  // Update this to handle all field changes generically, including channel and category
   const handleFieldChange = useCallback(
-    (field: keyof PostType, value: PostType[keyof PostType]) => {
-      setPost((prevPost) => ({
-        ...prevPost,
+    <K extends keyof PostInputType>(field: K, value: PostInputType[K]) => {
+      setPost((previous) => ({
+        ...previous,
         [field]: value,
       }));
     },
     [],
   );
 
-  const isStep1Valid = !!selectedFile; // UploadImage picked a file
-  const isStep2Valid = !!post.account && (!isSupplier || (
-    !!post.account.originCompanyId && connections.some((connection) =>
-      connection.status === "approved" &&
-      [connection.requestFromCompanyId, connection.requestToCompanyId].includes(companyId || "") &&
-      [connection.requestFromCompanyId, connection.requestToCompanyId].includes(post.account?.originCompanyId || ""),
-    )
-  )); // Supplier stores must resolve to an approved distributor connection.
-  const isStep3Valid =
-    (post.brands?.length || 0) > 0 && (post.productType?.length || 0) > 0; // SetDisplayDetails
-  const isStep4Valid = true; // DisplayDescription is optional
+  const stepValidity = useMemo(
+    () => ({
+      1: !!selectedFile,
+      2:
+        !!post.account &&
+        (!isSupplier ||
+          (!!post.account.originCompanyId &&
+            connections.some(
+              (connection) =>
+                connection.status === "approved" &&
+                [
+                  connection.requestFromCompanyId,
+                  connection.requestToCompanyId,
+                ].includes(companyId || "") &&
+                [
+                  connection.requestFromCompanyId,
+                  connection.requestToCompanyId,
+                ].includes(post.account?.originCompanyId || ""),
+            ))),
+      3:
+        (post.brands?.length || 0) > 0 &&
+        (post.productType?.length || 0) > 0,
+      4: true,
+    }),
+    [
+      companyId,
+      connections,
+      isSupplier,
+      post.account,
+      post.brands,
+      post.productType,
+      selectedFile,
+    ],
+  );
 
-  const canGoNext = useMemo(() => {
-    switch (currentStep) {
-      case 1:
-        return isStep1Valid;
-      case 2:
-        return isStep2Valid;
-      case 3:
-        return isStep3Valid;
-      case 4:
-        return isStep4Valid;
-      default:
-        return true; // Review/Submit step swaps to Submit
+  const canGoNext = stepValidity[currentStep as keyof typeof stepValidity];
+  const hasDraft =
+    !!selectedFile ||
+    !!post.account ||
+    (post.brands?.length || 0) > 0 ||
+    !!post.description?.trim();
+
+  useEffect(() => {
+    if (!hasDraft || isUploading) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [hasDraft, isUploading]);
+
+  const requestExit = () => {
+    if (isUploading) return;
+    if (hasDraft) {
+      setExitConfirmationOpen(true);
+      return;
     }
-  }, [currentStep, isStep1Valid, isStep2Valid, isStep3Valid, isStep4Valid]);
-
-  // Render different content based on the current step
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <UploadImage
-            setSelectedFile={setSelectedFile}
-            post={post}
-            setPost={setPost}
-            setUserLocation={setUserLocation}
-          />
-        );
-      case 2:
-        return (
-          <PickStore
-            post={post}
-            setPost={setPost}
-            handleFieldChange={handleFieldChange} // company goal logic uses handle field change
-            setSelectedCompanyAccount={setSelectedCompanyAccount}
-            setSelectedGalloGoal={setSelectedGalloGoal}
-            userLocation={userLocation} // 👈 add this
-          />
-        );
-      case 3:
-        return (
-          <SetDisplayDetails
-            post={post}
-            setPost={setPost}
-            handleTotalCaseCountChange={handleTotalCaseCountChange}
-          />
-        );
-      case 4:
-        return (
-          <DisplayDescription
-            post={post}
-            isSupplier={isSupplier}
-            handleFieldChange={handleFieldChange}
-          />
-        );
-      default:
-        return (
-          <ReviewAndSubmit
-            companyId={companyId}
-            post={post}
-            handleFieldChange={handleFieldChange}
-            isUploading={isUploading}
-            setIsUploading={setIsUploading}
-            uploadProgress={uploadProgress}
-            uploadStatusText={uploadStatusText}
-          />
-        );
-    }
-  };
-
-  const authToCreateOnBehalf = canPostOnBehalf(userData);
-
-  const appBarStyle = {
-    width: "100%",
-    display: "flex",
-    // justifyContent: "space-between",
-    flexDirection: { sm: "row", md: "row" },
+    navigate("/user-home-page");
   };
 
   const handleSubmitClick = async () => {
     if (!selectedFile) {
-      dispatch(showMessage("Please select an image before submitting."));
+      setCurrentStep(1);
+      dispatch(showMessage("Choose a display photo before publishing."));
+      return;
+    }
+    if (!post.account) {
+      setCurrentStep(2);
+      dispatch(showMessage("Confirm the store before publishing."));
+      return;
+    }
+    if (!stepValidity[3]) {
+      setCurrentStep(3);
+      dispatch(showMessage("Add a brand and product type."));
+      return;
+    }
+    if (post.totalCaseCount < 1) {
+      setCurrentStep(3);
+      setQuantityConfirmationOpen(true);
       return;
     }
 
-    // setIsSubmitting(true);
     setUploadProgress(0);
     setIsUploading(true);
 
     try {
-      // 🔒 Gate gallo args right here
-      const galloGoal = galloEnabled ? selectedGalloGoal : undefined;
       await handlePostSubmission(
         post,
         selectedFile,
         setIsUploading,
         setUploadProgress,
         setUploadStatusText,
-        galloGoal,
+        galloEnabled ? selectedGalloGoal : undefined,
       );
       navigate("/user-home-page");
-    } catch (err: any) {
-      console.error("Upload failed:", err);
-      alert(err.message || "An error occurred during upload.");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      dispatch(
+        showMessage(
+          error instanceof Error
+            ? error.message
+            : "The display could not be published.",
+        ),
+      );
     }
+  };
+
+  const renderStepContent = () => {
+    if (currentStep === 1) {
+      return (
+        <UploadImage
+          setSelectedFile={setSelectedFile}
+          post={post}
+          setPost={setPost}
+        />
+      );
+    }
+
+    if (currentStep === 2) {
+      return (
+        <PickStore
+          post={post}
+          setPost={setPost}
+          handleFieldChange={handleFieldChange}
+          setSelectedCompanyAccount={setSelectedCompanyAccount}
+          setSelectedGalloGoal={setSelectedGalloGoal}
+          prefetchedNearbyStores={storePrefetch.nearbyStores}
+          isPrefetchingNearbyStores={storePrefetch.isFindingNearbyStores}
+          nearbyStorePrefetchError={storePrefetch.nearbyStoreError}
+        />
+      );
+    }
+
+    if (currentStep === 3) {
+      return (
+        <div className="create-post-step-stack">
+          <SetDisplayDetails
+            post={post}
+            setPost={setPost}
+            handleTotalCaseCountChange={handleTotalCaseCountChange}
+          />
+          <DisplayDescription
+            post={post}
+            isSupplier={isSupplier}
+            handleFieldChange={handleFieldChange}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <ReviewAndSubmit
+        post={post}
+        handleFieldChange={handleFieldChange}
+        isUploading={isUploading}
+        uploadProgress={uploadProgress}
+        uploadStatusText={uploadStatusText}
+        onEditStep={setCurrentStep}
+      />
+    );
   };
 
   return (
     <>
       <CreatePostHelmet />
-      <Container disableGutters className="create-post-container">
-        <AppBar position="static" sx={appBarStyle}>
-          <div className="create-post-header">
-            <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
-            <button
-              className="close-button"
-              aria-label="close"
-              onClick={() => navigate("/user-home-page")}
-            >
-              <CancelRounded />
-            </button>
+      <Container disableGutters maxWidth={false} className="create-post-container">
+        <header className="create-post-header">
+          <div>
+            <span className="create-post-eyebrow">New field display</span>
+            <h1>Create a post</h1>
+            <p>{steps[currentStep - 1].helper}</p>
           </div>
-        </AppBar>
-        <div className="create-post-body">
-          {authToCreateOnBehalf && (
-            <CreatePostOnBehalfOfOtherUser
-              onBehalf={onBehalf}
-              setOnBehalf={setOnBehalf}
-              handleFieldChange={handleFieldChange}
-            />
-          )}
-          {/* Sticky footer */}
-          <div className="create-post-navigation">
-            {/* Back Button or Placeholder */}
-            {currentStep > 1 ? (
-              <button
-                className="btn-secondary"
-                onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
-                disabled={isUploading}
-              >
-                Back
-              </button>
-            ) : (
-              // invisible placeholder keeps layout stable
-              <div className="btn-placeholder" />
-            )}
+          <button
+            type="button"
+            className="create-post-close"
+            aria-label="Close Create Post"
+            onClick={requestExit}
+            disabled={isUploading}
+          >
+            <CancelRounded />
+          </button>
+        </header>
 
-            {/* Next / Submit Button */}
-            <button
-              type="button"
-              className={canGoNext ? "button-primary" : "btn-disabled"}
-              onClick={() => {
-                if (currentStep < 5) setCurrentStep((s) => s + 1);
-                else handleSubmitClick();
-              }}
-              disabled={isUploading || (currentStep < 5 && !canGoNext)}
-            >
-              {currentStep < 5
-                ? "Next"
-                : isUploading
-                  ? `Uploading ${Math.round(uploadProgress)}%`
-                  : "Submit"}
-            </button>
-          </div>
+        <nav className="create-post-stepper" aria-label="Create Post progress">
+          {steps.map((step, index) => {
+            const stepNumber = index + 1;
+            const isCurrent = stepNumber === currentStep;
+            const isComplete = stepNumber < currentStep;
+            return (
+              <button
+                type="button"
+                key={step.label}
+                className={[
+                  "create-post-step",
+                  isCurrent ? "create-post-step--current" : "",
+                  isComplete ? "create-post-step--complete" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-current={isCurrent ? "step" : undefined}
+                disabled={!isComplete || isUploading}
+                onClick={() => isComplete && setCurrentStep(stepNumber)}
+              >
+                <span>{isComplete ? "✓" : stepNumber}</span>
+                <strong>{step.label}</strong>
+              </button>
+            );
+          })}
+        </nav>
+
+        <main className="create-post-body">
+          {canPostOnBehalf(userData) && (
+            <div className="create-post-owner-context">
+              <span>Posting for</span>
+              <CreatePostOnBehalfOfOtherUser
+                onBehalf={onBehalf}
+                setOnBehalf={setOnBehalf}
+                handleFieldChange={handleFieldChange}
+              />
+            </div>
+          )}
 
           {post.autoDetectedBrands === undefined && post.imageUrl && (
-            <p className="hint-text">🧠 Analyzing image for brands…</p>
+            <div className="create-post-inline-status">
+              Analyzing the photo for brand suggestions…
+            </div>
           )}
-          {post.autoDetectedBrands && post.autoDetectedBrands?.length > 0 && (
-            <p className="hint-text">
-              ✅ AI detected {post.autoDetectedBrands.join(", ")}
-            </p>
+          {post.autoDetectedBrands && post.autoDetectedBrands.length > 0 && (
+            <div className="create-post-inline-status create-post-inline-status--success">
+              Detected {post.autoDetectedBrands.join(", ")}
+            </div>
           )}
 
-          {renderStepContent()}
-        </div>
+          <section className="create-post-step-content">
+            {renderStepContent()}
+          </section>
+
+          <nav className="create-post-navigation" aria-label="Step controls">
+            <button
+              type="button"
+              className="create-post-back"
+              onClick={() =>
+                setCurrentStep((step) => Math.max(1, step - 1))
+              }
+              disabled={currentStep === 1 || isUploading}
+            >
+              Back
+            </button>
+            <span className="create-post-navigation__status">
+              Step {currentStep} of {steps.length}
+            </span>
+            <button
+              type="button"
+              className="create-post-next"
+              onClick={() => {
+                if (currentStep === 3) {
+                  if (quantityWasEdited && post.totalCaseCount >= 1) {
+                    setCurrentStep(4);
+                  } else {
+                    setQuantityConfirmationOpen(true);
+                  }
+                } else if (currentStep < steps.length) {
+                  setCurrentStep((step) => step + 1);
+                } else {
+                  void handleSubmitClick();
+                }
+              }}
+              disabled={isUploading || !canGoNext}
+            >
+              {currentStep < steps.length
+                ? currentStep === 3
+                  ? "Review display"
+                  : "Continue"
+                : isUploading
+                  ? `Publishing ${Math.round(uploadProgress)}%`
+                  : "Publish display"}
+            </button>
+          </nav>
+        </main>
       </Container>
+
+      <CustomConfirmation
+        isOpen={quantityConfirmationOpen}
+        title="Confirm the display quantity"
+        message="Take one more look at the display and enter the total cases or units shown. Quantity cannot be left at zero."
+        confirmLabel="Confirm quantity & review"
+        confirmDisabled={post.totalCaseCount < 1}
+        onClose={() => setQuantityConfirmationOpen(false)}
+        onConfirm={() => {
+          if (post.totalCaseCount < 1) return;
+          setQuantityConfirmationOpen(false);
+          setCurrentStep(4);
+        }}
+      >
+        <div className="quantity-checkpoint">
+          <span>Quantity on display</span>
+          <TotalCaseCount
+            handleTotalCaseCountChange={handleTotalCaseCountChange}
+            initialValue={post.totalCaseCount}
+            minimum={0}
+            label="Cases or units"
+          />
+          {post.totalCaseCount < 1 && (
+            <small>Enter at least 1 to continue.</small>
+          )}
+        </div>
+      </CustomConfirmation>
+
+      <CustomConfirmation
+        isOpen={exitConfirmationOpen}
+        title="Discard this display?"
+        message="Your selected photo and display details will be lost."
+        confirmLabel="Discard draft"
+        tone="warning"
+        onClose={() => setExitConfirmationOpen(false)}
+        onConfirm={() => navigate("/user-home-page")}
+      />
     </>
   );
 };

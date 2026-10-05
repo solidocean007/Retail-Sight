@@ -5,12 +5,25 @@
   margin-bottom: 10px;
 }
 
-.total-case-count-box input {
-  width: auto;
-  max-width: 80px;
-  height: 30px;
+.total-case-count-box .total-case-count-input.MuiTextField-root {
+  width: 112px !important;
+  max-width: 112px;
+  align-self: center;
+  flex: 0 0 auto;
+}
+
+.total-case-count-box .total-case-count-input .MuiInputBase-root {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.total-case-count-box .total-case-count-input input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: auto;
   margin: 0;
-  padding: 0;
+  text-align: center;
 }
 
 /* .total-case-count-box label {

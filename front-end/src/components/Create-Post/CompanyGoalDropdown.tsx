@@ -95,6 +95,9 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
           },
         }}
       >
+        <MenuItem value="">
+          <ListItemText primary="No company goal" />
+        </MenuItem>
         {dedupedGoals.map((goal) => {
           const isSelected = selectedGoal?.id === goal.id;
           return (

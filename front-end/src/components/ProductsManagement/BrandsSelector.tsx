@@ -301,6 +301,8 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
           : `🤖 Auto-added ${aiMatches.length} detected brands`,
       ),
     );
+    // updateBrands intentionally uses the current catalog-derived helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiMatches, hasAppliedAiMatches, selectedBrands.length, dispatch]);
 
   useEffect(() => {
@@ -321,60 +323,36 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
     <div className="brandsSelector">
       <div className="ui-detect-brands">
         {rawCandidates?.length ? (
-          <div className="ai-suggestions-box">
-            <h4>🧠 Beta AI Brand Detection</h4>
-
-            {aiMatches.length > 0 ? (
-              <>
-                <p className="ai-subtitle">Matched company brands:</p>
-                <div className="ai-chip-row">
-                  {aiMatches.map((brand) => (
-                    <Chip
-                      key={brand}
-                      label={brand}
-                      color="success"
-                      variant="filled"
-                      size="small"
-                      onClick={() =>
-                        handleBrandsChange(null, [...selectedBrands, brand])
-                      }
-                    />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="ai-subtitle-muted">
-                No matching brands detected. Select manually below.
-              </p>
-            )}
-
-            {/* {aiCustomSuggestions.length > 0 && (
-              <>
-                <p className="ai-subtitle">Possible new brands:</p>
-                <div className="ai-chip-row">
-                  {aiCustomSuggestions.slice(0, 8).map((word) => (
-                    <Chip
-                      key={word}
-                      label={`${word} (Custom)`}
-                      size="small"
-                      variant="outlined"
-                      color="warning"
-                      onClick={() => requestAddCustomBrand(word)}
-                    />
-                  ))}
-                </div>
-              </>
-            )} */}
-
-            {aiMatches.length === 0 && aiCustomSuggestions.length === 0 && (
-              <p className="ai-subtitle-muted">
-                No recognizable brands detected.
-              </p>
-            )}
+          aiMatches.length > 0 ? (
+            <div className="ai-suggestions-box">
+              <div className="ai-suggestions-heading">🧠 AI brand suggestions</div>
+              <div className="ai-chip-row">
+                {aiMatches.map((brand) => (
+                  <Chip
+                    key={brand}
+                    label={brand}
+                    color="success"
+                    variant="filled"
+                    size="small"
+                    onClick={() =>
+                      handleBrandsChange(null, [...selectedBrands, brand])
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="ai-detection-summary">
+              <span aria-hidden="true">🧠</span>
+              <span>No catalog brand matched. Choose one below.</span>
+            </div>
+          )
+        ) : rawCandidates ? (
+          <div className="ai-detection-summary ai-detection-summary--quiet">
+            <span aria-hidden="true">🧠</span>
+            <span>No brand detected. Choose one below.</span>
           </div>
-        ) : (
-          <p className="ai-subtitle-muted">AI detection pending...</p>
-        )}
+        ) : null}
       </div>
 
       <FormControl fullWidth>

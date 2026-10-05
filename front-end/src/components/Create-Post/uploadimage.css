@@ -4,9 +4,16 @@
 
 .upload-buttons {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   margin-top: 10px;
+}
+
+.upload-button {
+  min-height: 46px;
+  min-width: min(100%, 190px);
+  border-radius: 12px;
 }
 
 .upload-buttons label {
@@ -18,14 +25,15 @@
 
 /* === 🧠 AI Detection Beta Feature Card === */
 .ai-detection-card {
-  background: var(--surface-elevated);
-  border: 2px solid var(--primary-blue);
+  width: min(100%, 560px);
+  background: var(--background-pop-out-body, var(--dashboard-card));
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 42%, transparent);
   border-radius: var(--card-radius);
   padding: 1.25rem 1.25rem 1rem;
   margin-bottom: 1.25rem;
   box-shadow: var(--card-shadow);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
-  max-width: 450px;
+  max-width: 560px;
 }
 
 .ai-detection-card:hover {
@@ -105,6 +113,24 @@
 [data-theme="dark"] .ai-detection-card {
   border-color: var(--primary-blue);
   background: var(--surface-elevated);
+}
+
+@media (max-width: 520px) {
+  .upload-buttons {
+    width: 100%;
+  }
+
+  .upload-button {
+    width: 100%;
+  }
+
+  .ai-detection-card {
+    padding: 1rem;
+  }
+
+  .ai-note {
+    margin-left: 0;
+  }
 }
 
 [data-theme="dark"] .ai-badge {

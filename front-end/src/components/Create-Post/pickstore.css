@@ -1,7 +1,83 @@
 /* src/components/create-post/pickstore.css */
 /* General Styles */
 .pick-store {
-  width: 90%;
+  width: 100%;
+}
+
+.store-suggestion {
+  display: flex;
+  margin: 0 auto 0.85rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 42%, transparent);
+  border-radius: 14px;
+  flex-direction: column;
+  gap: 0.2rem;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary-blue) 11%, transparent),
+      transparent
+    ),
+    var(--background-pop-out-body, var(--dashboard-card));
+}
+
+.store-suggestion__eyebrow {
+  color: var(--primary-blue);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.store-suggestion strong {
+  color: var(--text-color);
+  font-size: 0.92rem;
+}
+
+.store-suggestion > span:not(.store-suggestion__eyebrow) {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.store-suggestion__actions {
+  display: flex;
+  margin-top: 0.55rem;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.store-suggestion__partner {
+  margin-top: 0.2rem;
+  color: var(--primary-blue) !important;
+  font-weight: 700;
+}
+
+.store-fallback {
+  display: flex;
+  padding: 1rem;
+  border: 1px dashed color-mix(in srgb, var(--primary-blue) 38%, var(--border-color));
+  border-radius: 14px;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: color-mix(in srgb, var(--dashboard-card) 92%, var(--primary-blue) 8%);
+}
+
+.store-fallback strong {
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.store-fallback p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.store-prefetch-status {
+  margin: 0.4rem 0 0.75rem !important;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .pick-store-navigation-buttons {
@@ -52,6 +128,10 @@
   color: #ffffff;
   background-color: #1976d2;
   border-radius: 8px;
+}
+
+.pick-store .MuiBox-root[style*="border"] {
+  color: var(--text-color);
 }
 
 .toggle-switch {
