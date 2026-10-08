@@ -40,7 +40,10 @@ application shell (including lazy Create Post and Saved Posts bundles), and
 serves the cached SPA for offline navigation. Native builds also unregister any
 stale web service worker so the bundled Android application remains authoritative.
 A replacement staging APK was generated, and the corrected service worker and
-110-file offline manifest are live on staging Hosting.
+110-file offline manifest are live on staging Hosting. Direct APK delivery from
+Hosting proved unreliable in an Android embedded browser, so version
+`1.0-staging (2)` is now distributed to the initial tester through Firebase App
+Distribution instead of a public download URL.
 
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
