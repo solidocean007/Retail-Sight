@@ -46,6 +46,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   const [isConverting, setIsConverting] = useState(false);
   const [isAiEnabled, setIsAiEnabled] = useState(isAiFeatureEnabled);
   const [showAiInfo, setShowAiInfo] = useState(false);
+  const [online, setOnline] = useState(navigator.onLine);
   const aiAnalysisRequestId = useRef(0);
   const [captureSaveState, setCaptureSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
@@ -57,6 +58,18 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       aiEnabled: isAiEnabled,
     }));
   }, [isAiEnabled, setPost]);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const analyzeBrandsInBackground = async (
     imageFile: File,
@@ -295,7 +308,9 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         </div>
       )}
 
-      {captureSaveState !== "idle" && (
+      {(captureSaveState === "saving" ||
+        captureSaveState === "error" ||
+        (captureSaveState === "saved" && !online)) && (
         <p
           className={`capture-save-status capture-save-status--${captureSaveState}`}
           role="status"
@@ -303,7 +318,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         >
           {captureSaveState === "saving" && "Saving photo on this device…"}
           {captureSaveState === "saved" &&
-            "Saved safely on this device. If you submit while offline, Displaygram will upload it automatically when you're online and the app is open."}
+            "Saved on this device. It will upload when you're online and Displaygram is open."}
           {captureSaveState === "error" &&
             "Photo was not saved. Select it again before continuing."}
         </p>

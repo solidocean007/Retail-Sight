@@ -37,23 +37,30 @@
 
 .capture-save-status {
   width: min(100%, 450px);
-  margin: 0 0 1rem;
-  padding: 0.7rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.7rem;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   background: var(--surface-elevated);
-  color: var(--text-color);
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .capture-save-status--saved {
-  border-color: var(--success-color, #2e7d32);
+  border-color: color-mix(
+    in srgb,
+    var(--success-color, #2e7d32) 45%,
+    transparent
+  );
 }
 
 .capture-save-status--error {
   border-color: var(--error-color, #c62828);
+  color: var(--text-color);
+  font-weight: 600;
 }
 
 /* === 🧠 AI Detection Beta Feature Card === */

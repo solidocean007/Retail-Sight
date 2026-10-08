@@ -12,6 +12,8 @@ automatic recovery test completed successfully on October 8, 2026.
 - Follow-up build 4 also falls back to the original photo when a generated feed
   thumbnail is not available yet. This preserves the existing resized-image
   path while preventing a broken image in the feed.
+- Follow-up build 5 removes the local-save notice from the normal online
+  capture flow. A shorter, quieter notice remains available while offline.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 
