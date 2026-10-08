@@ -33,6 +33,15 @@ the staging Firebase configuration. Staging still needs its iOS app registration
 and distribution through an Android internal-test channel. Google sign-in
 remains off.
 
+The first Android device test exposed a legacy PWA behavior: offline navigation
+could fall through to the static `offline.html` page before Create Post loaded.
+The staging build now emits an offline asset manifest, pre-caches the complete
+application shell (including lazy Create Post and Saved Posts bundles), and
+serves the cached SPA for offline navigation. Native builds also unregister any
+stale web service worker so the bundled Android application remains authoritative.
+A replacement staging APK was generated, and the corrected service worker and
+110-file offline manifest are live on staging Hosting.
+
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
 visible name "Displaygram Staging". Each flavor reads its own Firebase Android
@@ -68,6 +77,9 @@ Completed foundation:
 - Added foreground automatic synchronization on initial app load, restored
   connectivity, and native app resume, with a single active worker and bounded
   retry backoff.
+- Added build-generated app-shell precaching and offline SPA navigation after
+  the first device test showed the older PWA fallback page blocking Create Post.
+  Native containers defensively remove stale web service workers.
 - Added the authenticated `finalizeOfflineCapture` function, deterministic post
   IDs, server-owned idempotency receipts, active company-membership checks, and
   server-side post/user/account validation.

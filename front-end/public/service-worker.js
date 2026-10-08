@@ -1,8 +1,10 @@
 /* eslint-disable no-undef */
 // front-end/public/service-worker.js
 const IMAGE_CACHE = "dg-image-cache-v3";
-const OFFLINE_CACHE_NAME = "dg-offline-v3";
+const OFFLINE_CACHE_NAME = "dg-offline-v4";
+const APP_SHELL_CACHE = "dg-app-shell-v1";
 const OFFLINE_FALLBACK_PAGE = "/offline.html";
+const OFFLINE_ASSET_MANIFEST = "/offline-assets.json";
 
 // -------------------------------------------------------
 // 1. INSTALL — cache offline fallback
@@ -12,11 +14,19 @@ self.addEventListener("install", (event) => {
   // to close — critical for push fixes to reach devices on next refresh.
   self.skipWaiting();
 
-  event.waitUntil(
-    caches.open(OFFLINE_CACHE_NAME).then((cache) => cache.addAll([
-      OFFLINE_FALLBACK_PAGE
-    ]))
-  );
+  event.waitUntil((async () => {
+    const fallbackCache = await caches.open(OFFLINE_CACHE_NAME);
+    await fallbackCache.add(OFFLINE_FALLBACK_PAGE);
+
+    const response = await fetch(OFFLINE_ASSET_MANIFEST, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Offline asset manifest failed: ${response.status}`);
+    }
+
+    const assets = await response.json();
+    const appCache = await caches.open(APP_SHELL_CACHE);
+    await appCache.addAll(assets);
+  })());
 });
 
 // -------------------------------------------------------
@@ -28,7 +38,12 @@ self.addEventListener("activate", (event) => {
       caches.keys().then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key !== OFFLINE_CACHE_NAME && key !== IMAGE_CACHE)
+            .filter(
+              (key) =>
+                key !== OFFLINE_CACHE_NAME &&
+                key !== APP_SHELL_CACHE &&
+                key !== IMAGE_CACHE
+            )
             .map((key) => caches.delete(key))
         )
       ),
@@ -38,7 +53,7 @@ self.addEventListener("activate", (event) => {
 });
 
 // -------------------------------------------------------
-// 3. FETCH — image caching only (network-first refresh)
+// 3. FETCH — offline app shell + image caching
 // -------------------------------------------------------
 // ----------------------------------------------------
 // IMAGE CACHE CONFIG
@@ -66,42 +81,66 @@ self.addEventListener("fetch", (event) => {
 
   if (req.method !== "GET") return;
 
-  // Only handle Firebase Storage images
-  if (!isOptimizedImageRequest(url)) return;
-
-  event.respondWith(
-    caches.open(IMAGE_CACHE).then(async (cache) => {
-      const cached = await cache.match(req);
-
-      // Kick off background update immediately
-      const fetchPromise = fetch(req)
-        .then((resp) => {
-          if (resp.ok) {
-            cache.put(req, resp.clone());
+  // Keep SPA navigation inside the runnable application while offline.
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req)
+        .then(async (response) => {
+          if (response.ok) {
+            const cache = await caches.open(APP_SHELL_CACHE);
+            await cache.put("/index.html", response.clone());
           }
-          return resp;
+          return response;
         })
-        .catch(() => null);
+        .catch(async () => {
+          const appCache = await caches.open(APP_SHELL_CACHE);
+          return (
+            (await appCache.match("/index.html")) ||
+            (await caches.match(OFFLINE_FALLBACK_PAGE))
+          );
+        })
+    );
+    return;
+  }
 
-      // Return cache FIRST if available (fastest)
-      return cached || fetchPromise;
-    })
-  );
-});
+  // Firebase Storage images use stale-while-revalidate.
+  if (isOptimizedImageRequest(url)) {
+    event.respondWith(
+      caches.open(IMAGE_CACHE).then(async (cache) => {
+        const cached = await cache.match(req);
+        const fetchPromise = fetch(req)
+          .then((resp) => {
+            if (resp.ok) {
+              cache.put(req, resp.clone());
+            }
+            return resp;
+          })
+          .catch(() => null);
 
-// ----------------------------------------------------
-// CLEANUP OLD IMAGE CACHES
-// ----------------------------------------------------
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k.startsWith("dg-image-cache") && k !== IMAGE_CACHE)
-          .map((k) => caches.delete(k))
-      )
-    )
-  );
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // Hashed build assets are immutable and are also pre-cached at install.
+  const requestUrl = new URL(req.url);
+  if (
+    requestUrl.origin === self.location.origin &&
+    (requestUrl.pathname.startsWith("/assets/") ||
+      ["script", "style", "font"].includes(req.destination))
+  ) {
+    event.respondWith(
+      caches.open(APP_SHELL_CACHE).then(async (cache) => {
+        const cached = await cache.match(req);
+        if (cached) return cached;
+
+        const response = await fetch(req);
+        if (response.ok) await cache.put(req, response.clone());
+        return response;
+      })
+    );
+  }
 });
 
 

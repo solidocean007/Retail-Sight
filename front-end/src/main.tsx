@@ -17,13 +17,24 @@ void initializeNativeRuntime().catch((error) => {
   console.error("Native runtime initialization failed:", error);
 });
 
+const nativePlatform = isNativePlatform();
+
+// Native builds ship the complete web bundle inside the app. A service worker
+// left behind by an earlier WebView session must never replace it with the web
+// fallback page when the device loses connectivity.
+if (nativePlatform && "serviceWorker" in navigator) {
+  void navigator.serviceWorker.getRegistrations().then((registrations) =>
+    Promise.all(registrations.map((registration) => registration.unregister())),
+  );
+}
+
 // Apply theme attribute to body early
 document.body.setAttribute("data-theme", prefersDark ? "dark" : "light");
 
 // -----------------------------------------
 // SAFE SERVICE WORKER REGISTRATION (PWA + FCM)
 // -----------------------------------------
-if (!isNativePlatform() && "serviceWorker" in navigator) {
+if (!nativePlatform && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     const ua = navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(ua);
