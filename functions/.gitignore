@@ -12,3 +12,4 @@ node_modules/
 .env
 .env.retail-sight
 .env.*
+!.env.*.example

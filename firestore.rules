@@ -37,11 +37,6 @@ service cloud.firestore {
              );
     }
 
-    function isInviteReadable(inviteId) {
-  		let doc = get(/databases/$(database)/documents/pendingInvites/$(inviteId));
-  		return doc.data.status == "pending" ||
-         doc.data.status == "email-queued";
-		}
     // ==========================================================
     // 🔹 Billing Logs (System-Generated)
     // ==========================================================

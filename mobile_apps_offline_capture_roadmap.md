@@ -14,10 +14,15 @@ must not be merged wholesale because the production capture workflow changed
 substantially.
 
 The staging project `displaygram-staging` now has Web and Android app
-registrations, including the staging Android Firebase configuration. It still
-needs Authentication provider setup, database and storage initialization,
-repository aliases, test-only seed data, its iOS app registration, and its
-first deployment.
+registrations, including the staging Android Firebase configuration.
+Email/password Authentication is enabled. Firestore was created in `nam5`, and
+the staging Storage bucket, Firestore rules/indexes, and Storage rules are live.
+The `finalizeOfflineCapture` callable is deployed in `us-central1` on Node 22;
+an unauthenticated verification request was rejected as expected. Staging also
+has a seven-day Functions artifact cleanup policy and non-production Braintree
+placeholders that must be replaced with sandbox credentials before billing is
+tested. It still needs test-only seed data, its iOS app registration, a staging
+web deployment, and an internal Android test build. Google sign-in remains off.
 
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
@@ -78,11 +83,13 @@ Open decisions and gates:
   be confirmed before Firebase native apps, signing, or store records are made.
 - Native Google/Apple authentication strategy and organization developer-account
   status still need owner confirmation.
-- A separate Firebase staging project and non-customer seed data are required
-  before deploying the phone-test channel. A Hosting preview channel by itself
-  still connects to whichever Firebase backend was compiled into the app.
-- Cloud Functions remains on Node 20 and must be upgraded and regression-tested
-  before the mobile backend is deployed.
+- The separate Firebase staging project is active, but non-customer seed data
+  is still required before distributing the phone-test build. A Hosting preview
+  channel by itself still connects to whichever Firebase backend was compiled
+  into the app.
+- Cloud Functions now targets Node 22. The complete production function suite
+  still needs regression testing before its runtime is upgraded and redeployed;
+  only `finalizeOfflineCapture` has been deployed to staging.
 - The new sync protocol no longer uses the broadly writable `images/**` or
   `tempUploads/**` paths. Those legacy paths remain an independent integrity
   issue and should be tightened after their existing callers are inventoried.
@@ -365,7 +372,8 @@ References:
 
 ### Phase 0 — Decisions and prerequisites
 
-- Upgrade Cloud Functions from Node 20 before mobile backend work expands.
+- Validate the Node 22 runtime across the complete production function suite;
+  the staging offline-capture function is already running on Node 22.
 - Confirm Apple and Google organization account status and ownership.
 - Confirm access to a current Mac capable of running Xcode for iOS builds.
 - Select application ID, app owner, support contact, and privacy-policy owner.
