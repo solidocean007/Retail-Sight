@@ -13,9 +13,17 @@ baseline. The September offline branch remains preserved as a reference and
 must not be merged wholesale because the production capture workflow changed
 substantially.
 
-The staging project `displaygram-staging` exists, but it still needs Firebase
-app registration, database and storage initialization, repository aliases,
-test-only seed data, and its first deployment.
+The staging project `displaygram-staging` now has Web and Android app
+registrations, including the staging Android Firebase configuration. It still
+needs Authentication provider setup, database and storage initialization,
+repository aliases, test-only seed data, its iOS app registration, and its
+first deployment.
+
+Android build identities are separated by environment: production uses
+`com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
+visible name "Displaygram Staging". Each flavor reads its own Firebase Android
+configuration so a staging phone build cannot identify as the Play production
+app.
 
 ## Historical implementation progress
 

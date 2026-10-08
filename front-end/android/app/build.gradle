@@ -16,6 +16,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    flavorDimensions += "environment"
+    productFlavors {
+        production {
+            dimension "environment"
+        }
+        staging {
+            dimension "environment"
+            applicationIdSuffix ".staging"
+            versionNameSuffix "-staging"
+            resValue "string", "app_name", "Displaygram Staging"
+            resValue "string", "title_activity_main", "Displaygram Staging"
+            resValue "string", "package_name", "com.displaygram.app.staging"
+            resValue "string", "custom_url_scheme", "com.displaygram.app.staging"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -44,11 +59,13 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+def googleServicesFiles = [
+    file('google-services.json'),
+    file('src/production/google-services.json'),
+    file('src/staging/google-services.json'),
+]
+if (googleServicesFiles.any { it.exists() && it.length() > 0 }) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.info("No google-services.json found; Firebase native services and push notifications are disabled")
 }

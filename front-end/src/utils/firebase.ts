@@ -22,35 +22,53 @@ export const displaygramEnvironment = configuredValue(
   "production",
 );
 
+const requiredFirebaseValue = (
+  value: string | undefined,
+  productionFallback: string,
+  variableName: string,
+) => {
+  const configured = value?.trim();
+  if (configured) return configured;
+  if (displaygramEnvironment === "production") return productionFallback;
+  throw new Error(
+    `${variableName} is required for the ${displaygramEnvironment} environment.`,
+  );
+};
+
 const firebaseConfig = {
-  apiKey: configuredValue(
+  apiKey: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_API_KEY,
     "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
+    "VITE_FIREBASE_API_KEY",
   ),
-  authDomain: configuredValue(
+  authDomain: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     "retail-sight.firebaseapp.com",
+    "VITE_FIREBASE_AUTH_DOMAIN",
   ),
-  projectId: configuredValue(
+  projectId: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_PROJECT_ID,
     "retail-sight",
+    "VITE_FIREBASE_PROJECT_ID",
   ),
-  storageBucket: configuredValue(
+  storageBucket: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
     "retail-sight.appspot.com",
+    "VITE_FIREBASE_STORAGE_BUCKET",
   ),
-  messagingSenderId: configuredValue(
+  messagingSenderId: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     "484872165965",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID",
   ),
-  appId: configuredValue(
+  appId: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_APP_ID,
     "1:484872165965:web:feb232cfe100a4b9105a04",
+    "VITE_FIREBASE_APP_ID",
   ),
-  measurementId: configuredValue(
-    import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-    "G-XSXPNG7BCB",
-  ),
+  measurementId:
+    import.meta.env.VITE_FIREBASE_MEASUREMENT_ID?.trim() ||
+    (displaygramEnvironment === "production" ? "G-XSXPNG7BCB" : undefined),
 };
 
 if (

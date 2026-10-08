@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "186573791834",
+    "project_id": "displaygram-staging",
+    "storage_bucket": "displaygram-staging.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:186573791834:android:06c3eace8626e476d5ae63",
+        "android_client_info": {
+          "package_name": "com.displaygram.app.staging"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "186573791834-q3416h7nrqcr0l36tt6ub22tnb8pe54h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHaac45piTyzVgnPYW-Epev6ul4bUCuSk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "186573791834-q3416h7nrqcr0l36tt6ub22tnb8pe54h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
