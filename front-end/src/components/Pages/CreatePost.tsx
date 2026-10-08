@@ -491,9 +491,18 @@ const CreatePost = () => {
             </div>
           )}
 
-          {post.autoDetectedBrands === undefined && post.imageUrl && (
+          {post.autoDetectedBrands === undefined &&
+            post.imageUrl &&
+            storePrefetch.online && (
             <div className="create-post-inline-status">
               Analyzing the photo for brand suggestions…
+            </div>
+          )}
+          {post.autoDetectedBrands === undefined &&
+            post.imageUrl &&
+            !storePrefetch.online && (
+            <div className="create-post-inline-status">
+              Offline — brand suggestions will be skipped for this photo.
             </div>
           )}
           {post.autoDetectedBrands && post.autoDetectedBrands.length > 0 && (

@@ -225,6 +225,11 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           if (navigator.onLine) {
             void analyzeBrandsInBackground(finalFile, analysisRequestId);
           } else {
+            setPost((prev) => ({
+              ...prev,
+              autoDetectedBrands: [],
+              rawCandidates: [],
+            }));
             dispatch(
               showMessage(
                 "Photo saved on this device. AI analysis is skipped while offline.",

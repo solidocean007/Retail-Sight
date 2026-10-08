@@ -17,17 +17,27 @@ const useAllCompanyAccountsSync = (enabled = true, shouldStartSync = true) => {
 
   useEffect(() => {
     if (!enabled || !user?.companyId || !canSync || !shouldStartSync) return;
+    let cancelled = false;
+
     const loadAccounts = async () => {
-      const cached = await getAllCompanyAccountsFromIndexedDB();
-      if (cached && cached.length > 0) {
+      const cached = await getAllCompanyAccountsFromIndexedDB().catch((error) => {
+        console.warn("[AccountSync] Failed to read IndexedDB:", error);
+        return [];
+      });
+      if (cancelled) return;
+
+      if (cached.length > 0) {
         dispatch(setAllAccounts(cached));
-        return;
       }
 
+      // Cached accounts remain usable when the app starts offline. The online
+      // listener below refreshes them as soon as connectivity returns.
+      if (!navigator.onLine) return;
+
       const fresh = await fetchAllCompanyAccounts(user.companyId);
+      if (cancelled) return;
       if (!fresh || fresh.length === 0) {
-        dispatch(setAllAccounts([]));
-        // dispatch(showMessage("No accounts have been imported for this company yet."));
+        if (cached.length === 0) dispatch(setAllAccounts([]));
         return;
       }
 
@@ -40,7 +50,14 @@ const useAllCompanyAccountsSync = (enabled = true, shouldStartSync = true) => {
       }
     };
 
-    loadAccounts();
+    void loadAccounts();
+    const refreshAfterReconnect = () => void loadAccounts();
+    window.addEventListener("online", refreshAfterReconnect);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", refreshAfterReconnect);
+    };
     // shouldStartSync MUST be a dependency: it's false on first render (appReady
     // is still false), so without it the effect bails once and never re-runs,
     // leaving allAccounts permanently empty for the session.

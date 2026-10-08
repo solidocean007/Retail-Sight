@@ -39,6 +39,18 @@ export const useEarlyStorePrefetch = ({
   >(null);
   const [isFindingNearbyStores, setIsFindingNearbyStores] = useState(false);
   const [nearbyStoreError, setNearbyStoreError] = useState("");
+  const [online, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const distributorPartnerIds = useMemo(() => {
     if (!isSupplier || !user?.companyId) return [];
@@ -79,6 +91,8 @@ export const useEarlyStorePrefetch = ({
         return;
       }
 
+      if (!online) return;
+
       const fresh = await fetchAllCompanyAccounts(user.companyId);
       if (cancelled) return;
       dispatch(setAllAccounts(fresh));
@@ -95,6 +109,7 @@ export const useEarlyStorePrefetch = ({
     dispatch,
     shouldWarmAllAccounts,
     user?.companyId,
+    online,
   ]);
 
   useEffect(() => {
@@ -103,7 +118,14 @@ export const useEarlyStorePrefetch = ({
   }, [distributorPartnerIds]);
 
   useEffect(() => {
-    if (!userLocation) return;
+    if (!userLocation || !online) {
+      if (!online) {
+        setNearbyStores([]);
+        setNearbyStoreError("Nearby lookup requires a connection.");
+        setIsFindingNearbyStores(false);
+      }
+      return;
+    }
 
     const controller = new AbortController();
     setIsFindingNearbyStores(true);
@@ -127,11 +149,12 @@ export const useEarlyStorePrefetch = ({
       .finally(() => setIsFindingNearbyStores(false));
 
     return () => controller.abort();
-  }, [userLocation]);
+  }, [userLocation, online]);
 
   return {
     nearbyStores,
     isFindingNearbyStores,
     nearbyStoreError,
+    online,
   };
 };

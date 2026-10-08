@@ -245,7 +245,20 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [accountLoadProblem, setAccountLoadProblem] = useState("");
+  const [online, setOnline] = useState(navigator.onLine);
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const usersGalloGoals = useSelector((state: RootState) =>
     selectUsersGalloGoals(state, salesRouteNum),
@@ -422,22 +435,65 @@ export const PickStore: React.FC<PickStoreProps> = ({
   ]);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchAccounts = async () => {
       setLoadingAccounts(true);
-      const cached = await getAllCompanyAccountsFromIndexedDB();
-      if (cached.length > 0) {
-        dispatch(setAllAccounts(cached));
-        setLoadingAccounts(false);
-        return;
+      setAccountLoadProblem("");
+      let cached: CompanyAccountType[] = [];
+
+      try {
+        cached = await getAllCompanyAccountsFromIndexedDB();
+        if (cancelled) return;
+        if (cached.length > 0) {
+          dispatch(setAllAccounts(cached));
+        }
+
+        if (!online) {
+          if (cached.length === 0) {
+            setAccountLoadProblem(
+              "No store list is saved on this device yet. Reconnect once so Displaygram can prepare offline store selection.",
+            );
+          }
+          return;
+        }
+
+        const fresh = await fetchAllCompanyAccounts(user?.companyId);
+        if (cancelled) return;
+        if (fresh.length > 0) {
+          dispatch(setAllAccounts(fresh));
+          await saveAllCompanyAccountsToIndexedDB(fresh);
+        } else if (cached.length === 0) {
+          setAccountLoadProblem(
+            "No stores are configured for this company yet.",
+          );
+        }
+      } catch (error) {
+        console.warn("Create Post store list could not be loaded:", error);
+        if (!cancelled && cached.length === 0) {
+          setAccountLoadProblem(
+            online
+              ? "The store list could not be loaded. Try again when the connection is stable."
+              : "No store list is saved on this device yet. Reconnect once so Displaygram can prepare offline store selection.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingAccounts(false);
       }
-      const fresh = await fetchAllCompanyAccounts(user?.companyId);
-      dispatch(setAllAccounts(fresh));
-      await saveAllCompanyAccountsToIndexedDB(fresh);
-      setLoadingAccounts(false);
     };
-    if (!isSupplier && isAllStoresShown) fetchAccounts();
+    if (!isSupplier && isAllStoresShown) void fetchAccounts();
     else setLoadingAccounts(false);
-  }, [isSupplier, isAllStoresShown, user?.role, user?.companyId, dispatch]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isSupplier,
+    isAllStoresShown,
+    user?.role,
+    user?.companyId,
+    dispatch,
+    online,
+  ]);
 
   const handleCompanyGoalSelection = (goal?: CompanyGoalWithIdType) => {
     if (!goal) {
@@ -570,6 +626,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   if (loadingAccounts || loadingPartnerAccounts) return <CircularProgress />;
 
+  const showStoreFallback =
+    !post.account &&
+    !isPrefetchingNearbyStores &&
+    (combinedAccounts.length > 0 ||
+      nearbyLookupComplete ||
+      !!nearbyStorePrefetchError ||
+      !!accountLoadProblem ||
+      !online);
+
   return (
     <div className="pick-store">
       {isSupplier && partnerCompanies.length === 0 && (
@@ -627,20 +692,25 @@ export const PickStore: React.FC<PickStoreProps> = ({
           Nearby lookup is unavailable. Search your account list instead.
         </Typography>
       )}
-      {!post.account &&
-        !isPrefetchingNearbyStores &&
-        (nearbyLookupComplete || !!nearbyStorePrefetchError) && (
+      {showStoreFallback && (
         <section className="store-fallback" aria-live="polite">
-          <span className="store-suggestion__eyebrow">No nearby account matched</span>
+          <span className="store-suggestion__eyebrow">
+            {online ? "Choose the store" : "Offline store selection"}
+          </span>
           <strong>
-            {isSupplier
-              ? "Choose a connected distributor account"
-              : "Choose an account from your store list"}
+            {combinedAccounts.length === 0
+              ? "A saved store list is required"
+              : isSupplier
+                ? "Choose a connected distributor account"
+                : "Choose an account from your saved store list"}
           </strong>
           <p>
-            {isSupplier
-              ? "If this store is outside a connected distributor’s market, add it manually and select the distributor it belongs to."
-              : "Search your available accounts, or add this store manually."}
+            {accountLoadProblem ||
+              (online
+                ? isSupplier
+                  ? "Choose a store from an approved distributor connection."
+                  : "Search your available company accounts."
+                : "These accounts were saved earlier and remain available without a connection.")}
           </p>
           <div className="store-suggestion__actions">
             {combinedAccounts.length > 0 && (
@@ -648,9 +718,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
                 {isSupplier ? "Choose distributor account" : "Choose account"}
               </Button>
             )}
-            <Button variant="outlined" onClick={openManualEntry}>
-              Add store manually
-            </Button>
+            {online && (
+              <Button variant="outlined" onClick={openManualEntry}>
+                Add store manually
+              </Button>
+            )}
           </div>
         </section>
       )}

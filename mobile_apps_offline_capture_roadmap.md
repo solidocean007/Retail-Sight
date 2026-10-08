@@ -45,6 +45,16 @@ Hosting proved unreliable in an Android embedded browser, so version
 `1.0-staging (2)` is now distributed to the initial tester through Firebase App
 Distribution instead of a public download URL.
 
+The next device test reached photo capture but exposed a second readiness gap:
+the Store step could render blank when airplane mode was enabled before the
+initial company-account sync completed, and offline photos could remain labeled
+as being analyzed even though AI was correctly skipped. Staging version
+`1.0-staging (3)` now loads cached accounts immediately, refreshes and persists
+them whenever connectivity returns, displays an explicit offline store-list
+state instead of a blank panel, and clears the AI-analysis state when offline.
+The device must still receive its company store list at least once while online;
+offline mode cannot synthesize reference data that has never reached the phone.
+
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
 visible name "Displaygram Staging". Each flavor reads its own Firebase Android
