@@ -86,7 +86,7 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
           : `${queued.length === 1 ? "A post is" : `${queued.length} posts are`} saved on this device. Displaygram will upload ${queued.length === 1 ? "it" : "them"} automatically when you're online and the app is open.`,
       };
     }
-    if (drafts.length > 0) {
+    if (drafts.length > 0 && !online) {
       return {
         kind: "draft",
         icon: <CloudOffOutlinedIcon />,

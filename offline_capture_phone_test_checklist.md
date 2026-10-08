@@ -1,6 +1,19 @@
 # Displaygram Offline Capture Phone Test
 
-Status: Blocked until a separate Firebase staging project is configured.
+Status: Android staging pilot in progress. The first airplane-mode queue and
+automatic recovery test completed successfully on October 8, 2026.
+
+## Pilot validation log
+
+- Android staging build 3 saved a completed post while the phone was in
+  airplane mode and uploaded it automatically after connectivity returned.
+- The recovered capture produced one feed post; no duplicate was observed.
+- Follow-up build 4 hides the ordinary unfinished-draft banner while online.
+- Follow-up build 4 also falls back to the original photo when a generated feed
+  thumbnail is not available yet. This preserves the existing resized-image
+  path while preventing a broken image in the feed.
+- Remaining interruption, restart, retry-storm, authentication, and device
+  coverage tests below are still required before production release.
 
 ## Safety prerequisite
 

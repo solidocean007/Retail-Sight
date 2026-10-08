@@ -76,6 +76,43 @@ interface PostCardProps {
   sourceCompanyName?: string;
 }
 
+type PostImageWithFallbackProps = {
+  sources: Array<string | null | undefined>;
+  onClick: () => void;
+};
+
+const PostImageWithFallback = ({
+  sources,
+  onClick,
+}: PostImageWithFallbackProps) => {
+  const uniqueSources = Array.from(
+    new Set(sources.filter((source): source is string => Boolean(source))),
+  );
+  const sourcesKey = uniqueSources.join("|");
+  const [sourceIndex, setSourceIndex] = useState(0);
+
+  useEffect(() => setSourceIndex(0), [sourcesKey]);
+
+  const source = uniqueSources[sourceIndex];
+  if (!source) return null;
+
+  return (
+    <img
+      title="display image"
+      alt="Display"
+      src={source}
+      className="post-image"
+      loading="lazy"
+      onClick={onClick}
+      onError={() => {
+        if (sourceIndex < uniqueSources.length - 1) {
+          setSourceIndex((currentIndex) => currentIndex + 1);
+        }
+      }}
+    />
+  );
+};
+
 const PostCard: React.FC<PostCardProps> = ({
   imageSet,
   id,
@@ -660,15 +697,15 @@ const PostCard: React.FC<PostCardProps> = ({
                       setIsImageModalOpen(true);
                     }}
                   /> */}
-                      {safeImageSet.feedSrc && (
-                        <img
-                          title="display image"
-                          src={safeImageSet.feedSrc}
-                          className="post-image"
-                          loading="lazy"
-                          onClick={() => setIsImageModalOpen(true)}
-                        />
-                      )}
+                      <PostImageWithFallback
+                        sources={[
+                          safeImageSet.feedSrc,
+                          post.originalImageUrl,
+                          post.imageUrl,
+                          ...safeImageSet.modalChain,
+                        ]}
+                        onClick={() => setIsImageModalOpen(true)}
+                      />
                     </div>
                   )}
                 </div>
