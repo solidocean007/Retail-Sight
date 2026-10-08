@@ -7,6 +7,25 @@ import { fetchUserDocWithRetry } from "./userData/fetchUserDocFromFirestore";
 import { UserType } from "./types";
 import { auth } from "./firebase";
 import { normalizeFirestoreData } from "./normalize";
+import {
+  getValidatedUserProfile,
+  saveValidatedUserProfile,
+} from "../features/offlineCapture/offlineCaptureDb";
+
+const isTransientProfileError = (error: unknown) => {
+  if (!navigator.onLine) return true;
+  const code = String(
+    (error as { code?: string })?.code ??
+      (error as Error)?.message ??
+      "",
+  ).toLowerCase();
+  return (
+    code.includes("unavailable") ||
+    code.includes("network") ||
+    code.includes("timed out") ||
+    code.includes("timeout")
+  );
+};
 
 export const useFirebaseAuth = () => {
   const dispatch = useDispatch();
@@ -15,6 +34,7 @@ export const useFirebaseAuth = () => {
 
   /** True when we're signed in but couldn't load the Firestore profile. */
   const [profileError, setProfileError] = useState(false);
+  const [usingCachedProfile, setUsingCachedProfile] = useState(false);
 
   /**
    * Short, screenshot-able reason the profile load failed. This bug is not
@@ -33,6 +53,7 @@ export const useFirebaseAuth = () => {
       if (!user) {
         setProfileError(false);
         setProfileErrorDetail(null);
+        setUsingCachedProfile(false);
         dispatch(setUser(null));
         return;
       }
@@ -41,19 +62,59 @@ export const useFirebaseAuth = () => {
       loadingProfileRef.current = true;
 
       try {
+        if (!navigator.onLine) {
+          const cachedProfile = await getValidatedUserProfile(user.uid);
+          if (cachedProfile) {
+            setProfileError(false);
+            setProfileErrorDetail(null);
+            setUsingCachedProfile(true);
+            dispatch(setUser(cachedProfile));
+            return;
+          }
+
+          setProfileError(true);
+          setProfileErrorDetail("profile-read: offline-no-cache");
+          setUsingCachedProfile(false);
+          dispatch(
+            setUser({ uid: user.uid, email: user.email } as UserType),
+          );
+          return;
+        }
+
         const { data, error } = await fetchUserDocWithRetry(user.uid);
 
         if (data) {
+          const normalizedProfile = {
+            ...normalizeFirestoreData(data),
+            uid: user.uid,
+            email: data.email ?? user.email ?? undefined,
+          } as UserType;
           setProfileError(false);
           setProfileErrorDetail(null);
-          dispatch(setUser(normalizeFirestoreData(data) as UserType));
+          setUsingCachedProfile(false);
+          dispatch(setUser(normalizedProfile));
+          void saveValidatedUserProfile(normalizedProfile).catch((cacheError) =>
+            console.warn("Unable to cache the validated user profile:", cacheError),
+          );
           return;
+        }
+
+        if (error && isTransientProfileError(error)) {
+          const cachedProfile = await getValidatedUserProfile(user.uid);
+          if (cachedProfile) {
+            setProfileError(false);
+            setProfileErrorDetail(null);
+            setUsingCachedProfile(true);
+            dispatch(setUser(cachedProfile));
+            return;
+          }
         }
 
         // Distinguish "read failed" from "user doc doesn't exist".
         // Both leave us without a companyId, but only the former is
         // worth retrying — and neither should hang silently.
         setProfileError(true);
+        setUsingCachedProfile(false);
         dispatch(
           setUser({ uid: user.uid, email: user.email } as UserType),
         );
@@ -106,11 +167,22 @@ export const useFirebaseAuth = () => {
     });
   }, [profileError, handleUserChange]);
 
+  useEffect(() => {
+    if (!usingCachedProfile) return;
+
+    const revalidateProfile = () => {
+      if (auth.currentUser) void handleUserChange(auth.currentUser);
+    };
+    window.addEventListener("online", revalidateProfile);
+    return () => window.removeEventListener("online", revalidateProfile);
+  }, [usingCachedProfile, handleUserChange]);
+
   return {
     currentUser,
     initializing,
     profileError,
     profileErrorDetail,
+    usingCachedProfile,
     retryProfileLoad,
   };
 };

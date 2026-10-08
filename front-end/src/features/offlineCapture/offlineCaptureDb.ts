@@ -2,11 +2,19 @@ import type {
   OfflineCaptureImageRecord,
   OfflineCaptureRecord,
 } from "./types";
+import type { UserType } from "../../utils/types";
 
 const DATABASE_NAME = "displaygramOfflineCaptureDB";
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const CAPTURES_STORE = "captures";
 const IMAGES_STORE = "captureImages";
+const PROFILES_STORE = "validatedProfiles";
+
+type CachedUserProfileRecord = {
+  userId: string;
+  profile: UserType;
+  validatedAt: string;
+};
 
 export const OFFLINE_CAPTURE_CHANGED_EVENT =
   "displaygram:offline-capture-changed";
@@ -49,8 +57,59 @@ export const openOfflineCaptureDatabase = (): Promise<IDBDatabase> =>
       if (!database.objectStoreNames.contains(IMAGES_STORE)) {
         database.createObjectStore(IMAGES_STORE, { keyPath: "captureId" });
       }
+
+      if (!database.objectStoreNames.contains(PROFILES_STORE)) {
+        database.createObjectStore(PROFILES_STORE, { keyPath: "userId" });
+      }
     };
   });
+
+export const saveValidatedUserProfile = async (
+  profile: UserType,
+): Promise<void> => {
+  if (!profile.uid || !profile.companyId) {
+    throw new Error("A complete user profile is required for offline access.");
+  }
+
+  const database = await openOfflineCaptureDatabase();
+  const transaction = database.transaction(PROFILES_STORE, "readwrite");
+  const record: CachedUserProfileRecord = {
+    userId: profile.uid,
+    profile,
+    validatedAt: new Date().toISOString(),
+  };
+  transaction.objectStore(PROFILES_STORE).put(record);
+
+  try {
+    await transactionComplete(transaction);
+  } finally {
+    database.close();
+  }
+};
+
+export const getValidatedUserProfile = async (
+  userId: string,
+): Promise<UserType | null> => {
+  const database = await openOfflineCaptureDatabase();
+  const transaction = database.transaction(PROFILES_STORE, "readonly");
+
+  try {
+    const record = await requestResult<CachedUserProfileRecord | undefined>(
+      transaction.objectStore(PROFILES_STORE).get(userId),
+    );
+    if (
+      !record ||
+      record.userId !== userId ||
+      record.profile.uid !== userId ||
+      !record.profile.companyId
+    ) {
+      return null;
+    }
+    return record.profile;
+  } finally {
+    database.close();
+  }
+};
 
 export const saveOfflineCapture = async (
   capture: OfflineCaptureRecord,

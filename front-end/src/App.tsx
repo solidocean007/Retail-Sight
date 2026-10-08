@@ -46,6 +46,7 @@ function AppContent() {
     initializing,
     profileError,
     profileErrorDetail,
+    usingCachedProfile,
     retryProfileLoad,
   } = useFirebaseAuth();
   const user = useSelector((state: RootState) => state.user.currentUser);
@@ -109,14 +110,28 @@ function AppContent() {
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
   useEffect(() => {
-    if (!user?.uid || !user.companyId || isPublicRoute || isAuthRoute) return;
+    if (
+      !user?.uid ||
+      !user.companyId ||
+      usingCachedProfile ||
+      isPublicRoute ||
+      isAuthRoute
+    )
+      return;
     return startOfflineCaptureSync(user.uid, user.companyId);
-  }, [user?.uid, user?.companyId, isPublicRoute, isAuthRoute]);
+  }, [
+    user?.uid,
+    user?.companyId,
+    usingCachedProfile,
+    isPublicRoute,
+    isAuthRoute,
+  ]);
 
   useAppBootstrap({
     enabled: shouldBootstrapApp,
     currentUser,
     initializing,
+    usingCachedProfile,
   });
 
   // Theme init from localStorage

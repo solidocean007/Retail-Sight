@@ -14,6 +14,11 @@ automatic recovery test completed successfully on October 8, 2026.
   path while preventing a broken image in the feed.
 - Follow-up build 5 removes the local-save notice from the normal online
   capture flow. A shorter, quieter notice remains available while offline.
+- The first offline cold-start test found that the app blocked on a remote
+  Firestore profile read even though the draft remained device-local. Build 6
+  caches the last server-validated profile, permits offline draft recovery with
+  that matching profile, and waits for online revalidation before starting
+  background data listeners or uploading queued captures.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

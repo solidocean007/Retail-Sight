@@ -1,5 +1,5 @@
 // hooks/useAppBootstrap.ts
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   clearCompanyScopedState,
@@ -46,10 +46,12 @@ export function useAppBootstrap({
   enabled = true,
   currentUser,
   initializing,
+  usingCachedProfile = false,
 }: {
   enabled?: boolean;
   currentUser: any;
   initializing: boolean;
+  usingCachedProfile?: boolean;
 }) {
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
@@ -61,6 +63,18 @@ export function useAppBootstrap({
 
   const appReady = useSelector((s: RootState) => s.app.appReady);
   const hasBootstrapped = useRef(false);
+  const [online, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const current = companyId;
@@ -96,7 +110,12 @@ export function useAppBootstrap({
   useSchemaVersion();
 
   // gate these
-  const shouldStartSync = enabled && appReady && !!user?.companyId;
+  const shouldStartSync =
+    enabled &&
+    appReady &&
+    !!user?.companyId &&
+    online &&
+    !usingCachedProfile;
   useCompanyUsersSync(shouldStartSync);
   useUserAccountsSync(shouldStartSync);
   useCompanyConnectionsListener(shouldStartSync);
@@ -129,6 +148,13 @@ export function useAppBootstrap({
 
     if (!realCompanyId) {
       dispatch(setLoadingMessage("Loading your company profile..."));
+      return;
+    }
+
+    if (!online || usingCachedProfile) {
+      dispatch(setAppReady(true));
+      dispatch(setLoadingMessage(null));
+      dispatch(setResetting(false));
       return;
     }
 
@@ -171,5 +197,13 @@ export function useAppBootstrap({
     };
 
     run();
-  }, [enabled, initializing, currentUser?.uid, user?.companyId, dispatch]);
+  }, [
+    enabled,
+    initializing,
+    currentUser?.uid,
+    user?.companyId,
+    online,
+    usingCachedProfile,
+    dispatch,
+  ]);
 }
