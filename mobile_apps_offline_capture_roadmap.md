@@ -26,9 +26,12 @@ credentials before billing is tested. The staging web build is live at
 `https://displaygram-staging.web.app` and was verified to contain the staging
 Firebase identifiers and production-project guard. One staging-only admin test
 account now has a fake company, route, stores, brands, products, and free plan;
-its custom claims point only to that fake company. Staging still needs its iOS
-app registration and an internal Android test build. Google sign-in remains
-off.
+its custom claims point only to that fake company. On October 8, 2026, a local
+staging debug APK was built successfully and verified as
+`com.displaygram.app.staging` with the visible name "Displaygram Staging" and
+the staging Firebase configuration. Staging still needs its iOS app registration
+and distribution through an Android internal-test channel. Google sign-in
+remains off.
 
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
