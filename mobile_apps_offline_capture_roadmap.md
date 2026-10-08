@@ -21,8 +21,11 @@ The `finalizeOfflineCapture` callable is deployed in `us-central1` on Node 22;
 an unauthenticated verification request was rejected as expected. Staging also
 has a seven-day Functions artifact cleanup policy and non-production Braintree
 placeholders that must be replaced with sandbox credentials before billing is
-tested. It still needs test-only seed data, its iOS app registration, a staging
-web deployment, and an internal Android test build. Google sign-in remains off.
+tested. The staging web build is live at
+`https://displaygram-staging.web.app` and was verified to contain the staging
+Firebase identifiers and production-project guard. It still needs test-only
+seed data, its iOS app registration, and an internal Android test build. Google
+sign-in remains off.
 
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the

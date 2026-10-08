@@ -49,7 +49,7 @@ const IMAGE_PATTERNS = [
   /_600x600\.(jpg|jpeg|png|webp)$/i,
   /_1200x1200\.(jpg|jpeg|png|webp)$/i,
   /resized\.(jpg|jpeg|png|webp)$/i,
-  /\.appspot\.com\/v0\/b\/retail-sight\.appspot\.com\/o\//i, // general bucket rule
+  /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^/]+\/o\//i,
 ];
 
 // Utility to test URL against allowed image patterns
