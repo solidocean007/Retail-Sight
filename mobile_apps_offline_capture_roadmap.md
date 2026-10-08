@@ -17,15 +17,18 @@ The staging project `displaygram-staging` now has Web and Android app
 registrations, including the staging Android Firebase configuration.
 Email/password Authentication is enabled. Firestore was created in `nam5`, and
 the staging Storage bucket, Firestore rules/indexes, and Storage rules are live.
-The `finalizeOfflineCapture` callable is deployed in `us-central1` on Node 22;
-an unauthenticated verification request was rejected as expected. Staging also
-has a seven-day Functions artifact cleanup policy and non-production Braintree
-placeholders that must be replaced with sandbox credentials before billing is
-tested. The staging web build is live at
+The `finalizeOfflineCapture` and `getAvailableBillingPlans` callables plus the
+`syncUserRoleClaims` Firestore trigger are deployed in `us-central1` on Node 22;
+an unauthenticated verification request for offline finalization was rejected as
+expected. Staging also has a seven-day Functions artifact cleanup policy and
+non-production Braintree placeholders that must be replaced with sandbox
+credentials before billing is tested. The staging web build is live at
 `https://displaygram-staging.web.app` and was verified to contain the staging
-Firebase identifiers and production-project guard. It still needs test-only
-seed data, its iOS app registration, and an internal Android test build. Google
-sign-in remains off.
+Firebase identifiers and production-project guard. One staging-only admin test
+account now has a fake company, route, stores, brands, products, and free plan;
+its custom claims point only to that fake company. Staging still needs its iOS
+app registration and an internal Android test build. Google sign-in remains
+off.
 
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
@@ -86,13 +89,15 @@ Open decisions and gates:
   be confirmed before Firebase native apps, signing, or store records are made.
 - Native Google/Apple authentication strategy and organization developer-account
   status still need owner confirmation.
-- The separate Firebase staging project is active, but non-customer seed data
-  is still required before distributing the phone-test build. A Hosting preview
-  channel by itself still connects to whichever Firebase backend was compiled
-  into the app.
+- The separate Firebase staging project is active and has a minimal fake-data
+  test tenant. Additional test users must be added only to that tenant (or to
+  other explicitly fake tenants) before distributing access more broadly. A
+  Hosting preview channel by itself still connects to whichever Firebase
+  backend was compiled into the app.
 - Cloud Functions now targets Node 22. The complete production function suite
   still needs regression testing before its runtime is upgraded and redeployed;
-  only `finalizeOfflineCapture` has been deployed to staging.
+  only the three functions needed for staging login/bootstrap and offline capture
+  have been deployed to staging.
 - The new sync protocol no longer uses the broadly writable `images/**` or
   `tempUploads/**` paths. Those legacy paths remain an independent integrity
   issue and should be tightened after their existing callers are inventoried.
