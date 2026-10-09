@@ -86,6 +86,42 @@
   opacity: 0.55;
 }
 
+.create-post-saved-drafts {
+  display: flex;
+  width: min(100%, 820px);
+  margin: 0 auto 0.7rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 25%, transparent);
+  border-radius: 10px;
+  align-items: center;
+  gap: 0.5rem;
+  background: color-mix(in srgb, var(--primary-blue) 6%, transparent);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.create-post-saved-drafts .MuiSvgIcon-root {
+  flex: 0 0 auto;
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+}
+
+.create-post-saved-drafts span {
+  flex: 1;
+}
+
+.create-post-saved-drafts button {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 45%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--primary-blue);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
 .create-post-stepper {
   display: grid;
   width: min(100%, 820px);

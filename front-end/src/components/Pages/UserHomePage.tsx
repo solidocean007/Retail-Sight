@@ -33,7 +33,7 @@ import { normalizePost } from "../../utils/normalize";
 import PostViewerModal from "./../PostViewerModal";
 import TuneIcon from "@mui/icons-material/Tune";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
-import { Fab } from "@mui/material";
+import { Badge, Fab } from "@mui/material";
 import SharedFeed from "../SharedFeed";
 import { useSharedPosts } from "../../hooks/useSharedPosts";
 import OnboardingSuccessModal from "./OnboardingSuccessModal";
@@ -49,6 +49,7 @@ import {
   setFilteredSharedPostFetchedAt,
   setFilteredSharedPosts,
 } from "../../Slices/sharedPostsSlice";
+import { useOfflineCapturesForUser } from "../../features/offlineCapture/useOfflineCapturesForUser";
 
 type FeedType = "company" | "shared";
 
@@ -98,6 +99,10 @@ const UserHomePage = () => {
   >("posts");
   const clearInput = false;
   const user = useSelector(selectUser);
+  const offlineCaptures = useOfflineCapturesForUser(user?.uid);
+  const unfinishedDraftCount = offlineCaptures.filter(
+    (capture) => capture.state === "draft",
+  ).length;
   const [sharedFeedLastViewedAt, setSharedFeedLastViewedAt] = useState(0);
   const [sharedViewInitialized, setSharedViewInitialized] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -547,13 +552,26 @@ const UserHomePage = () => {
 
               {sharedPosts.length > 0 && renderFeedToggle()}
 
-              <Fab
-                color="primary"
-                aria-label="create"
-                onClick={() => navigate("/create-post")}
+              <Badge
+                badgeContent={unfinishedDraftCount}
+                color="warning"
+                max={9}
+                overlap="circular"
+                invisible={unfinishedDraftCount === 0}
+                className="create-post-draft-badge"
               >
-                <AddAPhotoIcon />
-              </Fab>
+                <Fab
+                  color="primary"
+                  aria-label={
+                    unfinishedDraftCount > 0
+                      ? `Create post. ${unfinishedDraftCount} unfinished ${unfinishedDraftCount === 1 ? "draft" : "drafts"} saved on this device.`
+                      : "Create post"
+                  }
+                  onClick={() => navigate("/create-post")}
+                >
+                  <AddAPhotoIcon />
+                </Fab>
+              </Badge>
             </div>
           )}
         </div>

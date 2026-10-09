@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Container } from "@mui/material";
-import { CancelRounded } from "@mui/icons-material";
+import { CancelRounded, EditNoteRounded } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -33,6 +33,7 @@ import { UploadImage } from "../Create-Post/UploadImage";
 import { useEarlyStorePrefetch } from "../Create-Post/useEarlyStorePrefetch";
 import CustomConfirmation from "../CustomConfirmation";
 import TotalCaseCount from "../TotalCaseCount";
+import { useOfflineCapturesForUser } from "../../features/offlineCapture/useOfflineCapturesForUser";
 
 import "./createPost.css";
 
@@ -71,6 +72,11 @@ const CreatePost = () => {
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [captureId, setCaptureId] = useState<string | null>(null);
+  const offlineCaptures = useOfflineCapturesForUser(userData?.uid);
+  const otherDraftCount = offlineCaptures.filter(
+    (capture) =>
+      capture.state === "draft" && capture.captureId !== captureId,
+  ).length;
   const [, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [selectedGalloGoal, setSelectedGalloGoal] =
@@ -451,6 +457,20 @@ const CreatePost = () => {
             <CancelRounded />
           </button>
         </header>
+
+        {otherDraftCount > 0 && (
+          <aside className="create-post-saved-drafts" role="status">
+            <EditNoteRounded />
+            <span>
+              {otherDraftCount === 1
+                ? "1 other unfinished post is saved on this device."
+                : `${otherDraftCount} other unfinished posts are saved on this device.`}
+            </span>
+            <button type="button" onClick={() => navigate("/saved-posts") }>
+              Review
+            </button>
+          </aside>
+        )}
 
         <nav className="create-post-stepper" aria-label="Create Post progress">
           {steps.map((step, index) => {

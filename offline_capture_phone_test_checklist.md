@@ -22,6 +22,10 @@ automatic recovery test completed successfully on October 8, 2026.
 - Build 7 keeps the active online capture form uncluttered, but shows a compact
   unfinished-post reminder after the user leaves or reopens that flow. Drafts
   therefore remain discoverable after connectivity returns.
+- Build 8 replaces the global unfinished-draft banner with a numbered badge on
+  the mobile Create Post button. The Create Post workflow contains a compact
+  link for reviewing other device-local drafts; no dashboard management panel
+  was added. Uploading, queued, and failure status remain globally visible.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

@@ -13,19 +13,10 @@
   z-index: 1200;
 }
 
-.offline-capture-banner--offline,
-.offline-capture-banner--draft {
+.offline-capture-banner--offline {
   background: #fff8e7;
   border-bottom-color: #ecd28d;
   color: #664b05;
-}
-
-.offline-capture-banner--draft-online {
-  background: #f6f8fb;
-  border-bottom-color: #d8e0e8;
-  color: #46586a;
-  font-size: 0.82rem;
-  padding-block: 0.45rem;
 }
 
 .offline-capture-banner--attention {

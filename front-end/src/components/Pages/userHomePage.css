@@ -49,6 +49,15 @@
   background-color: var(--hover-color, #f0f0f0);
 }
 
+.create-post-draft-badge .MuiBadge-badge {
+  min-width: 20px;
+  height: 20px;
+  border: 2px solid var(--background-body);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
 /* Tabs between Company / Shared */
 .feed-tabs {
   display: flex;
