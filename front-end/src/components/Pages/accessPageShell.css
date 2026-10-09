@@ -7,17 +7,64 @@
   --access-ink: #142336;
   --access-muted: #617086;
   --access-line: #dce5ee;
+  --access-page-background:
+    radial-gradient(circle at 9% 4%, rgba(84, 196, 255, 0.2), transparent 26rem),
+    radial-gradient(circle at 92% 88%, rgba(79, 111, 255, 0.14), transparent 30rem),
+    #edf4f9;
+  --access-layout-background: #ffffff;
+  --access-panel-background: #ffffff;
+  --access-input-background: #fbfdff;
+  --access-input-focus-background: #ffffff;
+  --access-subtle-background: #eaf4fb;
+  --access-secondary-background: #ffffff;
+  --access-placeholder: #7b8796;
+  --access-footer-line: #e7edf3;
+  --access-footer-text: #617086;
+  --access-alert-background: #fff4f3;
+  --access-alert-border: #f0b8b6;
+  --access-alert-text: #982c2c;
+  --access-banner-background: #eef9ff;
+  --access-banner-border: #acd9f7;
+  --access-banner-text: #235d84;
+  --access-status-background: #e8f7ee;
+  --access-status-text: #20824a;
   min-height: 100svh;
   width: 100%;
   display: grid;
   place-items: center;
   padding: clamp(1rem, 3vw, 2.75rem);
-  background:
-    radial-gradient(circle at 9% 4%, rgba(84, 196, 255, 0.2), transparent 26rem),
-    radial-gradient(circle at 92% 88%, rgba(79, 111, 255, 0.14), transparent 30rem),
-    #edf4f9;
+  background: var(--access-page-background);
   color: var(--access-ink);
   box-sizing: border-box;
+}
+
+[data-theme="dark"] .access-shell-page {
+  --access-blue-dark: #59b9fb;
+  --access-ink: #f3f7fb;
+  --access-muted: #b8c5d3;
+  --access-line: #40556a;
+  --access-page-background:
+    radial-gradient(circle at 9% 4%, rgba(38, 140, 210, 0.18), transparent 26rem),
+    radial-gradient(circle at 92% 88%, rgba(79, 111, 255, 0.12), transparent 30rem),
+    #07131f;
+  --access-layout-background: #101f2e;
+  --access-panel-background: #101f2e;
+  --access-input-background: #172b3e;
+  --access-input-focus-background: #1b3248;
+  --access-subtle-background: #1b3850;
+  --access-secondary-background: #172b3e;
+  --access-placeholder: #91a1b2;
+  --access-footer-line: #31465a;
+  --access-footer-text: #b8c5d3;
+  --access-alert-background: #3a2025;
+  --access-alert-border: #92525a;
+  --access-alert-text: #ffc2c5;
+  --access-banner-background: #153249;
+  --access-banner-border: #376887;
+  --access-banner-text: #bde8ff;
+  --access-status-background: #183d2b;
+  --access-status-text: #8fe0ad;
+  color-scheme: dark;
 }
 
 .access-shell-page *,
@@ -45,7 +92,7 @@
   overflow: hidden;
   border: 1px solid rgba(19, 45, 72, 0.1);
   border-radius: 28px;
-  background: #fff;
+  background: var(--access-layout-background);
   box-shadow:
     0 30px 80px rgba(17, 42, 70, 0.18),
     0 3px 12px rgba(17, 42, 70, 0.08);
@@ -139,6 +186,10 @@
   line-height: 1.7;
 }
 
+[data-theme="dark"] .access-shell-story .access-shell-lede {
+  color: rgba(231, 245, 255, 0.79);
+}
+
 .access-shell-highlights {
   display: grid;
   gap: 1.15rem;
@@ -214,7 +265,7 @@
   display: grid;
   place-items: center;
   padding: clamp(2rem, 5vw, 4.5rem);
-  background: #fff;
+  background: var(--access-panel-background);
 }
 
 .access-shell-panel-inner {
@@ -254,15 +305,15 @@
 }
 
 .access-shell-alert {
-  border: 1px solid #f0b8b6;
-  background: #fff4f3;
-  color: #982c2c;
+  border: 1px solid var(--access-alert-border);
+  background: var(--access-alert-background);
+  color: var(--access-alert-text);
 }
 
 .access-shell-banner {
-  border: 1px solid #acd9f7;
-  background: #eef9ff;
-  color: #235d84;
+  border: 1px solid var(--access-banner-border);
+  background: var(--access-banner-background);
+  color: var(--access-banner-text);
 }
 
 .access-shell-form {
@@ -289,12 +340,12 @@
 }
 
 .access-shell-field label {
-  color: #24364b;
+  color: var(--access-ink);
   font-size: 0.82rem;
   font-weight: 750;
 }
 
-.access-shell-input {
+.access-shell-page .access-shell-input {
   width: 100%;
   min-height: 50px;
   margin: 0;
@@ -302,7 +353,7 @@
   border: 1px solid var(--access-line);
   border-radius: 10px;
   outline: none;
-  background: #fbfdff;
+  background: var(--access-input-background);
   color: var(--access-ink);
   font: inherit;
   font-size: 16px;
@@ -310,17 +361,17 @@
   transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
-.access-shell-input::placeholder {
-  color: #9aa7b6;
+.access-shell-page .access-shell-input::placeholder {
+  color: var(--access-placeholder);
 }
 
-.access-shell-input:focus {
+.access-shell-page .access-shell-input:focus {
   border-color: var(--access-blue);
-  background: #fff;
+  background: var(--access-input-focus-background);
   box-shadow: 0 0 0 3px rgba(63, 169, 245, 0.14);
 }
 
-.access-shell-input[aria-invalid="true"] {
+.access-shell-page .access-shell-input[aria-invalid="true"] {
   border-color: #dc6b68;
 }
 
@@ -342,7 +393,7 @@
   padding: 0.25rem 0.5rem;
   border: 0;
   border-radius: 8px;
-  background: #eaf4fb;
+  background: var(--access-subtle-background);
   color: var(--access-blue-dark);
   font: inherit;
   font-size: 0.72rem;
@@ -384,7 +435,7 @@
 .access-shell-secondary,
 .access-shell-google {
   border: 1px solid var(--access-line);
-  background: #fff;
+  background: var(--access-secondary-background);
   color: var(--access-ink);
 }
 
@@ -433,8 +484,8 @@
 .access-shell-footer {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
-  border-top: 1px solid #e7edf3;
-  color: #708095;
+  border-top: 1px solid var(--access-footer-line);
+  color: var(--access-footer-text);
   font-size: 0.82rem;
   line-height: 1.5;
   text-align: center;
@@ -455,8 +506,8 @@
   height: 64px;
   margin: 0 auto 1.25rem;
   border-radius: 18px;
-  background: #e8f7ee;
-  color: #20824a;
+  background: var(--access-status-background);
+  color: var(--access-status-text);
   font-size: 1.8rem;
   font-weight: 900;
 }
@@ -480,7 +531,7 @@
 
 .access-shell-note {
   margin-top: 1.2rem !important;
-  color: #8591a1 !important;
+  color: var(--access-footer-text) !important;
   font-size: 0.76rem;
 }
 
@@ -525,7 +576,7 @@
 @media (max-width: 620px) {
   .access-shell-page {
     padding: 0;
-    background: #fff;
+    background: var(--access-panel-background);
   }
 
   .access-shell-layout {
