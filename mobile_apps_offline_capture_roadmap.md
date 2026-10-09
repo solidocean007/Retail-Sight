@@ -78,6 +78,13 @@ environment guard continues to reject any staging build configured with the
 production `retail-sight` Firebase project, and the release verification checks
 the embedded staging project ID and API configuration before publication.
 
+On October 9, 2026, a local Auth, Firestore, Storage, and Functions emulator
+test submitted two concurrent `finalizeOfflineCapture` requests for the same
+capture. Exactly one post and one completion receipt were created; one request
+performed the initial finalization and the duplicate reused the completed post.
+This test is isolated by `firebase.offline-test.json` and does not read or write
+staging or production data.
+
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
 visible name "Displaygram Staging". Each flavor reads its own Firebase Android

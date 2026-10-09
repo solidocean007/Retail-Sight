@@ -5,6 +5,7 @@
     "format": "prettier --write \"**/*.{js,ts,json,md}\"",
     "build": "npm run lint && tsc",
     "build:watch": "tsc --watch",
+    "test:offline-idempotency": "npm run build && firebase emulators:exec --config ../firebase.offline-test.json --project retail-sight-offline-test --only auth,firestore,storage,functions \"node tests/offlineCaptureIdempotency.test.cjs\"",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
   },

@@ -1,0 +1,20 @@
+{
+  "functions": {
+    "source": "functions/test-runtime",
+    "codebase": "offline-test"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "functions": { "port": 5005 },
+    "firestore": { "port": 8080 },
+    "auth": { "port": 9099 },
+    "storage": { "port": 9199 },
+    "ui": { "enabled": false }
+  }
+}

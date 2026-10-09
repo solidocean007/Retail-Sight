@@ -6,3 +6,6 @@ lib/
 # rather than via ignorePatterns because the config's leading-slash globs don't
 # match reliably against Windows backslash paths.
 scripts/
+
+# Minimal CommonJS entry point used only by the local offline-capture emulator.
+test-runtime/

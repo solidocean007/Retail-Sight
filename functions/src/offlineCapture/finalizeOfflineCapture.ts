@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { randomUUID } from "crypto";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getDownloadURL } from "firebase-admin/storage";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
@@ -156,7 +157,7 @@ const validatedCapturedAt = (value: unknown): admin.firestore.Timestamp => {
   ) {
     throw new HttpsError("invalid-argument", "Invalid capture date.");
   }
-  return admin.firestore.Timestamp.fromDate(date);
+  return Timestamp.fromDate(date);
 };
 
 const extractHashtags = (description: string): string[] =>
@@ -402,8 +403,8 @@ export const finalizeOfflineCapture = onCall<FinalizeOfflineCaptureData>(
         originalImageUrl: imageUrl,
         displayDate: capturedAt,
         timestamp: capturedAt,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         migratedVisibility,
         totalCaseCount,
         account,
@@ -482,13 +483,13 @@ export const finalizeOfflineCapture = onCall<FinalizeOfflineCaptureData>(
         transaction.create(newManualAccountRef, {
           ...account,
           createdBy: uid,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
       }
       if (goalRef) {
         transaction.update(goalRef, {
-          submittedPosts: admin.firestore.FieldValue.arrayUnion({
+          submittedPosts: FieldValue.arrayUnion({
             postId: captureId,
             submittedAt: capturedAt,
             submittedBy: postUser,
@@ -502,7 +503,7 @@ export const finalizeOfflineCapture = onCall<FinalizeOfflineCaptureData>(
         ownerUid: uid,
         postId: captureId,
         finalStoragePath,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         galloFollowUpRequired: Boolean(galloGoalId),
         schemaVersion: 1,
       });
