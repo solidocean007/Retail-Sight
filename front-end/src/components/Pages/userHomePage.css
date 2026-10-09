@@ -49,13 +49,46 @@
   background-color: var(--hover-color, #f0f0f0);
 }
 
+.create-post-draft-badge {
+  position: relative;
+  z-index: 0;
+  overflow: visible;
+}
+
+.create-post-draft-badge .MuiFab-root {
+  position: relative;
+  z-index: 1;
+}
+
 .create-post-draft-badge .MuiBadge-badge {
+  top: 2px !important;
+  right: 2px !important;
+  z-index: 4;
   min-width: 20px;
   height: 20px;
   border: 2px solid var(--background-body);
   border-radius: 999px;
+  box-shadow: 0 0 0 0 rgb(237 108 2 / 42%);
   font-size: 0.68rem;
   font-weight: 850;
+  transform: translate(48%, -48%) !important;
+  animation: create-post-draft-badge-pulse 1.8s ease-out infinite;
+}
+
+@keyframes create-post-draft-badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(237 108 2 / 38%);
+  }
+  55% {
+    box-shadow: 0 0 0 7px rgb(237 108 2 / 0%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-post-draft-badge .MuiBadge-badge {
+    animation: none;
+  }
 }
 
 /* Tabs between Company / Shared */

@@ -26,6 +26,9 @@ automatic recovery test completed successfully on October 8, 2026.
   the mobile Create Post button. The Create Post workflow contains a compact
   link for reviewing other device-local drafts; no dashboard management panel
   was added. Uploading, queued, and failure status remain globally visible.
+- Build 9 positions the draft badge above the camera button and gives it a
+  restrained attention pulse, while honoring the device's reduced-motion
+  preference.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 
