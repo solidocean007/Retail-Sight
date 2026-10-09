@@ -11,29 +11,31 @@
 
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/displaygram-app-icon-192-v2.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/displaygram-app-icon-512-v2.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-192-maskable.png",
+      "src": "/icons/displaygram-app-icon-192-maskable-v2.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512-maskable.png",
+      "src": "/icons/displaygram-app-icon-512-maskable-v2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/apple-touch-icon.png",
+      "src": "/icons/displaygram-apple-touch-icon-v2.png",
       "sizes": "180x180",
       "type": "image/png"
     }
