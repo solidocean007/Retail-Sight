@@ -1,0 +1,200 @@
+.android-beta-page {
+  min-height: 100%;
+  padding: clamp(1.25rem, 4vw, 3.5rem) 1rem 4rem;
+  color: var(--text-color, #142033);
+  background:
+    radial-gradient(circle at top right, rgba(56, 132, 255, 0.2), transparent 34rem),
+    var(--background-color, #f4f7fb);
+}
+
+.android-beta-page > section,
+.android-beta-links {
+  width: min(100%, 760px);
+  margin-inline: auto;
+}
+
+.android-beta-hero {
+  text-align: center;
+  padding: clamp(1.5rem, 5vw, 3rem);
+}
+
+.android-beta-logo {
+  width: min(100%, 330px);
+  height: auto;
+  margin-bottom: 1.25rem;
+}
+
+.android-beta-kicker {
+  display: block;
+  color: #246fdb;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.android-beta-hero h1 {
+  margin: 0.5rem 0 0.8rem;
+  font-size: clamp(2rem, 7vw, 3.8rem);
+  line-height: 1.05;
+}
+
+.android-beta-hero > p {
+  max-width: 620px;
+  margin: 0 auto 1.25rem;
+  color: var(--text-secondary, #536174);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.android-beta-release-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0;
+}
+
+.android-beta-release-row span {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(72, 97, 132, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.android-beta-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 0.85rem 1.4rem;
+  border-radius: 14px;
+  background: #1f72e5;
+  box-shadow: 0 10px 24px rgba(31, 114, 229, 0.28);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.android-beta-download:hover,
+.android-beta-download:focus-visible {
+  background: #145fc4;
+  transform: translateY(-1px);
+}
+
+.android-beta-hero .android-beta-browser-note {
+  margin-top: 0.9rem;
+  font-size: 0.88rem;
+}
+
+.android-beta-warning,
+.android-beta-card {
+  box-sizing: border-box;
+  margin-top: 1rem;
+  padding: clamp(1.15rem, 4vw, 1.75rem);
+  border: 1px solid rgba(72, 97, 132, 0.25);
+  border-radius: 20px;
+  background: var(--card-background, #fff);
+  box-shadow: 0 12px 36px rgba(32, 48, 72, 0.1);
+}
+
+.android-beta-warning {
+  border-color: #e0ad39;
+  background: #fff8df;
+  color: #523b06;
+}
+
+.android-beta-warning h2,
+.android-beta-card h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1.25rem;
+}
+
+.android-beta-warning p,
+.android-beta-card p,
+.android-beta-card li {
+  line-height: 1.6;
+}
+
+.android-beta-card ol {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.android-beta-card li + li {
+  margin-top: 0.7rem;
+}
+
+.android-beta-integrity code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: rgba(41, 57, 80, 0.08);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  user-select: all;
+}
+
+.android-beta-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding-top: 1.5rem;
+}
+
+.android-beta-links a {
+  color: #246fdb;
+  font-weight: 750;
+}
+
+body[data-theme="dark"] .android-beta-page {
+  color: #f1f5fb;
+  background:
+    radial-gradient(circle at top right, rgba(62, 136, 255, 0.22), transparent 34rem),
+    #101a2c;
+}
+
+body[data-theme="dark"] .android-beta-logo {
+  filter: drop-shadow(0 4px 14px rgba(255, 255, 255, 0.18));
+}
+
+body[data-theme="dark"] .android-beta-hero > p {
+  color: #bbc7d8;
+}
+
+body[data-theme="dark"] .android-beta-release-row span,
+body[data-theme="dark"] .android-beta-card {
+  border-color: rgba(173, 193, 222, 0.24);
+  background: #18253a;
+}
+
+body[data-theme="dark"] .android-beta-warning {
+  border-color: #b88a24;
+  background: #332c1a;
+  color: #ffe6a9;
+}
+
+body[data-theme="dark"] .android-beta-integrity code {
+  background: #0d1727;
+  color: #d9e6f7;
+}
+
+@media (max-width: 520px) {
+  .android-beta-page {
+    padding-inline: 0.75rem;
+  }
+
+  .android-beta-hero {
+    padding-inline: 0.5rem;
+  }
+
+  .android-beta-download {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

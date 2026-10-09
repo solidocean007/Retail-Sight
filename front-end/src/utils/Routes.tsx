@@ -42,6 +42,12 @@ const DeveloperDashboard = lazy(
 const NotificationsPage = lazy(
   () => import("../components/Pages/NotificationsPage"),
 );
+const AndroidBetaDownload = lazy(
+  () => import("../components/Pages/AndroidBetaDownload"),
+);
+
+const isStagingBuild =
+  import.meta.env.VITE_DISPLAYGRAM_ENV?.trim() === "staging";
 
 export const AppRoutes = () => {
   const isImpersonating = useSelector((s: RootState) => s.impersonation.active);
@@ -57,6 +63,12 @@ export const AppRoutes = () => {
         <Route path="/terms-service" element={<TermsOfService />} />
         <Route path="/cookies" element={<CookiesPolicy />} />
         <Route path="/help-support" element={<HelpSupport />} />
+        <Route
+          path="/android-beta"
+          element={
+            isStagingBuild ? <AndroidBetaDownload /> : <Navigate to="/" replace />
+          }
+        />
         <Route
           path="/developer-dashboard"
           element={

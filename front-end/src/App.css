@@ -487,4 +487,16 @@ tr:nth-child(even) {
   letter-spacing: 0.02em;
   padding: 0.45rem 1rem;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+}
+
+.test-environment-banner a {
+  color: #fff;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }

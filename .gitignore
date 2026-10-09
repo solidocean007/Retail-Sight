@@ -32,3 +32,9 @@ front-end/stats.html
 .env.*
 !.env.example
 !.env.*.example
+
+# Android signing credentials and distributable binaries
+*.jks
+*.keystore
+keystore.properties
+front-end/public/downloads/*.apk

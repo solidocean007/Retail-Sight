@@ -77,6 +77,7 @@ function AppContent() {
         "/cookies",
         "/contact-us",
         "/help-support",
+        "/android-beta",
       ]),
     [],
   );
@@ -249,7 +250,8 @@ function AppContent() {
         <div className="app-shell">
           {displaygramEnvironment !== "production" && (
             <div className="test-environment-banner" role="status">
-              Displaygram Test Environment — posts here are test data
+              <span>Displaygram Test Environment — posts here are test data</span>
+              <a href="/android-beta">Get Android beta</a>
             </div>
           )}
           {isImpersonating && (

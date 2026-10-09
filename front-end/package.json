@@ -11,6 +11,8 @@
     "build:native": "npm run build && cap sync",
     "build:android:production": "npm run build && cap sync android && cd android && gradlew.bat bundleProductionRelease",
     "build:android:staging": "npm run build:staging && cap sync android && cd android && gradlew.bat bundleStagingRelease",
+    "build:android:staging:apk": "npm run build:staging && cap sync android && cd android && gradlew.bat assembleStagingRelease",
+    "publish:android-beta": "node scripts/publish-android-beta.mjs",
     "cap:sync": "cap sync",
     "cap:android": "npm run build && cap sync android",
     "cap:ios": "npm run build && cap sync ios",

@@ -30,8 +30,10 @@ its custom claims point only to that fake company. On October 8, 2026, a local
 staging debug APK was built successfully and verified as
 `com.displaygram.app.staging` with the visible name "Displaygram Staging" and
 the staging Firebase configuration. Staging still needs its iOS app registration
-and distribution through an Android internal-test channel. Google sign-in
-remains off.
+and, before public store release, distribution through a Google Play
+internal-test channel. The website APK is an interim pilot channel, not a
+substitute for Play App Signing or Android developer verification. Google
+sign-in remains off.
 
 The first Android device test exposed a legacy PWA behavior: offline navigation
 could fall through to the static `offline.html` page before Create Post loaded.
@@ -41,9 +43,25 @@ serves the cached SPA for offline navigation. Native builds also unregister any
 stale web service worker so the bundled Android application remains authoritative.
 A replacement staging APK was generated, and the corrected service worker and
 110-file offline manifest are live on staging Hosting. Direct APK delivery from
-Hosting proved unreliable in an Android embedded browser, so version
-`1.0-staging (2)` is now distributed to the initial tester through Firebase App
-Distribution instead of a public download URL.
+an Android embedded browser proved unreliable during the first test, so early
+builds were distributed through Firebase App Distribution. On October 9, 2026,
+a staging-only website beta channel was added at
+`https://displaygram-staging.web.app/android-beta`. Build
+`1.0-staging (11)` is a versioned, release-signed APK served with explicit APK
+download headers, its size and SHA-256 are shown on the page, and testers are
+directed to open the page in Chrome rather than an embedded browser. The APK is
+copied into Hosting only after the web build so it is not included in the
+offline application-shell manifest.
+
+The direct beta uses a long-lived **staging-only** signing certificate. The
+certificate and password configuration are outside Git and must be backed up
+together in a business-controlled password manager or encrypted archive before
+additional testers rely on in-place updates. Earlier App Distribution builds
+used a different certificate, so testers must finish or discard saved staging
+drafts, uninstall the earlier staging app once, and then install build 11.
+Subsequent direct-beta builds can update build 11 without another uninstall as
+long as the same staging key is retained. This staging key is not the future
+Google Play production signing key.
 
 The next device test reached photo capture but exposed a second readiness gap:
 the Store step could render blank when airplane mode was enabled before the
@@ -54,6 +72,11 @@ them whenever connectivity returns, displays an explicit offline store-list
 state instead of a blank panel, and clears the AI-analysis state when offline.
 The device must still receive its company store list at least once while online;
 offline mode cannot synthesize reference data that has never reached the phone.
+
+The direct-beta release work changes no Firestore or Storage rules. The staging
+environment guard continues to reject any staging build configured with the
+production `retail-sight` Firebase project, and the release verification checks
+the embedded staging project ID and API configuration before publication.
 
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the

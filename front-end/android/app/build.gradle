@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+def stagingSigningPropertiesFile = rootProject.file('keystore.properties')
+def stagingSigningProperties = new Properties()
+if (stagingSigningPropertiesFile.exists()) {
+    stagingSigningProperties.load(new FileInputStream(stagingSigningPropertiesFile))
+}
+
 android {
     namespace = "com.displaygram.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,6 +22,16 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        stagingRelease {
+            if (stagingSigningPropertiesFile.exists()) {
+                storeFile file(stagingSigningProperties['storeFile'])
+                storePassword stagingSigningProperties['storePassword']
+                keyAlias stagingSigningProperties['keyAlias']
+                keyPassword stagingSigningProperties['keyPassword']
+            }
+        }
+    }
     flavorDimensions += "environment"
     productFlavors {
         production {
@@ -24,8 +40,11 @@ android {
         staging {
             dimension "environment"
             applicationIdSuffix ".staging"
-            versionCode 10
+            versionCode 11
             versionNameSuffix "-staging"
+            if (stagingSigningPropertiesFile.exists()) {
+                signingConfig signingConfigs.stagingRelease
+            }
             resValue "string", "app_name", "Displaygram Staging"
             resValue "string", "title_activity_main", "Displaygram Staging"
             resValue "string", "package_name", "com.displaygram.app.staging"
@@ -37,6 +56,18 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def buildsStagingRelease = graph.allTasks.any {
+        it.name == 'assembleStagingRelease' || it.name == 'bundleStagingRelease'
+    }
+    if (buildsStagingRelease && !stagingSigningPropertiesFile.exists()) {
+        throw new GradleException(
+            'Staging release signing is not configured. Copy keystore.properties.example ' +
+            'to android/keystore.properties and provide the staging-only key details.'
+        )
     }
 }
 
