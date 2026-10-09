@@ -24,7 +24,7 @@ android {
         staging {
             dimension "environment"
             applicationIdSuffix ".staging"
-            versionCode 6
+            versionCode 7
             versionNameSuffix "-staging"
             resValue "string", "app_name", "Displaygram Staging"
             resValue "string", "title_activity_main", "Displaygram Staging"

@@ -19,6 +19,9 @@ automatic recovery test completed successfully on October 8, 2026.
   caches the last server-validated profile, permits offline draft recovery with
   that matching profile, and waits for online revalidation before starting
   background data listeners or uploading queued captures.
+- Build 7 keeps the active online capture form uncluttered, but shows a compact
+  unfinished-post reminder after the user leaves or reopens that flow. Drafts
+  therefore remain discoverable after connectivity returns.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

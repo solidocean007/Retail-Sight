@@ -3,6 +3,7 @@ import CloudDoneOutlinedIcon from "@mui/icons-material/CloudDoneOutlined";
 import CloudOffOutlinedIcon from "@mui/icons-material/CloudOffOutlined";
 import SyncOutlinedIcon from "@mui/icons-material/SyncOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
+import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
 import {
   listOfflineCapturesForUser,
   OFFLINE_CAPTURE_CHANGED_EVENT,
@@ -10,7 +11,7 @@ import {
 import type { OfflineCaptureRecord } from "./types";
 import { OFFLINE_CAPTURE_SYNCED_EVENT } from "./offlineCaptureService";
 import "./offlineCaptureStatusBanner.css";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type Props = {
   userId: string;
@@ -18,6 +19,7 @@ type Props = {
 
 export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [captures, setCaptures] = useState<OfflineCaptureRecord[]>([]);
   const [online, setOnline] = useState(navigator.onLine);
   const [recentlySynced, setRecentlySynced] = useState(false);
@@ -63,6 +65,9 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
     );
     const queued = captures.filter((capture) => capture.state === "queued");
     const drafts = captures.filter((capture) => capture.state === "draft");
+    const isViewingDraftFlow =
+      location.pathname === "/create-post" ||
+      location.pathname === "/saved-posts";
     if (failed.length > 0) {
       return {
         kind: "attention",
@@ -86,11 +91,13 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
           : `${queued.length === 1 ? "A post is" : `${queued.length} posts are`} saved on this device. Displaygram will upload ${queued.length === 1 ? "it" : "them"} automatically when you're online and the app is open.`,
       };
     }
-    if (drafts.length > 0 && !online) {
+    if (drafts.length > 0 && (!online || !isViewingDraftFlow)) {
       return {
-        kind: "draft",
-        icon: <CloudOffOutlinedIcon />,
-        text: `${drafts.length === 1 ? "An unfinished post is" : `${drafts.length} unfinished posts are`} saved on this device. Review ${drafts.length === 1 ? "it" : "them"} when convenient.`,
+        kind: online ? "draft-online" : "draft",
+        icon: online ? <EditNoteOutlinedIcon /> : <CloudOffOutlinedIcon />,
+        text: online
+          ? `${drafts.length === 1 ? "You have an unfinished post" : `You have ${drafts.length} unfinished posts`} saved on this device.`
+          : `${drafts.length === 1 ? "An unfinished post is" : `${drafts.length} unfinished posts are`} saved on this device. Review ${drafts.length === 1 ? "it" : "them"} when convenient.`,
       };
     }
     if (recentlySynced) {
@@ -101,7 +108,7 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
       };
     }
     return null;
-  }, [captures, online, recentlySynced]);
+  }, [captures, online, recentlySynced, location.pathname]);
 
   if (!status) return null;
 
