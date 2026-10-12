@@ -85,6 +85,16 @@ performed the initial finalization and the duplicate reused the completed post.
 This test is isolated by `firebase.offline-test.json` and does not read or write
 staging or production data.
 
+On October 12, 2026, the staging offline finalizer added best-effort Gallo Axis
+submission after the core post transaction. It reuses the existing Gallo API
+configuration and payload, records `processing`, `sent`, `failed`, or
+`sent_goal_update_failed` on both the post and its server-only receipt, and
+never rolls back a confirmed Displaygram post when Gallo fails. Gallo does not
+provide an idempotency key, so ambiguous external timeouts are recorded for
+review instead of being automatically resent. The dedicated end-to-end Gallo
+test is deferred; the existing duplicate-finalization emulator test still
+passes, and the updated function is deployed only to `displaygram-staging`.
+
 Android build identities are separated by environment: production uses
 `com.displaygram.app`, while staging uses `com.displaygram.app.staging` and the
 visible name "Displaygram Staging". Each flavor reads its own Firebase Android
@@ -159,9 +169,11 @@ Open decisions and gates:
 - The new sync protocol no longer uses the broadly writable `images/**` or
   `tempUploads/**` paths. Those legacy paths remain an independent integrity
   issue and should be tightened after their existing callers are inventoried.
-- AI, custom-product/manual-account, and Gallo follow-up work is not yet routed
-  through retry-safe backend jobs. A core post can sync, but this branch must not
-  be deployed to the pilot until those side effects and recovery UI are handled.
+- The core transaction now creates the post, any new manual account, the
+  company-goal submission, and the completion receipt together. AI feedback and
+  custom-product learning remain optional follow-up work. Offline Gallo
+  submission is best-effort and records failures for later review; a dedicated
+  Gallo integration test remains a pilot follow-up.
 
 ## Outcome
 

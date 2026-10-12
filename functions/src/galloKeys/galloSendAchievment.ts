@@ -15,27 +15,21 @@ async function getGalloConfig(companyId: string) {
   return gallo;
 }
 
-export const galloSendAchievement = onCall<
-  {
-    env: "prod" | "dev";
-    oppId: string;
-    closedBy: string;
-    closedDate: string;
-    closedUnits: string | number;
-    photos: { file: string }[];
-  },
-  unknown
->(async (req) => {
-  const uid = req.auth?.uid;
-  if (!uid) throw new Error("Not authenticated");
+export type GalloAchievementData = {
+  env: "prod" | "dev";
+  oppId: string;
+  closedBy: string;
+  closedDate: string;
+  closedUnits: string | number;
+  photos: { file: string }[];
+};
 
-  const userSnap = await admin.firestore().doc(`users/${uid}`).get();
-  const companyId = userSnap.data()?.companyId;
-  if (!companyId) throw new Error("Missing companyId");
-
+export const sendGalloAchievementForCompany = async (
+  companyId: string,
+  data: GalloAchievementData
+): Promise<{ ok: true }> => {
   const gallo = await getGalloConfig(companyId);
-
-  const { env, oppId, closedBy, closedDate, closedUnits, photos } = req.data;
+  const { env, oppId, closedBy, closedDate, closedUnits, photos } = data;
 
   const apiKey = env === "prod" ? gallo.prodKey : gallo.devKey;
   const baseUrl = env === "prod" ? gallo.prodBaseUrl : gallo.devBaseUrl;
@@ -70,4 +64,17 @@ export const galloSendAchievement = onCall<
   }
 
   return { ok: true };
-});
+};
+
+export const galloSendAchievement = onCall<GalloAchievementData, unknown>(
+  async (req) => {
+    const uid = req.auth?.uid;
+    if (!uid) throw new Error("Not authenticated");
+
+    const userSnap = await admin.firestore().doc(`users/${uid}`).get();
+    const companyId = userSnap.data()?.companyId;
+    if (!companyId) throw new Error("Missing companyId");
+
+    return sendGalloAchievementForCompany(companyId, req.data);
+  }
+);

@@ -3,6 +3,10 @@ import { randomUUID } from "crypto";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getDownloadURL } from "firebase-admin/storage";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import {
+  sendGalloAchievementForCompany,
+  type GalloAchievementData,
+} from "../galloKeys/galloSendAchievment";
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -172,6 +176,48 @@ const extractStarTags = (description: string): string[] =>
     50
   );
 
+const formatGalloClosedDate = (value: unknown, fallback: Date): string => {
+  const requested = typeof value === "string" ? new Date(value) : fallback;
+  const date = Number.isNaN(requested.getTime()) ? fallback : requested;
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${month}-${day}-${date.getUTCFullYear()}`;
+};
+
+const markGalloGoalAccountSubmitted = async (
+  goalId: string,
+  accountNumber: string,
+  oppId: string,
+  postId: string
+): Promise<void> => {
+  if (!goalId || (!accountNumber && !oppId)) return;
+  const goalRef = db.doc(`galloGoals/${goalId}`);
+
+  await db.runTransaction(async (transaction) => {
+    const goalSnap = await transaction.get(goalRef);
+    if (!goalSnap.exists) throw new Error("Gallo goal not found");
+
+    const accounts = goalSnap.data()?.accounts;
+    if (!Array.isArray(accounts))
+      throw new Error("Gallo goal accounts missing");
+
+    let matched = false;
+    const updatedAccounts = accounts.map((candidate) => {
+      const account = asRecord(candidate);
+      const matchesAccount =
+        (accountNumber &&
+          cleanAccountNumber(account.distributorAcctId) === accountNumber) ||
+        (oppId && cleanString(account.oppId, 240) === oppId);
+      if (!matchesAccount) return candidate;
+      matched = true;
+      return { ...account, submittedPostId: postId };
+    });
+
+    if (!matched) throw new Error("Gallo goal account not found");
+    transaction.update(goalRef, { accounts: updatedAccounts });
+  });
+};
+
 export const finalizeOfflineCapture = onCall<FinalizeOfflineCaptureData>(
   { region: "us-central1", timeoutSeconds: 120, memory: "512MiB" },
   async (request) => {
@@ -195,6 +241,35 @@ export const finalizeOfflineCapture = onCall<FinalizeOfflineCaptureData>(
     }
     const initialUser = initialUserSnap.data() || {};
     const companyId = assertActiveMembership(initialUser);
+    const galloGoal = asRecord(input.galloGoal);
+    const galloGoalId = cleanString(galloGoal.goalId, 160);
+    const galloOppId = cleanString(galloGoal.oppId, 240);
+    const galloEnv: "prod" | "dev" =
+      cleanString(galloGoal.env, 8) === "dev" ? "dev" : "prod";
+    const requestedAccountNumber = cleanAccountNumber(
+      asRecord(input.account).accountNumber
+    );
+    const userDisplayName =
+      `${cleanString(initialUser.firstName, 80)} ${cleanString(
+        initialUser.lastName,
+        80
+      )}`.trim();
+    const galloAchievement: GalloAchievementData | null = galloOppId
+      ? {
+          env: galloEnv,
+          oppId: galloOppId,
+          closedBy:
+            cleanString(input.closedBy, 160) ||
+            userDisplayName ||
+            cleanString(initialUser.email, 320),
+          closedDate: formatGalloClosedDate(
+            input.closedDate,
+            capturedAt.toDate()
+          ),
+          closedUnits: Number(input.totalCaseCount || 0),
+          photos: [],
+        }
+      : null;
     const receiptRef = db.doc(`offlineCaptureReceipts/${uid}_${captureId}`);
     const existingReceipt = await receiptRef.get();
     if (existingReceipt.exists) {
@@ -464,18 +539,17 @@ export const finalizeOfflineCapture = onCall<FinalizeOfflineCaptureData>(
         if (supplierId) postPayload.sharedWithCompanies = [supplierId];
       }
 
-      const galloGoal = asRecord(input.galloGoal);
-      const galloGoalId = cleanString(galloGoal.goalId, 160);
       if (galloGoalId) {
         postPayload.galloGoalId = galloGoalId;
         postPayload.galloGoalTitle = cleanString(galloGoal.title, 240);
-        postPayload.galloGoalEnv = cleanString(galloGoal.env, 8, "prod");
+        postPayload.galloGoalEnv = galloEnv;
         postPayload.galloGoal = {
           goalId: galloGoalId,
           title: cleanString(galloGoal.title, 240),
-          env: cleanString(galloGoal.env, 8, "prod"),
-          oppId: cleanString(galloGoal.oppId, 240),
+          env: galloEnv,
+          oppId: galloOppId,
         };
+        postPayload.galloFollowUpStatus = "pending";
       }
 
       transaction.create(postRef, postPayload);
@@ -505,9 +579,79 @@ export const finalizeOfflineCapture = onCall<FinalizeOfflineCaptureData>(
         finalStoragePath,
         createdAt: FieldValue.serverTimestamp(),
         galloFollowUpRequired: Boolean(galloGoalId),
+        galloFollowUpStatus: galloGoalId ? "pending" : "not_required",
+        galloFollowUpAttempts: 0,
         schemaVersion: 1,
       });
     });
+
+    const recordGalloFollowUpStatus = async (
+      status: "processing" | "sent" | "failed" | "sent_goal_update_failed",
+      errorCode?: string,
+      incrementAttempt = false
+    ): Promise<void> => {
+      const sharedUpdate: UnknownRecord = {
+        galloFollowUpStatus: status,
+        galloFollowUpUpdatedAt: FieldValue.serverTimestamp(),
+        galloFollowUpLastErrorCode: errorCode || FieldValue.delete(),
+      };
+      await Promise.all([
+        receiptRef.set(
+          {
+            ...sharedUpdate,
+            ...(incrementAttempt
+              ? { galloFollowUpAttempts: FieldValue.increment(1) }
+              : {}),
+          },
+          { merge: true }
+        ),
+        postRef.set(sharedUpdate, { merge: true }),
+      ]);
+    };
+
+    if (!alreadyFinalized && galloGoalId) {
+      let achievementSent = false;
+      try {
+        await recordGalloFollowUpStatus("processing", undefined, true);
+        if (!galloAchievement) {
+          throw new Error("Missing Gallo opportunity ID");
+        }
+
+        await sendGalloAchievementForCompany(companyId, {
+          ...galloAchievement,
+          photos: [{ file: imageUrl }],
+        });
+        achievementSent = true;
+
+        await markGalloGoalAccountSubmitted(
+          galloGoalId,
+          requestedAccountNumber,
+          galloOppId,
+          captureId
+        );
+        await recordGalloFollowUpStatus("sent");
+      } catch (error) {
+        const status = achievementSent ? "sent_goal_update_failed" : "failed";
+        const errorCode = achievementSent
+          ? "gallo_goal_update_failed"
+          : galloAchievement
+            ? "gallo_send_failed"
+            : "gallo_opportunity_missing";
+        console.warn("Offline Gallo follow-up needs attention", {
+          captureId,
+          status,
+          error,
+        });
+        await recordGalloFollowUpStatus(status, errorCode).catch(
+          (statusError) => {
+            console.warn("Offline Gallo status update failed", {
+              captureId,
+              statusError,
+            });
+          }
+        );
+      }
+    }
 
     await sourceFile.delete({ ignoreNotFound: true }).catch((error) => {
       console.warn("Offline capture staging cleanup failed", {
