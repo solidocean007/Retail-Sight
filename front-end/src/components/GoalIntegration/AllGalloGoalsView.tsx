@@ -19,6 +19,7 @@ import { updateGalloGoalLifecycle } from "../../utils/helperFunctions/updateGall
 import CustomConfirmation from "../CustomConfirmation";
 import PostViewerModal from "../PostViewerModal";
 import AdminGalloGoalsSection from "./AdminGalloGoalsSection";
+import ArchivedGalloGoalsCollection from "./ArchivedGalloGoalsCollection";
 import EditGalloGoalModal from "./EditGalloGoalModal";
 import GalloGoalProgressOverlay from "./GalloGoalProgressOverlay";
 import GalloGoalsCollection from "./GalloGoalsCollection";
@@ -338,11 +339,11 @@ const AllGalloGoalsView = ({ view, onViewChange }: Props) => {
       {view === "archived" && (
         <AdminGalloGoalsSection
           title="Archived goals"
-          subtitle="Past programs, ordered by the most recently completed."
+          subtitle="Past programs grouped by the month they started. Open a month to review its goals."
           count={filteredGoals.archived.length}
           tone="archived"
         >
-          <GalloGoalsCollection
+          <ArchivedGalloGoalsCollection
             goals={filteredGoals.archived}
             emptyTitle="No archived goals"
             emptyMessage={
@@ -350,7 +351,7 @@ const AllGalloGoalsView = ({ view, onViewChange }: Props) => {
                 ? "No archived programs match this search."
                 : "Completed Gallo programs will be kept here for reference."
             }
-            compact
+            revealAll={Boolean(search.trim())}
             {...collectionProps}
           />
         </AdminGalloGoalsSection>
