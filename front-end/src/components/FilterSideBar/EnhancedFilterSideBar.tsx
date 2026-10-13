@@ -31,6 +31,7 @@ import FilterAccordionSection from "./FilterAccordionSection";
 import FilterChips from "./FilterChips";
 import GalloGoalFilterGroup from "./GalloGoalFilterGroup";
 import GoalFilterGroup from "./GoalFilterGroup";
+import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
 import UserFilterAutocomplete from "./UserFilterAutocomplete";
 import { useFeedFilterResults } from "./hooks/useFeedFilterResults";
 import "./styles/enhancedFilterSideBar.css";
@@ -136,6 +137,7 @@ const EnhancedFilterSidebar = ({
   const [tagInput, setTagInput] = useState("");
   const [brandInput, setBrandInput] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [productTypeInput, setProductTypeInput] = useState("");
   const [selectedUserInput, setSelectedUserInput] = useState("");
   const [distributorInput, setDistributorInput] = useState("");
   const [selectedDistributor, setSelectedDistributor] =
@@ -278,6 +280,7 @@ const EnhancedFilterSidebar = ({
     setTagInput(nextFilters.hashtag || nextFilters.starTag || "");
     setBrandInput(nextFilters.brand || "");
     setSelectedBrand(nextFilters.brand || null);
+    setProductTypeInput(nextFilters.productType || "");
     setAccountNameInput(nextFilters.accountName || "");
     setDistributorInput(nextFilters.distributorCompanyName || "");
     setSelectedDistributor(
@@ -352,6 +355,7 @@ const EnhancedFilterSidebar = ({
     setTagInput("");
     setBrandInput("");
     setSelectedBrand(null);
+    setProductTypeInput("");
     setSelectedUserInput("");
     setDistributorInput("");
     setSelectedDistributor(null);
@@ -376,6 +380,7 @@ const EnhancedFilterSidebar = ({
       setBrandInput("");
       setSelectedBrand(null);
     }
+    if (field === "productType") setProductTypeInput("");
     if (field === "accountName" || field === "accountNumber") {
       setAccountNameInput("");
     }
@@ -403,6 +408,7 @@ const EnhancedFilterSidebar = ({
   ]);
   const productSummary = summarize([
     draftFilters.brand,
+    draftFilters.productType,
     draftFilters.minCaseCount != null
       ? `≥ ${draftFilters.minCaseCount} cases`
       : null,
@@ -535,6 +541,12 @@ const EnhancedFilterSidebar = ({
               setSelectedBrand(brand);
               updateFilters({ brand });
             }}
+          />
+          <ProductTypeAutocomplete
+            inputValue={productTypeInput}
+            selectedType={draftFilters.productType ?? null}
+            onInputChange={setProductTypeInput}
+            onTypeChange={(productType) => updateFilters({ productType })}
           />
           <label className="filter-field-label">
             <span>Minimum display quantity</span>
