@@ -156,18 +156,16 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
       : types;
   };
 
-  const companyProductTypeOptions = useProductTypeOptions();
+  const companyProductTypeOptions = useProductTypeOptions(selectedBrands);
   const derivedProductTypes = getSelectedProductTypes(selectedBrands);
-  const productTypeOptions = isSupplier
-    ? dedupeBrands([
-        ...derivedProductTypes,
-        ...companyProductTypeOptions.filter(
-          (type) => type.trim().toLowerCase() !== "unspecified",
-        ),
-        "beer pkg",
-        "wine unfortified",
-      ]).sort((a, b) => a.localeCompare(b))
-    : derivedProductTypes;
+  const productTypeOptions = dedupeBrands([
+    ...derivedProductTypes,
+    ...companyProductTypeOptions.filter(
+      (type) =>
+        !isSupplier || type.trim().toLowerCase() !== "unspecified",
+    ),
+    ...(isSupplier ? ["beer pkg", "wine unfortified"] : []),
+  ]).sort((a, b) => a.localeCompare(b));
 
   const [brandInput, setBrandInput] = useState("");
   const [typeInput, setTypeInput] = useState("");
