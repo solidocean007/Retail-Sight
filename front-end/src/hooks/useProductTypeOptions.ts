@@ -7,20 +7,33 @@ import { selectCurrentCompany } from "../Slices/currentCompanySlice";
 export const useProductTypeOptions = (filterBrands?: string[]): string[] => {
   const products = useSelector(selectAllProducts);
   const company = useSelector(selectCurrentCompany);
-  const library = company?.customProductTypeLibrary ?? [];
+  const customProductTypeLibrary = company?.customProductTypeLibrary;
+  const normalizedFilterKey = (filterBrands ?? [])
+    .map((brand) => brand.trim().toLowerCase())
+    .sort()
+    .join("\u0000");
+
   return useMemo(() => {
     let list = products;
+    const library = customProductTypeLibrary ?? [];
 
-    // if they passed in a brand filter, only include those
-    if (filterBrands && filterBrands.length) {
-      const brandSet = new Set(filterBrands);
-      list = list.filter((p) => p.brand && brandSet.has(p.brand));
+    // Product and AI/catalog brand casing is not guaranteed to match.
+    if (normalizedFilterKey) {
+      const brandSet = new Set(normalizedFilterKey.split("\u0000"));
+      list = list.filter(
+        (product) =>
+          product.brand &&
+          brandSet.has(product.brand.trim().toLowerCase()),
+      );
     }
 
-    // extract, dedupe, sort
+    // The company library remains available when a legacy brand record has
+    // not yet been backfilled with productTypes.
     const types = list
-      .map((p) => p.productType) // or whatever your field is called
-      .filter((t): t is string => Boolean(t));
-    return Array.from(new Set([...types, ...library])).sort();
-  }, [products, filterBrands?.join("|"), library]);
+      .map((product) => product.productType?.trim())
+      .filter((type): type is string => Boolean(type));
+    return Array.from(
+      new Set([...types, ...library.map((type) => type.trim())].filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [products, normalizedFilterKey, customProductTypeLibrary]);
 };
