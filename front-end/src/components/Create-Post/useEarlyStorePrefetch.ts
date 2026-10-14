@@ -128,6 +128,11 @@ export const useEarlyStorePrefetch = ({
     }
 
     const controller = new AbortController();
+    let timedOut = false;
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 12000);
     setIsFindingNearbyStores(true);
     setNearbyStoreError("");
 
@@ -139,16 +144,26 @@ export const useEarlyStorePrefetch = ({
     )
       .then(setNearbyStores)
       .catch((error) => {
-        if (error?.name === "AbortError") return;
+        if (error?.name === "AbortError" && !timedOut) return;
         console.warn("Create Post nearby-store prefetch failed:", error);
         setNearbyStores([]);
         setNearbyStoreError(
-          error instanceof Error ? error.message : "Nearby store lookup failed.",
+          timedOut
+            ? "Nearby store lookup timed out. Search your account list instead."
+            : error instanceof Error
+              ? error.message
+              : "Nearby store lookup failed.",
         );
       })
-      .finally(() => setIsFindingNearbyStores(false));
+      .finally(() => {
+        window.clearTimeout(timeoutId);
+        setIsFindingNearbyStores(false);
+      });
 
-    return () => controller.abort();
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [userLocation, online]);
 
   return {

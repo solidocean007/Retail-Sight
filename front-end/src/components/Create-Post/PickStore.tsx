@@ -576,15 +576,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
       galloGoal: undefined,
       account: {
         accountName,
-        accountAddress,
+        accountAddress: accountAddress ?? "",
         ...(originCompanyId && { originCompanyId, originCompanyName }),
-        streetAddress,
-        city,
-        state,
-        accountNumber,
-        salesRouteNums,
-        typeOfAccount,
-        chain,
+        streetAddress: streetAddress ?? "",
+        city: city ?? "",
+        state: state ?? "",
+        accountNumber: String(accountNumber ?? ""),
+        salesRouteNums: salesRouteNums ?? [],
+        typeOfAccount: typeOfAccount ?? "",
+        chain: chain ?? "",
         chainType,
       },
       accountNumber,
@@ -624,19 +624,17 @@ export const PickStore: React.FC<PickStoreProps> = ({
     setOpenManualAccountForm(true);
   };
 
-  if (loadingAccounts || loadingPartnerAccounts) return <CircularProgress />;
-
   const showStoreFallback =
-    !post.account &&
-    !isPrefetchingNearbyStores &&
-    (combinedAccounts.length > 0 ||
-      nearbyLookupComplete ||
-      !!nearbyStorePrefetchError ||
-      !!accountLoadProblem ||
-      !online);
+    !post.account;
 
   return (
     <div className="pick-store">
+      {(loadingAccounts || loadingPartnerAccounts) && (
+        <Box className="store-prefetch-status" display="flex" alignItems="center" gap={1} px={3} mt={2}>
+          <CircularProgress size={20} />
+          <Typography variant="body2">Loading your store list…</Typography>
+        </Box>
+      )}
       {isSupplier && partnerCompanies.length === 0 && (
         <Typography variant="body2" color={connectionsError ? "error" : "textSecondary"} px={3} mt={2}>
           {connectionsLoading

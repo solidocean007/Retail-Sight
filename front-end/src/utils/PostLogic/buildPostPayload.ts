@@ -6,6 +6,34 @@ import {
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { Timestamp } from "@firebase/firestore";
 
+/**
+ * Firestore rejects undefined at any depth. Account and user records come
+ * from several legacy import paths, so optional nested fields cannot be
+ * assumed to be clean even when the flattened post fields are normalized.
+ * Preserve class instances such as Timestamp and only clean plain objects.
+ */
+const removeUndefinedFields = <T>(value: T): T => {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== undefined)
+      .map((item) => removeUndefinedFields(item)) as T;
+  }
+
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    Object.getPrototypeOf(value) === Object.prototype
+  ) {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, removeUndefinedFields(item)]),
+    ) as T;
+  }
+
+  return value;
+};
+
 export const buildPostPayload = (
   post: PostInputType,
   goal?: { supplierIdForGoal?: string | null },
@@ -25,7 +53,7 @@ export const buildPostPayload = (
   const cleanedShareNote = post.shareNote?.trim();
   const shareNoteAudienceCompanyId = account?.originCompanyId;
 
-  return {
+  const payload = {
     ...(shared.size > 0 && {
       sharedWithCompanies: Array.from(shared),
     }),
@@ -119,4 +147,6 @@ export const buildPostPayload = (
     commentCount: 0,
     tokens: [],
   } satisfies FirestorePostPayload;
+
+  return removeUndefinedFields(payload);
 };
