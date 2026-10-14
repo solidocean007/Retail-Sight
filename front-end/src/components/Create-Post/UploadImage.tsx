@@ -35,6 +35,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   const [isAiEnabled, setIsAiEnabled] = useState(isAiFeatureEnabled);
   const [showAiInfo, setShowAiInfo] = useState(false);
   const aiAnalysisRequestId = useRef(0);
+  const analysisTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPost((prev) => ({
@@ -43,6 +44,15 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     }));
   }, [isAiEnabled, setPost]);
 
+  useEffect(
+    () => () => {
+      aiAnalysisRequestId.current += 1;
+      if (analysisTimeoutRef.current !== null) {
+        window.clearTimeout(analysisTimeoutRef.current);
+      }
+    },
+    [],
+  );
   const analyzeBrandsInBackground = async (
     imageFile: File,
     requestId: number,
@@ -112,6 +122,10 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const analysisRequestId = ++aiAnalysisRequestId.current;
+    if (analysisTimeoutRef.current !== null) {
+      window.clearTimeout(analysisTimeoutRef.current);
+      analysisTimeoutRef.current = null;
+    }
     if (!file) {
       dispatch(showMessage("No file selected. Please choose an image."));
       return;
@@ -182,7 +196,46 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         dispatch(showMessage("Image selected successfully!"));
 
         if (isAiEnabled) {
-          void analyzeBrandsInBackground(finalFile, analysisRequestId);
+          if (navigator.onLine) {
+            if (analysisTimeoutRef.current !== null) {
+              window.clearTimeout(analysisTimeoutRef.current);
+            }
+            const timeoutId = window.setTimeout(() => {
+              if (analysisRequestId !== aiAnalysisRequestId.current) return;
+              aiAnalysisRequestId.current += 1;
+              analysisTimeoutRef.current = null;
+              setPost((prev) => ({
+                ...prev,
+                autoDetectedBrands: [],
+                rawCandidates: [],
+              }));
+              dispatch(
+                showMessage(
+                  "Brand analysis took too long — continuing without suggestions.",
+                ),
+              );
+            }, 30000);
+            analysisTimeoutRef.current = timeoutId;
+            void analyzeBrandsInBackground(finalFile, analysisRequestId).finally(
+              () => {
+                if (analysisTimeoutRef.current === timeoutId) {
+                  window.clearTimeout(timeoutId);
+                  analysisTimeoutRef.current = null;
+                }
+              },
+            );
+          } else {
+            setPost((prev) => ({
+              ...prev,
+              autoDetectedBrands: [],
+              rawCandidates: [],
+            }));
+            dispatch(
+              showMessage(
+                "Photo saved on this device. AI analysis is skipped while offline.",
+              ),
+            );
+          }
         }
       };
       reader.readAsDataURL(finalFile);
