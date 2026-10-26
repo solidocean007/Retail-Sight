@@ -8,7 +8,6 @@ import {
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
-import { getStorage } from "firebase/storage";
 import {
   initializeAppCheck,
   ReCaptchaEnterpriseProvider,
@@ -48,7 +47,6 @@ if (appCheckSiteKey) {
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 export const functions = getFunctions(app, "us-central1");
 
 setPersistence(auth, browserLocalPersistence);

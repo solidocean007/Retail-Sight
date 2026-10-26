@@ -7,6 +7,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  min-width: 0;
   margin-top: 0;
   position: relative;
   height: 100%;
@@ -135,6 +137,8 @@
 
 @media (max-width: 600px) {
   .post-card-renderer-container {
+    width: 100%;
+    min-width: 0;
     padding-inline: 0;
   }
 }

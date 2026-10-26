@@ -1,6 +1,5 @@
 // hooks/useNotificationHealth.ts
 import { useCallback, useEffect, useState } from "react";
-import { hasTokenForThisDevice } from "../firebase/messaging";
 
 export type NotificationPermissionState =
   | "unsupported"
@@ -35,6 +34,9 @@ export const useNotificationHealth = (uid?: string) => {
     }
 
     try {
+      const { hasTokenForThisDevice } = await import(
+        "../firebase/fcmTokenStore"
+      );
       const exists = await hasTokenForThisDevice(uid);
       setTokenStatus(exists ? "ok" : "none");
     } catch (err) {

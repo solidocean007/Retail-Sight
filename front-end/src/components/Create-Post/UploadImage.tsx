@@ -9,7 +9,8 @@ import {
   uploadBytes,
 } from "firebase/storage";
 import { httpsCallable, getFunctions } from "firebase/functions";
-import { storage } from "../../utils/firebase";
+import { storage } from "../../utils/firebaseStorage";
+import { convertHeicImage } from "../../utils/PostLogic/convertHeicImage";
 import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { PostInputType } from "../../utils/types";
@@ -164,16 +165,9 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         dispatch(showMessage("Converting HEIC image, please wait..."));
         setIsConverting(true);
 
-        const { default: convertHeic } = await import("heic2any");
-        const convertedBlob = await convertHeic({
-          blob: finalFile,
-          toType: "image/jpeg",
-        });
-        const singleBlob = Array.isArray(convertedBlob)
-          ? convertedBlob[0]
-          : convertedBlob;
+        const convertedBlob = await convertHeicImage(finalFile);
         finalFile = new File(
-          [singleBlob],
+          [convertedBlob],
           file.name.replace(/\.\w+$/, ".jpg"),
           {
             type: "image/jpeg",

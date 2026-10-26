@@ -1,24 +1,6 @@
 // Routes.tsx
 import { Route, Routes, Navigate } from "react-router-dom";
-import About from "../components/Pages/About/About";
-import ContactUs from "../components/Pages/ContactUs";
-import PrivacyPolicy from "../components/Pages/PrivacyPolicy";
-import TermsOfService from "../components/Pages/TermsService";
-import HelpSupport from "../components/Pages/HelpSupport";
-import SplashPage from "../components/Pages/SplashPage";
-import ViewCollection from "../components/Pages/ViewCollection";
-import { PageNotFound } from "../components/Pages/ErrorPages/PageNotFound";
-import { AccessDenied } from "../components/Pages/ErrorPages/AccessDenied";
-import RequestAccessForm from "../components/Pages/RequestAccessForm";
-import InviteAcceptForm from "../components/Pages/InviteAcceptForm";
-import { PublicPostViewer } from "../components/Pages/ViewPostByLink";
-import ResetPassword from "../components/Pages/ResetPassword";
-import RequestSubmitted from "../components/Pages/RequestSubmitted";
-import CompanyOnboardingAcceptForm from "../components/Pages/CompanyOnboardingAcceptForm";
 import ProtectedRoute from "../components/ProtectedRoute";
-import PostViewer from "../components/Pages/PostViewer";
-import CookiesPolicy from "../components/Pages/CookiesPolicy";
-import SmartLanding from "../components/SmartLanding";
 import { lazy, Suspense } from "react";
 import AppLoadingScreen from "../components/AppLoadingScreen";
 import { useSelector } from "react-redux/es/hooks/useSelector";
@@ -27,6 +9,42 @@ import { RootState } from "./store";
 const PricingPlans = lazy(() => import("../components/Pages/PricingPlans"));
 const Features = lazy(() => import("../components/Pages/Features"));
 const LoginForm = lazy(() => import("../components/Pages/LoginForm"));
+const SmartLanding = lazy(() => import("../components/SmartLanding"));
+const SplashPage = lazy(() => import("../components/Pages/SplashPage"));
+const About = lazy(() => import("../components/Pages/About/About"));
+const ContactUs = lazy(() => import("../components/Pages/ContactUs"));
+const PrivacyPolicy = lazy(() => import("../components/Pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("../components/Pages/TermsService"));
+const CookiesPolicy = lazy(() => import("../components/Pages/CookiesPolicy"));
+const HelpSupport = lazy(() => import("../components/Pages/HelpSupport"));
+const RequestAccessForm = lazy(
+  () => import("../components/Pages/RequestAccessForm"),
+);
+const RequestSubmitted = lazy(
+  () => import("../components/Pages/RequestSubmitted"),
+);
+const InviteAcceptForm = lazy(
+  () => import("../components/Pages/InviteAcceptForm"),
+);
+const ResetPassword = lazy(
+  () => import("../components/Pages/ResetPassword"),
+);
+const CompanyOnboardingAcceptForm = lazy(
+  () => import("../components/Pages/CompanyOnboardingAcceptForm"),
+);
+const ViewCollection = lazy(
+  () => import("../components/Pages/ViewCollection"),
+);
+const PostViewer = lazy(() => import("../components/Pages/PostViewer"));
+const PublicPostViewer = lazy(
+  () => import("../components/Pages/ViewPostByLink"),
+);
+const PageNotFound = lazy(
+  () => import("../components/Pages/ErrorPages/PageNotFound"),
+);
+const AccessDenied = lazy(
+  () => import("../components/Pages/ErrorPages/AccessDenied"),
+);
 const UserHomePage = lazy(() => import("../components/Pages/UserHomePage"));
 const Dashboard = lazy(() => import("../components/Pages/Dashboard"));
 const CreatePost = lazy(() => import("../components/Pages/CreatePost"));

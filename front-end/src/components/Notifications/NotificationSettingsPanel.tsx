@@ -10,7 +10,6 @@ import { ReactNode } from "react";
 import { useSelector } from "react-redux";
 
 import { selectUser } from "../../Slices/userSlice";
-import { registerFcmToken } from "../../firebase/messaging";
 import { useNotificationHealth } from "../../hooks/useNotificationHealth";
 import {
   UserNotificationSettings,
@@ -66,6 +65,7 @@ const NotificationSettingsPanel = () => {
     const nextPermission = await Notification.requestPermission();
     if (nextPermission === "granted") {
       try {
+        const { registerFcmToken } = await import("../../firebase/messaging");
         await registerFcmToken();
       } catch (pushError) {
         console.error("Could not register this device for push:", pushError);

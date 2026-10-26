@@ -853,6 +853,17 @@
 }
 
 @media (max-width: 600px) {
+  .memoized-post-card,
+  .post-card-stack {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .card-border {
+    width: calc(100% - 1rem);
+    margin: 0.75rem auto 1.25rem;
+  }
+
   .card-border,
   .post-card-container {
     border-radius: 15px;
@@ -868,7 +879,8 @@
   }
 
   .post-card-stack.has-shared-context .shared-post-context {
-    margin-bottom: -38px;
+    width: calc(100% - 1rem);
+    margin: 0 auto -38px;
   }
 }
 

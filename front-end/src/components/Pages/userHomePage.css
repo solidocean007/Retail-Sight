@@ -214,6 +214,10 @@
     display: none;
   }
 
+  .side-bar-container:not(.sidebar-fullscreen) {
+    display: none;
+  }
+
   .activity-feed-header-bar {
     padding: 0 0.75rem;
   }
@@ -372,7 +376,15 @@
 
 @media (max-width: 600px) {
   .home-page-content {
-    padding: 1rem 0.55rem 0;
+    padding: 1rem 0 0;
+  }
+
+  .activity-feed-container {
+    min-width: 0;
+    max-width: none;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 20px 20px 0 0;
   }
 }
 

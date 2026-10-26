@@ -149,10 +149,6 @@ const BillingDashboard: React.FC = () => {
   }, [currentCompanyId]);
 
   useEffect(() => {
-    import("braintree-web-drop-in");
-  }, []);
-
-  useEffect(() => {
     if (!currentCompanyId) return;
     const getClientToken = httpsCallable<
       { companyId: string },

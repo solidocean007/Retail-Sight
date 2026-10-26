@@ -1,7 +1,8 @@
 import { deleteDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { PostWithID } from "../types";
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
+import { storage } from "../firebaseStorage";
 import {
   deleteUserCreatedPostInIndexedDB,
   purgeDeletedPostFromFilteredSets,

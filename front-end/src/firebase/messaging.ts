@@ -5,15 +5,20 @@ import {
   deleteToken,
   type Messaging,
 } from "firebase/messaging";
+import { app, auth } from "../utils/firebase";
 import {
-  doc,
-  setDoc,
-  deleteDoc,
-  serverTimestamp,
-  collection,
-  getDocs,
-} from "firebase/firestore";
-import { app, auth, db } from "../utils/firebase";
+  subscribeToForegroundMessages,
+  type PushPayload,
+} from "./foregroundMessages";
+import { deleteFcmToken, saveFcmToken } from "./fcmTokenStore";
+
+export { subscribeToForegroundMessages, type PushPayload };
+export {
+  deleteFcmToken,
+  hasExistingFcmToken,
+  hasTokenForThisDevice,
+  saveFcmToken,
+} from "./fcmTokenStore";
 
 // IMPORTANT: Your VAPID key from Firebase Console > Cloud Messaging > Web Push Certificate
 const VAPID_KEY =
@@ -42,36 +47,6 @@ export function isIOSPWA(): boolean {
       // iOS < 13 fallback
       window.navigator.standalone === true)
   );
-}
-
-// --------------------------------------------
-// Save Token to Firestore
-// --------------------------------------------
-export async function saveFcmToken(uid: string, token: string) {
-  if (!uid || !token) return;
-
-  const tokenRef = doc(db, `users/${uid}/fcmTokens/${token}`);
-
-  await setDoc(tokenRef, {
-    token,
-    createdAt: serverTimestamp(),
-    device: navigator.userAgent,
-  }).catch((err) => {
-    console.error("Error saving FCM token:", err);
-  });
-}
-
-// --------------------------------------------
-// Delete Token from Firestore
-// --------------------------------------------
-export async function deleteFcmToken(uid: string, token: string) {
-  if (!uid || !token) return;
-
-  const tokenRef = doc(db, `users/${uid}/fcmTokens/${token}`);
-
-  await deleteDoc(tokenRef).catch((err) => {
-    console.error("Error deleting FCM token:", err);
-  });
 }
 
 // --------------------------------------------
@@ -201,62 +176,6 @@ export async function unregisterCurrentDeviceToken(uid: string) {
     // Never block logout on push cleanup
     console.warn("unregisterCurrentDeviceToken failed:", err);
   }
-}
-
-// Return TRUE if any token exists for this user
-export async function hasExistingFcmToken(uid: string): Promise<boolean> {
-  if (!uid) return false;
-
-  try {
-    const colRef = collection(db, `users/${uid}/fcmTokens`);
-    const snap = await getDocs(colRef);
-    return snap.size > 0;
-  } catch (err) {
-    console.error("hasExistingFcmToken error:", err);
-    return false;
-  }
-}
-
-export async function hasTokenForThisDevice(uid: string): Promise<boolean> {
-  if (!uid) return false;
-
-  try {
-    const ua = navigator.userAgent;
-    const colRef = collection(db, `users/${uid}/fcmTokens`);
-    const snap = await getDocs(colRef);
-
-    return snap.docs.some((d) => d.data().device === ua);
-  } catch (err) {
-    console.error("hasTokenForThisDevice error:", err);
-    return false;
-  }
-}
-
-// --------------------------------------------
-// On-Message Listener (foreground notifications)
-// --------------------------------------------
-// Shape of the raw FCM payload the service worker forwards to the page
-export type PushPayload = {
-  data?: Record<string, string>;
-  notification?: { title?: string; body?: string };
-};
-
-// The service worker forwards pushes to visible windows as
-// FOREGROUND_PUSH messages (we no longer use the Firebase SDK inside
-// the SW, so firebase/messaging onMessage would never fire).
-export function subscribeToForegroundMessages(
-  cb: (payload: PushPayload) => void,
-) {
-  if (!("serviceWorker" in navigator)) return () => {};
-
-  const handler = (event: MessageEvent) => {
-    if (event.data?.type === "FOREGROUND_PUSH") {
-      cb(event.data.payload);
-    }
-  };
-
-  navigator.serviceWorker.addEventListener("message", handler);
-  return () => navigator.serviceWorker.removeEventListener("message", handler);
 }
 
 // --------------------------------------------
