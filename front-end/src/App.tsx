@@ -13,10 +13,9 @@ import "./App.css";
 import { RootState, useAppDispatch } from "./utils/store";
 import { hideMessage, nextMessage, showMessage } from "./Slices/snackbarSlice";
 import {
-  registerFcmToken,
   subscribeToForegroundMessages,
   type PushPayload,
-} from "./firebase/messaging";
+} from "./firebase/foregroundMessages";
 import { setDarkMode } from "./Slices/themeSlice";
 
 import { getTheme } from "./theme";
@@ -36,7 +35,6 @@ import { db, displaygramEnvironment } from "./utils/firebase";
 import { handleLogout } from "./utils/validation/authenticate";
 import { stopViewAsCompany } from "./Slices/impersonationSlice";
 import { OfflineCaptureStatusBanner } from "./features/offlineCapture/OfflineCaptureStatusBanner";
-import { startOfflineCaptureSync } from "./features/offlineCapture/offlineCaptureSync";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -119,7 +117,22 @@ function AppContent() {
       isAuthRoute
     )
       return;
-    return startOfflineCaptureSync(user.uid, user.companyId);
+    let cancelled = false;
+    let stopSync: (() => void) | undefined;
+
+    void import("./features/offlineCapture/offlineCaptureSync")
+      .then(({ startOfflineCaptureSync }) => {
+        if (cancelled) return;
+        stopSync = startOfflineCaptureSync(user.uid, user.companyId);
+      })
+      .catch((error) =>
+        console.warn("Offline capture sync could not be loaded:", error),
+      );
+
+    return () => {
+      cancelled = true;
+      stopSync?.();
+    };
   }, [
     user?.uid,
     user?.companyId,
@@ -158,9 +171,22 @@ function AppContent() {
     if (typeof Notification === "undefined") return;
     if (Notification.permission !== "granted") return;
 
-    registerFcmToken().catch((err) =>
-      console.warn("Silent FCM re-register failed:", err),
-    );
+    let cancelled = false;
+
+    void import("./firebase/messaging")
+      .then(({ registerFcmToken }) => {
+        if (cancelled) return;
+        registerFcmToken().catch((err) =>
+          console.warn("Silent FCM re-register failed:", err),
+        );
+      })
+      .catch((error) =>
+        console.warn("Firebase Messaging could not be loaded:", error),
+      );
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentUser?.uid]);
 
   // Foreground push messages: FCM data-only messages received while

@@ -12,6 +12,9 @@ const offlineAssetManifest = () => ({
     const buildAssets = Object.values(bundle)
       .map(({ fileName }) => fileName)
       .filter((fileName) => !fileName.endsWith("stats.html"))
+      // Checkout requires live callable functions and cannot work offline.
+      // Let the service worker runtime-cache it only after checkout is opened.
+      .filter((fileName) => !/^assets\/dropin-[^/]+\.js$/.test(fileName))
       .map((fileName) => `/${fileName}`);
 
     const assets = Array.from(
@@ -43,12 +46,42 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: "/",
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            const moduleId = id.replace(/\\/g, "/");
+
+            if (
+              moduleId.includes("/node_modules/@firebase/firestore/") ||
+              moduleId.includes("/node_modules/@firebase/webchannel-wrapper/")
+            ) {
+              return "firebase-firestore";
+            }
+
+            if (moduleId.includes("/node_modules/@firebase/auth/")) {
+              return "firebase-auth";
+            }
+
+            if (
+              moduleId.includes("/node_modules/react/") ||
+              moduleId.includes("/node_modules/react-dom/") ||
+              moduleId.includes("/node_modules/scheduler/")
+            ) {
+              return "react-vendor";
+            }
+
+            return undefined;
+          },
+        },
+      },
+    },
     plugins: [
       react(),
       offlineAssetManifest(),
       visualizer.default({
         // Use .default here
-        open: true,
+        open: false,
         gzipSize: true,
         brotliSize: true,
       }),

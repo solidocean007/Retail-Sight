@@ -5,7 +5,8 @@ import {
   PostInputType,
   PostWithID,
 } from "../types";
-import { auth, db, storage } from "../firebase";
+import { auth, db } from "../firebase";
+import { storage } from "../firebaseStorage";
 import {
   deleteObject,
   getDownloadURL,

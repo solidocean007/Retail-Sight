@@ -6,7 +6,7 @@ import {
 } from "firebase/storage";
 import Compressor from "compressorjs";
 import { resizeImage } from "../../images/resizeImages";
-import { storage } from "../firebase";
+import { storage } from "../firebaseStorage";
 
 export const uploadImageToStorage = (
   uid: string,

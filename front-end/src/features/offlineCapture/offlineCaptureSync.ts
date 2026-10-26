@@ -5,7 +5,7 @@ import {
   type UploadTask,
   type UploadTaskSnapshot,
 } from "firebase/storage";
-import { storage } from "../../utils/firebase";
+import { storage } from "../../utils/firebaseStorage";
 import {
   NATIVE_APP_RESUMED_EVENT,
   NATIVE_NETWORK_STATUS_EVENT,

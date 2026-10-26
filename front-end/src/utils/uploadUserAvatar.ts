@@ -1,6 +1,6 @@
 // utils/uploadUserAvatar.ts
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "./firebase";
+import { storage } from "./firebaseStorage";
 
 export const MAX_AVATAR_FILE_SIZE = 8 * 1024 * 1024;
 export const SUPPORTED_AVATAR_TYPES: readonly string[] = [
