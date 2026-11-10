@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
-import { selectUser } from "../../Slices/userSlice";
 import { SplashPageHelmet } from "../../utils/helmetConfigurations";
 import "./splashPage.css";
 
@@ -24,11 +22,10 @@ const workflowSteps = [
   },
 ];
 
-const SplashPage = () => {
-  const user = useSelector(selectUser);
+const SplashPage = ({ signedIn }: { signedIn: boolean }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const primaryPath = user ? "/user-home-page" : "/request-access";
-  const primaryLabel = user ? "Open workspace" : "Request access";
+  const primaryPath = signedIn ? "/user-home-page" : "/request-access";
+  const primaryLabel = signedIn ? "Open workspace" : "Request access";
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -94,7 +91,7 @@ const SplashPage = () => {
           <a href="#goals" onClick={closeMenu}>Goals</a>
           <a href="#sharing" onClick={closeMenu}>Sharing</a>
           <Link to="/pricing" onClick={closeMenu}>Pricing</Link>
-          {user ? (
+          {signedIn ? (
             <Link
               to="/user-home-page"
               className="dg-splash-nav-action"
@@ -135,7 +132,7 @@ const SplashPage = () => {
                 {primaryLabel}
                 <span aria-hidden="true">→</span>
               </Link>
-              {!user && (
+              {!signedIn && (
                 <Link to="/login" className="dg-splash-button is-secondary">
                   Log in
                 </Link>

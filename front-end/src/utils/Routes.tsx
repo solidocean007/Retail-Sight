@@ -58,13 +58,13 @@ const NotificationsPage = lazy(
   () => import("../components/Pages/NotificationsPage"),
 );
 
-export const AppRoutes = () => {
+export const AppRoutes = ({ signedIn }: { signedIn: boolean }) => {
   const isImpersonating = useSelector((s: RootState) => s.impersonation.active);
   return (
     <Suspense fallback={<AppLoadingScreen show message="Loading page…" />}>
       <Routes>
-        <Route path="/" element={<SmartLanding />} />
-        <Route path="/splash" element={<SplashPage />} />
+        <Route path="/" element={<SmartLanding signedIn={signedIn} />} />
+        <Route path="/splash" element={<SplashPage signedIn={signedIn} />} />
         <Route path="/about" element={<About />} />
         <Route path="/features" element={<Features />} />
         <Route path="/contact-us" element={<ContactUs />} />

@@ -212,6 +212,10 @@ function AppContent() {
 
   const showAppLoader = shouldBootstrapApp && (initializing || !appReady);
 
+  if (initializing && (pathname === "/" || pathname === "/splash")) {
+    return <AppLoadingScreen show message="Restoring session…" />;
+  }
+
   // IMPORTANT:
   // Do NOT mount routes/feed/UI while bootstrapping.
   if (showAppLoader) {
@@ -249,7 +253,7 @@ function AppContent() {
 
           {/* Main layout frame */}
           <div className="page-layout-frame">
-            <AppRoutes />
+            <AppRoutes signedIn={!!currentUser} />
             {!isPublicRoute &&
               !isAuthRoute &&
               !isStandalonePostRoute &&
