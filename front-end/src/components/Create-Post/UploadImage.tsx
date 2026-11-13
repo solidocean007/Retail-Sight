@@ -72,7 +72,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
-
   useEffect(
     () => () => {
       aiAnalysisRequestId.current += 1;
@@ -82,7 +81,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     },
     [],
   );
-
   const analyzeBrandsInBackground = async (
     imageFile: File,
     requestId: number,
@@ -165,7 +163,9 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       return;
     }
     if (file.size > 20 * 1024 * 1024) {
-      dispatch(showMessage("That image is larger than 20 MB. Choose a smaller photo."));
+      dispatch(
+        showMessage("That image is larger than 20 MB. Choose a smaller photo."),
+      );
       return;
     }
 
@@ -188,7 +188,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       ];
       if (!validImageTypes.includes(finalFile.type)) {
         dispatch(
-          showMessage("Unsupported file type. Please upload JPG or PNG.")
+          showMessage("Unsupported file type. Please upload JPG or PNG."),
         );
         return;
       }
@@ -204,7 +204,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           file.name.replace(/\.\w+$/, ".jpg"),
           {
             type: "image/jpeg",
-          }
+          },
         );
       }
 
@@ -264,14 +264,15 @@ export const UploadImage: React.FC<UploadImageProps> = ({
               );
             }, 30000);
             analysisTimeoutRef.current = timeoutId;
-            void analyzeBrandsInBackground(finalFile, analysisRequestId).finally(
-              () => {
-                if (analysisTimeoutRef.current === timeoutId) {
-                  window.clearTimeout(timeoutId);
-                  analysisTimeoutRef.current = null;
-                }
-              },
-            );
+            void analyzeBrandsInBackground(
+              finalFile,
+              analysisRequestId,
+            ).finally(() => {
+              if (analysisTimeoutRef.current === timeoutId) {
+                window.clearTimeout(timeoutId);
+                analysisTimeoutRef.current = null;
+              }
+            });
           } else {
             setPost((prev) => ({
               ...prev,
@@ -419,8 +420,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           ⓘ Learn More
         </button>
       </div>
-
-    
 
       {/* 🖼 Preview */}
       {post.imageUrl && (

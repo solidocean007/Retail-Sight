@@ -26,15 +26,11 @@ const RequestSubmitted = lazy(
 const InviteAcceptForm = lazy(
   () => import("../components/Pages/InviteAcceptForm"),
 );
-const ResetPassword = lazy(
-  () => import("../components/Pages/ResetPassword"),
-);
+const ResetPassword = lazy(() => import("../components/Pages/ResetPassword"));
 const CompanyOnboardingAcceptForm = lazy(
   () => import("../components/Pages/CompanyOnboardingAcceptForm"),
 );
-const ViewCollection = lazy(
-  () => import("../components/Pages/ViewCollection"),
-);
+const ViewCollection = lazy(() => import("../components/Pages/ViewCollection"));
 const PostViewer = lazy(() => import("../components/Pages/PostViewer"));
 const PublicPostViewer = lazy(
   () => import("../components/Pages/ViewPostByLink"),
@@ -67,13 +63,13 @@ const AndroidBetaDownload = lazy(
 const isStagingBuild =
   import.meta.env.VITE_DISPLAYGRAM_ENV?.trim() === "staging";
 
-export const AppRoutes = () => {
+export const AppRoutes = ({ signedIn }: { signedIn: boolean }) => {
   const isImpersonating = useSelector((s: RootState) => s.impersonation.active);
   return (
     <Suspense fallback={<AppLoadingScreen show message="Loading page…" />}>
       <Routes>
-        <Route path="/" element={<SmartLanding />} />
-        <Route path="/splash" element={<SplashPage />} />
+        <Route path="/" element={<SmartLanding signedIn={signedIn} />} />
+        <Route path="/splash" element={<SplashPage signedIn={signedIn} />} />
         <Route path="/about" element={<About />} />
         <Route path="/features" element={<Features />} />
         <Route path="/contact-us" element={<ContactUs />} />
@@ -84,7 +80,11 @@ export const AppRoutes = () => {
         <Route
           path="/android-beta"
           element={
-            isStagingBuild ? <AndroidBetaDownload /> : <Navigate to="/" replace />
+            isStagingBuild ? (
+              <AndroidBetaDownload />
+            ) : (
+              <Navigate to="/" replace />
+            )
           }
         />
         <Route

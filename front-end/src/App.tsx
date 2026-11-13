@@ -249,6 +249,10 @@ function AppContent() {
 
   const showAppLoader = shouldBootstrapApp && (initializing || !appReady);
 
+  if (initializing && (pathname === "/" || pathname === "/splash")) {
+    return <AppLoadingScreen show message="Restoring session…" />;
+  }
+
   // IMPORTANT:
   // Do NOT mount routes/feed/UI while bootstrapping.
   if (showAppLoader) {
@@ -276,7 +280,9 @@ function AppContent() {
         <div className="app-shell">
           {displaygramEnvironment !== "production" && (
             <div className="test-environment-banner" role="status">
-              <span>Displaygram Test Environment — posts here are test data</span>
+              <span>
+                Displaygram Test Environment — posts here are test data
+              </span>
               <a href="/android-beta">Get Android beta</a>
             </div>
           )}
@@ -295,13 +301,11 @@ function AppContent() {
 
           {/* Main layout frame */}
           <div className="page-layout-frame">
-            <AppRoutes />
+            <AppRoutes signedIn={!!currentUser} />
             {!isPublicRoute &&
               !isAuthRoute &&
               !isStandalonePostRoute &&
-              !isCreatePostRoute && (
-                <Footer />
-              )}
+              !isCreatePostRoute && <Footer />}
           </div>
 
           {snackbar.current && (

@@ -33,7 +33,8 @@ export const useEarlyStorePrefetch = ({
     (state: RootState) => state.allAccounts.accounts,
   );
   const shouldWarmAllAccounts =
-    !isSupplier && ["admin", "super-admin", "supervisor"].includes(user?.role || "");
+    !isSupplier &&
+    ["admin", "super-admin", "supervisor"].includes(user?.role || "");
   const [nearbyStores, setNearbyStores] = useState<
     NearbyStoreCandidate[] | null
   >(null);

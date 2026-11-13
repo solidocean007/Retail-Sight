@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
-import { selectUser } from "../../Slices/userSlice";
 import { SplashPageHelmet } from "../../utils/helmetConfigurations";
 import "./splashPage.css";
 
@@ -24,11 +22,10 @@ const workflowSteps = [
   },
 ];
 
-const SplashPage = () => {
-  const user = useSelector(selectUser);
+const SplashPage = ({ signedIn }: { signedIn: boolean }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const primaryPath = user ? "/user-home-page" : "/request-access";
-  const primaryLabel = user ? "Open workspace" : "Request access";
+  const primaryPath = signedIn ? "/user-home-page" : "/request-access";
+  const primaryLabel = signedIn ? "Open workspace" : "Request access";
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -89,12 +86,22 @@ const SplashPage = () => {
           id="splash-navigation"
           className={`dg-splash-nav${menuOpen ? " is-open" : ""}`}
         >
-          <a href="#product" onClick={closeMenu}>Product</a>
-          <a href="#workflow" onClick={closeMenu}>How it works</a>
-          <a href="#goals" onClick={closeMenu}>Goals</a>
-          <a href="#sharing" onClick={closeMenu}>Sharing</a>
-          <Link to="/pricing" onClick={closeMenu}>Pricing</Link>
-          {user ? (
+          <a href="#product" onClick={closeMenu}>
+            Product
+          </a>
+          <a href="#workflow" onClick={closeMenu}>
+            How it works
+          </a>
+          <a href="#goals" onClick={closeMenu}>
+            Goals
+          </a>
+          <a href="#sharing" onClick={closeMenu}>
+            Sharing
+          </a>
+          <Link to="/pricing" onClick={closeMenu}>
+            Pricing
+          </Link>
+          {signedIn ? (
             <Link
               to="/user-home-page"
               className="dg-splash-nav-action"
@@ -135,7 +142,7 @@ const SplashPage = () => {
                 {primaryLabel}
                 <span aria-hidden="true">→</span>
               </Link>
-              {!user && (
+              {!signedIn && (
                 <Link to="/login" className="dg-splash-button is-secondary">
                   Log in
                 </Link>
@@ -165,20 +172,27 @@ const SplashPage = () => {
           </figure>
         </section>
 
-        <section id="product" className="dg-splash-section dg-splash-product dg-reveal">
+        <section
+          id="product"
+          className="dg-splash-section dg-splash-product dg-reveal"
+        >
           <div className="dg-splash-section-heading">
             <p className="dg-splash-eyebrow">One visual workspace</p>
             <h2>From aisle photo to team visibility.</h2>
             <p>
               Displaygram keeps the image at the center while making the
-              surrounding account, product, people, and goal context easy to find.
+              surrounding account, product, people, and goal context easy to
+              find.
             </p>
           </div>
 
           <div className="dg-splash-product-stage">
             <figure className="dg-splash-desktop-shot">
               <div className="dg-splash-window-bar" aria-hidden="true">
-                <span /><span /><span /><small>Live activity feed</small>
+                <span />
+                <span />
+                <span />
+                <small>Live activity feed</small>
               </div>
               <img
                 src="/splash/product/desktopFeed.PNG"
@@ -230,7 +244,10 @@ const SplashPage = () => {
           </div>
         </section>
 
-        <section id="workflow" className="dg-splash-section dg-splash-workflow dg-reveal">
+        <section
+          id="workflow"
+          className="dg-splash-section dg-splash-workflow dg-reveal"
+        >
           <div className="dg-splash-section-heading is-compact">
             <p className="dg-splash-eyebrow">A simple field rhythm</p>
             <h2>Capture. Organize. Act.</h2>
@@ -247,7 +264,10 @@ const SplashPage = () => {
           </div>
         </section>
 
-        <section id="goals" className="dg-splash-section dg-splash-split-section dg-reveal">
+        <section
+          id="goals"
+          className="dg-splash-section dg-splash-split-section dg-reveal"
+        >
           <div className="dg-splash-split-copy">
             <p className="dg-splash-eyebrow">Goals & accountability</p>
             <h2>Turn activity into measurable execution.</h2>
@@ -274,7 +294,10 @@ const SplashPage = () => {
           </figure>
         </section>
 
-        <section id="sharing" className="dg-splash-section dg-splash-share-section dg-reveal">
+        <section
+          id="sharing"
+          className="dg-splash-section dg-splash-share-section dg-reveal"
+        >
           <figure className="dg-splash-export-shot">
             <img
               src="/splash/product/export-display-card.jpg"
@@ -311,11 +334,15 @@ const SplashPage = () => {
           <div className="dg-splash-trust-grid">
             <article>
               <strong>Company-aware</strong>
-              <span>Workspaces keep internal and shared activity distinct.</span>
+              <span>
+                Workspaces keep internal and shared activity distinct.
+              </span>
             </article>
             <article>
               <strong>Role-aware</strong>
-              <span>Field, management, and partner workflows stay focused.</span>
+              <span>
+                Field, management, and partner workflows stay focused.
+              </span>
             </article>
             <article>
               <strong>History-aware</strong>

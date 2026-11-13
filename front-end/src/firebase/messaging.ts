@@ -179,9 +179,6 @@ export async function unregisterCurrentDeviceToken(uid: string) {
 }
 
 // --------------------------------------------
-// On-Message Listener (foreground notifications)
-// --------------------------------------------
-// --------------------------------------------
 // Token Refresh Handling
 // --------------------------------------------
 export function handleTokenRefresh(uid: string) {
