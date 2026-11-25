@@ -62,15 +62,16 @@ export function useCompanyBrandCatalogSync(
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!shouldStartSync || !companyId) return;
+    if (!companyId) return;
 
     let cancelled = false;
+    let receivedRemoteSnapshot = false;
 
     const loadCachedFirst = async () => {
       try {
         const cached = await getCompanyBrandCatalogFromIndexedDB(companyId);
 
-        if (!cancelled && cached.length > 0) {
+        if (!cancelled && !receivedRemoteSnapshot && cached.length > 0) {
           dispatch(
             setCompanyBrandCatalog({
               companyId,
@@ -86,6 +87,14 @@ export function useCompanyBrandCatalogSync(
 
     loadCachedFirst();
 
+    // Reading the device cache must not depend on network availability.
+    // Only the Firestore listener is gated behind online/auth readiness.
+    if (!shouldStartSync) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
     dispatch(setBrandCatalogLoading({ companyId, loading: true }));
 
     const ref = collection(db, "companies", companyId, "brandCatalog");
@@ -93,6 +102,7 @@ export function useCompanyBrandCatalogSync(
     const unsubscribe = onSnapshot(
       ref,
       async (snapshot) => {
+        receivedRemoteSnapshot = true;
         const brands = snapshot.docs.map((docSnap) =>
           normalizeBrandDoc(companyId, docSnap.id, docSnap.data()),
         );

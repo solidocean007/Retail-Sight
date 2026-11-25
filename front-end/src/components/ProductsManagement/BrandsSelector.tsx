@@ -113,7 +113,7 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
     (state: RootState) => state.companyConnections.connections,
   );
   const [hasAppliedAiMatches, setHasAppliedAiMatches] = useState(false);
-  const companyBrandOptions = useBrandOptions();
+  const companyBrandOptions = useBrandOptions(companyId);
 
   const supplierBrands = useMemo(() => {
     if (!isSupplier || !companyId || !partnerCompanyId) return [];
@@ -140,6 +140,7 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   );
 
   const {
+    loading: brandCatalogLoading,
     getBrandIdByName,
     getProductTypesForBrandNames,
     getSearchTextForBrandOption,
@@ -378,6 +379,8 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
               placeholder="Select brand"
               helperText={isSupplier && brandOptions.length === 0
                 ? "No shared brands are available for the selected partner."
+                : !brandCatalogLoading && brandOptions.length === 0
+                  ? "No saved brands are available on this device. Connect once to refresh the brand list."
                 : undefined}
             />
           )}

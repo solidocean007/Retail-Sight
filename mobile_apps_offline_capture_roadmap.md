@@ -72,6 +72,17 @@ device-local record from stranding the user. No Firestore or Storage rules were
 changed. Build 13 still requires the focused airplane-mode device retest before
 the mobile pilot advances.
 
+That retest opened Saved Posts successfully and confirmed that older
+device-local records survived the update. A subsequent capture exposed another
+offline prerequisite: after a cold offline start, the Details step could show
+no brands even though an earlier online session had saved the company catalog.
+The cache loader was incorrectly gated by permission to start the live
+Firestore listener, and the brand picker could lose the company ID when the
+company document was unavailable offline. Build 14 loads the
+saved catalog independently of network sync, uses the validated profile's
+company ID as the offline fallback, and explains when a device truly has no
+saved brand catalog. No Firestore rules or data-shape changes are required.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before

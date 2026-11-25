@@ -34,6 +34,10 @@ automatic recovery test completed successfully on October 8, 2026.
   core and supplies Back and Retry actions if a device-local record still
   causes a rendering failure. The queued photo is not discarded by either
   action.
+- Build 13 opened Saved Posts successfully offline and retained older local
+  records, but a cold offline capture found an empty brand selector. Build 14
+  build hydrates the previously saved brand catalog even when live Firestore
+  synchronization is disabled and retains the profile company ID fallback.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

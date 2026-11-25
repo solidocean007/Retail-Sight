@@ -1,15 +1,14 @@
-// hooks/useBrandOptions.ts
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { selectCurrentCompany } from "../Slices/currentCompanySlice";
 import { useCompanyBrandCatalog } from "./useCompanyBrandCatalog";
 
-export const useBrandOptions = (): string[] => {
+export const useBrandOptions = (companyId?: string | null): string[] => {
   const company = useSelector(selectCurrentCompany);
-  const companyId = company?.id;
+  const effectiveCompanyId = company?.id ?? companyId;
   const library = company?.customBrandLibrary ?? [];
 
-  const { brandOptions } = useCompanyBrandCatalog(companyId);
+  const { brandOptions } = useCompanyBrandCatalog(effectiveCompanyId);
 
   return useMemo(() => {
     return Array.from(new Set([...brandOptions, ...library]))
