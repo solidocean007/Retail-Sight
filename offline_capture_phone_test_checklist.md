@@ -36,8 +36,11 @@ automatic recovery test completed successfully on October 8, 2026.
   action.
 - Build 13 opened Saved Posts successfully offline and retained older local
   records, but a cold offline capture found an empty brand selector. Build 14
-  build hydrates the previously saved brand catalog even when live Firestore
+  hydrates the previously saved brand catalog even when live Firestore
   synchronization is disabled and retains the profile company ID fallback.
+- Build 14 confirmed that queued posts resume uploading after connectivity
+  returns. Build 15 makes feed images automatically retry after reconnecting so
+  a manual app refresh is not required to replace broken offline placeholders.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

@@ -83,6 +83,13 @@ saved catalog independently of network sync, uses the validated profile's
 company ID as the offline fallback, and explains when a device truly has no
 saved brand catalog. No Firestore rules or data-shape changes are required.
 
+The same Build 14 test confirmed that queued posts uploaded after connectivity
+returned. Images from already successful posts remained in their failed
+offline state until the user refreshed the app, however. Build 15
+resets each feed image's fallback chain after either a browser or native-network
+reconnect event so images retry automatically without refetching the feed or
+changing post data.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before

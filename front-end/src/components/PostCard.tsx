@@ -49,6 +49,7 @@ import { createPostComment } from "../utils/PostLogic/createPostComment";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
 import { FeedImageSet } from "./PostCardRenderer";
 import ExportDisplayCardButton from "./SocialShare/ExportDisplayCardButton";
+import { NATIVE_NETWORK_STATUS_EVENT } from "../native/nativeRuntime";
 // import CreateLinkedInCardButton from "./SocialShare/CreateLinkedInCardButton";
 
 // import TotalCaseCount from "./TotalCaseCount";
@@ -90,14 +91,40 @@ const PostImageWithFallback = ({
   );
   const sourcesKey = uniqueSources.join("|");
   const [sourceIndex, setSourceIndex] = useState(0);
+  const [retryVersion, setRetryVersion] = useState(0);
 
   useEffect(() => setSourceIndex(0), [sourcesKey]);
+
+  useEffect(() => {
+    const retryImages = () => {
+      setSourceIndex(0);
+      setRetryVersion((current) => current + 1);
+    };
+    const retryAfterNativeReconnect = (event: Event) => {
+      const status = (event as CustomEvent<{ connected?: boolean }>).detail;
+      if (status?.connected) retryImages();
+    };
+
+    window.addEventListener("online", retryImages);
+    window.addEventListener(
+      NATIVE_NETWORK_STATUS_EVENT,
+      retryAfterNativeReconnect,
+    );
+    return () => {
+      window.removeEventListener("online", retryImages);
+      window.removeEventListener(
+        NATIVE_NETWORK_STATUS_EVENT,
+        retryAfterNativeReconnect,
+      );
+    };
+  }, []);
 
   const source = uniqueSources[sourceIndex];
   if (!source) return null;
 
   return (
     <img
+      key={`${sourcesKey}:${retryVersion}`}
       title="display image"
       alt="Display"
       src={source}
