@@ -5,6 +5,8 @@ import { lazy, Suspense } from "react";
 import AppLoadingScreen from "../components/AppLoadingScreen";
 import { useSelector } from "react-redux/es/hooks/useSelector";
 import { RootState } from "./store";
+import SavedPostsPage from "../features/offlineCapture/SavedPostsPage";
+import { SavedPostsErrorBoundary } from "../features/offlineCapture/SavedPostsErrorBoundary";
 
 const PricingPlans = lazy(() => import("../components/Pages/PricingPlans"));
 const Features = lazy(() => import("../components/Pages/Features"));
@@ -44,9 +46,6 @@ const AccessDenied = lazy(
 const UserHomePage = lazy(() => import("../components/Pages/UserHomePage"));
 const Dashboard = lazy(() => import("../components/Pages/Dashboard"));
 const CreatePost = lazy(() => import("../components/Pages/CreatePost"));
-const SavedPostsPage = lazy(
-  () => import("../features/offlineCapture/SavedPostsPage"),
-);
 const BillingDashboard = lazy(
   () => import("../components/Pages/Billing/BillingDashboard"),
 );
@@ -149,7 +148,9 @@ export const AppRoutes = ({ signedIn }: { signedIn: boolean }) => {
           path="/saved-posts"
           element={
             <ProtectedRoute>
-              <SavedPostsPage />
+              <SavedPostsErrorBoundary>
+                <SavedPostsPage />
+              </SavedPostsErrorBoundary>
             </ProtectedRoute>
           }
         />

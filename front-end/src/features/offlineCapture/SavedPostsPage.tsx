@@ -18,9 +18,6 @@ import {
   discardOfflineCaptureDraft,
   queueOfflineCaptureForRetry,
 } from "./offlineCaptureService";
-import {
-  requestOfflineCaptureSync,
-} from "./offlineCaptureSync";
 import type { OfflineCaptureRecord } from "./types";
 import "./savedPostsPage.css";
 
@@ -191,6 +188,7 @@ const SavedPostsPage = () => {
     if (!user?.uid) return;
     try {
       await queueOfflineCaptureForRetry(capture.captureId, user.uid);
+      const { requestOfflineCaptureSync } = await import("./offlineCaptureSync");
       requestOfflineCaptureSync();
       dispatch(showMessage("Displaygram is retrying this saved post."));
     } catch (error) {

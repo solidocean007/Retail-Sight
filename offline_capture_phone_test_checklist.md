@@ -29,6 +29,11 @@ automatic recovery test completed successfully on October 8, 2026.
 - Build 9 positions the draft badge above the camera button and gives it a
   restrained attention pulse, while honoring the device's reduced-motion
   preference.
+- Build 12 exposed a blank-screen regression when **Saved Posts** was opened in
+  airplane mode. Build 13 keeps that recovery screen in the always-loaded app
+  core and supplies Back and Retry actions if a device-local record still
+  causes a rendering failure. The queued photo is not discarded by either
+  action.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

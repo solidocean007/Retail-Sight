@@ -63,6 +63,15 @@ only to `displaygram-staging`; a fresh download from Hosting matched the
 published SHA-256 checksum. Build 12 uses the same staging certificate as Build
 11, so Build 11 can be updated in place.
 
+Build 12 device testing found that opening **Saved Posts** while offline could
+leave the Android app on a blank screen, even though the queued photo remained
+stored on the device. Build 13 moves the small recovery screen into the
+always-loaded application core and adds a screen-level recovery message with
+Back and Retry actions. This prevents an offline screen-load failure or a bad
+device-local record from stranding the user. No Firestore or Storage rules were
+changed. Build 13 still requires the focused airplane-mode device retest before
+the mobile pilot advances.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before

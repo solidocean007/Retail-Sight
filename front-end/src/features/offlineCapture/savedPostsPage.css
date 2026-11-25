@@ -167,6 +167,23 @@
   text-align: center;
 }
 
+.saved-posts-page__recovery {
+  background: var(--saved-posts-surface);
+  border: 1px solid var(--saved-posts-border);
+  border-radius: 14px;
+  box-shadow: var(--saved-posts-shadow);
+  margin: 1rem auto;
+  max-width: 36rem;
+}
+
+.saved-posts-page__recovery h2 {
+  color: var(--saved-posts-text);
+}
+
+.saved-posts-page__recovery .saved-post-card__actions {
+  justify-content: center;
+}
+
 [data-theme="dark"] .saved-post-card__error {
   color: #fca5a5;
 }
