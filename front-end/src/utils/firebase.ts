@@ -23,12 +23,14 @@ export const displaygramEnvironment = configuredValue(
 
 const requiredFirebaseValue = (
   value: string | undefined,
-  productionFallback: string,
+  productionFallback: string | undefined,
   variableName: string,
 ) => {
   const configured = value?.trim();
   if (configured) return configured;
-  if (displaygramEnvironment === "production") return productionFallback;
+  if (displaygramEnvironment === "production" && productionFallback) {
+    return productionFallback;
+  }
   throw new Error(
     `${variableName} is required for the ${displaygramEnvironment} environment.`,
   );
@@ -37,7 +39,7 @@ const requiredFirebaseValue = (
 const firebaseConfig = {
   apiKey: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_API_KEY,
-    "AIzaSyAg8We9cHJWZ4uQKphqerBhAYmOcz8v2aw",
+    undefined,
     "VITE_FIREBASE_API_KEY",
   ),
   authDomain: requiredFirebaseValue(

@@ -34,6 +34,22 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const isStaging =
     mode === "staging" || env.VITE_DISPLAYGRAM_ENV === "staging";
+  const isProduction =
+    !isStaging &&
+    (mode === "production" || env.VITE_DISPLAYGRAM_ENV === "production");
+
+  if (
+    isProduction &&
+    !(
+      process.env.VITE_FIREBASE_API_KEY?.trim() ||
+      env.VITE_FIREBASE_API_KEY?.trim()
+    )
+  ) {
+    throw new Error(
+      "Production builds require VITE_FIREBASE_API_KEY in front-end/.env.production.local or the process environment.",
+    );
+  }
+
   if (
     isStaging &&
     (!env.VITE_FIREBASE_PROJECT_ID ||

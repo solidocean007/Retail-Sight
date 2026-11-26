@@ -121,6 +121,28 @@ To explore and utilize Displaygram.com:
 - **Create an Account:** Sign up with your company email to start creating and managing your display posts.
 - **Join an Existing Team:** If your company is already registered, contact your admin to get set up with an account.
 
+## Production Hosting Deployment
+
+Production Firebase web configuration belongs in
+`front-end/.env.production.local`, which is intentionally ignored by Git. Start
+from `front-end/.env.production.example` and obtain the current Firebase Web API
+key from the authorized production deployment environment.
+
+Deploy Hosting with:
+
+```bash
+firebase deploy --only hosting --project retail-sight
+```
+
+The Firebase Hosting predeploy hook validates that the configured key can start
+Google OAuth for `displaygram.com`, verifies that the OAuth client belongs to
+the `retail-sight` project, and then creates a fresh production build. An
+expired, missing, or wrong-project key stops the deployment before upload.
+
+When the Firebase Web API key is rotated, update only
+`front-end/.env.production.local` on authorized deployment machines and rerun
+the deployment. Do not add a production API-key fallback to application source.
+
 ## Contributing
 
 Public contributions are not open at this time. Stay tuned for future updates regarding community contributions.

@@ -1,6 +1,7 @@
 {
   "hosting": {
     "public": "front-end/dist",
+    "predeploy": ["npm --prefix \"front-end\" run build:production"],
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {
