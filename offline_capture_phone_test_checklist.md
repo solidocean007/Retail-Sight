@@ -41,6 +41,11 @@ automatic recovery test completed successfully on October 8, 2026.
 - Build 14 confirmed that queued posts resume uploading after connectivity
   returns. Build 15 makes feed images automatically retry after reconnecting so
   a manual app refresh is not required to replace broken offline placeholders.
+- The November 26 Build 15 phone retest passed: the queued post uploaded once
+  after reconnecting and its feed image appeared without a manual refresh.
+- The next staging build will make the saved-post banner smaller and replace
+  single-D and legacy native launcher assets with the arrow-D-arrow icon. This
+  is a presentation-only update; Firestore and Storage rules are unchanged.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

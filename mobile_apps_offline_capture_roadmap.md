@@ -90,6 +90,15 @@ resets each feed image's fallback chain after either a browser or native-network
 reconnect event so images retry automatically without refetching the feed or
 changing post data.
 
+The November 26 Android phone retest confirmed that Build 15 recovered an
+airplane-mode capture, uploaded it once after reconnecting, and refreshed its
+feed image without a manual app refresh. The next staging build will use a more
+compact saved-post banner and a shared arrow-D-arrow icon family for the web
+app, Android launcher/adaptive icons, and iOS. The platform assets now come from
+one versioned source and generation script. No Firestore or Storage rule change
+was required. The mobile branch also already contains the current GitHub
+`origin/main` commit, so the November 26 main synchronization was a no-op.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before
