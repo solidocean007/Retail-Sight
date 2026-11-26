@@ -60,7 +60,8 @@ continue.
 
 ## Build 18 native authentication test
 
-Use only the staging Android app and staging test accounts.
+Use only the staging Android app and staging test accounts. Download Build 18
+from `https://displaygram-staging.web.app/android-beta`.
 
 1. Update Build 17 in place with Build 18 and confirm existing saved drafts
    remain available.

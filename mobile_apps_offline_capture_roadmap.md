@@ -132,10 +132,13 @@ identity. Web Google sign-in remains on the established popup/redirect path.
 The staging Firebase Android app now has both debug and staging-release SHA-1
 and SHA-256 fingerprints, and its regenerated `google-services.json` contains
 the matching Android OAuth clients. The web production build, lint, targeted
-TypeScript check, Capacitor sync, and Android staging-debug compilation pass.
-Build 18 must still be signed, published only to staging, and tested on a phone
-with both email/password and Google before this branch can be considered for
-production. No production Firebase configuration or rules changed.
+TypeScript check, Capacitor sync, and Android staging compilation pass. Signed
+Build 18 was published only to `displaygram-staging` Hosting, and an external
+download reproduced SHA-256
+`BEEF22D18D25BD445143C57B80002E4E9F243A64036C1E8A5C939676508D2370`.
+It must still pass the physical-phone checklist with both email/password and
+Google before this branch can be considered for production. No production
+Firebase configuration or rules changed.
 
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
