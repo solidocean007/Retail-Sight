@@ -95,6 +95,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       // ✅ Navigate once at the end
       navigate(redirectTo);
     } catch (e: any) {
+      console.error("Google sign-in failed:", e.code, e.message);
       if (e.code === "auth/account-exists-with-different-credential") {
         const cred = GoogleAuthProvider.credentialFromError(e);
         const emailFromErr = (e.customData?.email || "").toLowerCase();
@@ -110,6 +111,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
         try {
           await signInWithRedirect(auth, google);
         } catch (e2: any) {
+          console.error(
+            "Google redirect sign-in failed:",
+            e2.code,
+            e2.message,
+          );
           setErr(
             ERROR_MAP[e2.code] || "Google sign-in failed. Please try again.",
           );

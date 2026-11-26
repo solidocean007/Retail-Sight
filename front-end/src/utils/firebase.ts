@@ -37,7 +37,7 @@ const requiredFirebaseValue = (
 const firebaseConfig = {
   apiKey: requiredFirebaseValue(
     import.meta.env.VITE_FIREBASE_API_KEY,
-    "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
+    "AIzaSyAg8We9cHJWZ4uQKphqerBhAYmOcz8v2aw",
     "VITE_FIREBASE_API_KEY",
   ),
   authDomain: requiredFirebaseValue(
