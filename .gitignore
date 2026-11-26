@@ -37,4 +37,5 @@ front-end/stats.html
 *.jks
 *.keystore
 keystore.properties
+production-keystore.properties
 front-end/public/downloads/*.apk

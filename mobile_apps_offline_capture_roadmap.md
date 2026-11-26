@@ -155,6 +155,16 @@ HTTP 200 for both `https://displaygram.com/` and its Firebase auth handler. This
 deployment changed Hosting only; Functions, Firestore rules, Storage rules, and
 the production Android app were not deployed.
 
+Production Android internal-release preparation then created Firebase Android
+app `1:484872165965:android:3e148ebb298b4826105a04` for
+`com.displaygram.app`, generated a distinct production upload certificate, and
+registered its SHA-1 and SHA-256 fingerprints with Firebase. The upload key and
+populated properties remain outside Git. Signed version `1.0 (1)` AAB and APK
+artifacts build successfully, and both signature and package metadata checks
+pass. The AAB has not been uploaded to Google Play: Play Console access and the
+Play App Signing certificate fingerprints are still required before an internal
+track rollout. No production Firebase rules or application data changed.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before

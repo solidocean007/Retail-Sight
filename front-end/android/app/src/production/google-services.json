@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "484872165965",
+    "project_id": "retail-sight",
+    "storage_bucket": "retail-sight.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:484872165965:android:3e148ebb298b4826105a04",
+        "android_client_info": {
+          "package_name": "com.displaygram.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "484872165965-htm3c0qlpnug8bqu7ddrh7g64k9psdmi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.displaygram.app",
+            "certificate_hash": "27e047c846c47248741da178858ee9543381f904"
+          }
+        },
+        {
+          "client_id": "484872165965-6rd2109mcjgammhu1n858vggeob744ac.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApxDBVfQ1rzvaNElG9BDXJLmIAfaD_Ud0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "484872165965-6rd2109mcjgammhu1n858vggeob744ac.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

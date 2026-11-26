@@ -143,6 +143,13 @@ When the Firebase Web API key is rotated, update only
 `front-end/.env.production.local` on authorized deployment machines and rerun
 the deployment. Do not add a production API-key fallback to application source.
 
+## Production Android Internal Testing
+
+Production Android signing and Google authentication setup are documented in
+[`production_android_internal_release.md`](production_android_internal_release.md).
+The production upload key and populated signing properties must remain outside
+Git. Do not reuse the staging signing certificate for a production build.
+
 ## Contributing
 
 Public contributions are not open at this time. Stay tuned for future updates regarding community contributions.

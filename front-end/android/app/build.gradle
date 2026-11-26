@@ -6,6 +6,12 @@ if (stagingSigningPropertiesFile.exists()) {
     stagingSigningProperties.load(new FileInputStream(stagingSigningPropertiesFile))
 }
 
+def productionSigningPropertiesFile = rootProject.file('production-keystore.properties')
+def productionSigningProperties = new Properties()
+if (productionSigningPropertiesFile.exists()) {
+    productionSigningProperties.load(new FileInputStream(productionSigningPropertiesFile))
+}
+
 android {
     namespace = "com.displaygram.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -23,6 +29,14 @@ android {
         }
     }
     signingConfigs {
+        productionRelease {
+            if (productionSigningPropertiesFile.exists()) {
+                storeFile file(productionSigningProperties['storeFile'])
+                storePassword productionSigningProperties['storePassword']
+                keyAlias productionSigningProperties['keyAlias']
+                keyPassword productionSigningProperties['keyPassword']
+            }
+        }
         stagingRelease {
             if (stagingSigningPropertiesFile.exists()) {
                 storeFile file(stagingSigningProperties['storeFile'])
@@ -36,6 +50,9 @@ android {
     productFlavors {
         production {
             dimension "environment"
+            if (productionSigningPropertiesFile.exists()) {
+                signingConfig signingConfigs.productionRelease
+            }
         }
         staging {
             dimension "environment"
@@ -60,6 +77,17 @@ android {
 }
 
 gradle.taskGraph.whenReady { graph ->
+    def buildsProductionRelease = graph.allTasks.any {
+        it.name == 'assembleProductionRelease' || it.name == 'bundleProductionRelease'
+    }
+    if (buildsProductionRelease && !productionSigningPropertiesFile.exists()) {
+        throw new GradleException(
+            'Production release signing is not configured. Copy ' +
+            'production-keystore.properties.example to ' +
+            'android/production-keystore.properties and provide the production upload key details.'
+        )
+    }
+
     def buildsStagingRelease = graph.allTasks.any {
         it.name == 'assembleStagingRelease' || it.name == 'bundleStagingRelease'
     }
