@@ -49,6 +49,9 @@ automatic recovery test completed successfully on October 8, 2026.
 - Build 17 is the current signed staging beta. It hides the draft-count badge
   when the count is zero. Verify that it updates in place, shows no zero badge,
   and restores the raised pulsing badge after an unfinished draft is created.
+- Build 17 retained the normal online posting path. The production build and
+  lint passed, the concurrent-finalization emulator test produced one post and
+  one receipt, and all five offline Storage rule tests passed.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

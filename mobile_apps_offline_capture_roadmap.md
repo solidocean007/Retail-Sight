@@ -103,6 +103,11 @@ hides the Create Post draft-count badge when the count is zero; the raised,
 pulsing badge remains unchanged for positive counts. Its
 package/version, staging certificate, published size, download headers, and
 SHA-256 metadata were verified before release to `displaygram-staging`.
+The owner then confirmed that a normal online post still completed successfully.
+The production web build and full front-end lint completed with zero errors
+(51 pre-existing hook warnings remain). Local Firebase emulator tests also
+confirmed that two concurrent offline finalizations create one post and one
+receipt, and all five Storage rule access-control cases passed.
 
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
