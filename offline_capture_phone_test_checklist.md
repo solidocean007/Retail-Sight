@@ -76,8 +76,11 @@ from `https://displaygram-staging.web.app/android-beta`.
 8. Repeat the airplane-mode capture and reconnect test below using the Google
    session; confirm exactly one post is created.
 
-Do not merge or publish Build 18 to production until both sign-in methods and
-the saved-draft update path pass on a physical Android phone.
+Recorded November 26: native Google sign-in passed on a physical Android phone.
+The email/password check was deferred because the selected staging identity was
+Google-only and had no staging password credential. The owner accepted this
+test gap for the production web merge. Build 18 remains staging-only and is not
+approved as a production Android release.
 
 ## Safety prerequisite
 

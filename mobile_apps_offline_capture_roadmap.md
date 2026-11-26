@@ -136,9 +136,17 @@ TypeScript check, Capacitor sync, and Android staging compilation pass. Signed
 Build 18 was published only to `displaygram-staging` Hosting, and an external
 download reproduced SHA-256
 `BEEF22D18D25BD445143C57B80002E4E9F243A64036C1E8A5C939676508D2370`.
-It must still pass the physical-phone checklist with both email/password and
-Google before this branch can be considered for production. No production
-Firebase configuration or rules changed.
+A physical-phone sign-in check was the final planned validation before merge.
+No production Firebase configuration or rules changed.
+
+On November 26, the native Google path passed on a physical Android phone: the
+system account chooser opened, authentication completed, and the isolated
+staging data loaded. The email/password check was deferred because that staging
+identity had only been enrolled through Google and therefore had no staging
+password credential. The owner accepted that remaining test gap and approved
+the reviewed branch for merge and production web deployment. This is not a
+production Android release approval; Build 18 remains staging-only until the
+production Android Firebase and signing configuration is completed.
 
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
