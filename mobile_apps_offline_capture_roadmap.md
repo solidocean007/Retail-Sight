@@ -148,6 +148,13 @@ the reviewed branch for merge and production web deployment. This is not a
 production Android release approval; Build 18 remains staging-only until the
 production Android Firebase and signing configuration is completed.
 
+The reviewed history was then fast-forwarded into `main` and production Firebase
+Hosting was deployed for `retail-sight`. The production authentication preflight
+and optimized web build passed during deployment, and external checks returned
+HTTP 200 for both `https://displaygram.com/` and its Firebase auth handler. This
+deployment changed Hosting only; Functions, Firestore rules, Storage rules, and
+the production Android app were not deployed.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before
