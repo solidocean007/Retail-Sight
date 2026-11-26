@@ -1,3 +1,5 @@
+/// <reference types="@capacitor-firebase/authentication" />
+
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
@@ -7,6 +9,14 @@ const config: CapacitorConfig = {
   webDir: "dist",
   server: {
     androidScheme: "https",
+  },
+  plugins: {
+    FirebaseAuthentication: {
+      // Google uses the native account chooser, then the returned credential
+      // signs in through the Firebase JS SDK used by Firestore and Functions.
+      skipNativeAuth: true,
+      providers: ["google.com"],
+    },
   },
 };
 

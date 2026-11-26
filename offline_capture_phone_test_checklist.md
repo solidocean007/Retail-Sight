@@ -58,6 +58,26 @@ continue.
   device coverage tests remain follow-up work for the native pilot and gradual
   rollout; they are not recorded as completed.
 
+## Build 18 native authentication test
+
+Use only the staging Android app and staging test accounts.
+
+1. Update Build 17 in place with Build 18 and confirm existing saved drafts
+   remain available.
+2. Sign out, then sign in with an existing staging email/password account.
+3. Confirm the feed loads and one normal online post can be opened.
+4. Sign out, choose **Continue with Google**, and confirm Android opens the
+   native account chooser rather than a browser popup.
+5. Select an approved staging Google account and confirm the same Displaygram
+   profile and company load.
+6. Fully close and reopen the app and confirm the Google session persists.
+7. Sign out and confirm protected screens no longer open without signing in.
+8. Repeat the airplane-mode capture and reconnect test below using the Google
+   session; confirm exactly one post is created.
+
+Do not merge or publish Build 18 to production until both sign-in methods and
+the saved-draft update path pass on a physical Android phone.
+
 ## Safety prerequisite
 
 A Firebase Hosting preview channel changes only the hosted website version. It

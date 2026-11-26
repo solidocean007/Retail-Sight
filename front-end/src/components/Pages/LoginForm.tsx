@@ -1,11 +1,13 @@
 // export default LoginForm;
 import React, { useEffect, useMemo, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import AccessPageShell from "./AccessPageShell";
 import {
   getAuth,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
+  signInWithCredential,
   signInWithPopup,
   signInWithRedirect,
   sendPasswordResetEmail,
@@ -79,7 +81,30 @@ const LoginForm: React.FC<LoginFormProps> = ({
     setSubmitting(true);
     setErr(null);
     try {
-      await signInWithPopup(auth, google);
+      if (Capacitor.isNativePlatform()) {
+        const { NativeFirebaseAuthentication } = await import(
+          "../../native/firebaseAuthentication"
+        );
+        const result = await NativeFirebaseAuthentication.signInWithGoogle({
+          skipNativeAuth: true,
+          useCredentialManager: true,
+        });
+        const idToken = result.credential?.idToken;
+        if (!idToken) {
+          const credentialError = new Error(
+            "Native Google sign-in did not return an ID token.",
+          ) as Error & { code?: string };
+          credentialError.code = "auth/native-google-token-missing";
+          throw credentialError;
+        }
+
+        await signInWithCredential(
+          auth,
+          GoogleAuthProvider.credential(idToken),
+        );
+      } else {
+        await signInWithPopup(auth, google);
+      }
 
       // Handle stored redirect early and exit
       const storedRedirect = localStorage.getItem("postRedirect");

@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "186573791834-l4llvbp7dnlfkm7k1c0apftko2q0e12a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.displaygram.app.staging",
+            "certificate_hash": "584c267f7e83f7e8cd75a752b14cfa97c6cd3862"
+          }
+        },
+        {
+          "client_id": "186573791834-o4niq8f1d2oamq8rj57bve4kvhnurc8p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.displaygram.app.staging",
+            "certificate_hash": "4571b6421f45f564b8a855f832389d953626e145"
+          }
+        },
+        {
           "client_id": "186573791834-q3416h7nrqcr0l36tt6ub22tnb8pe54h.apps.googleusercontent.com",
           "client_type": 3
         }

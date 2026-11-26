@@ -122,6 +122,21 @@ server-only offline receipt collection and restricts temporary offline uploads
 by authenticated user, company path, image type, metadata, and a 20 MiB limit;
 the existing online posting path remains intact.
 
+Later on November 26, native Google authentication work started on
+`feat/native-google-auth` for Android staging Build 18. Email/password continues
+to use the existing Firebase JavaScript session. Google now opens the native
+Android account chooser through the Capacitor Firebase Authentication plugin,
+then exchanges the returned Google ID token into that same JavaScript session
+so Firestore, Functions, and the existing auth listeners continue to use one
+identity. Web Google sign-in remains on the established popup/redirect path.
+The staging Firebase Android app now has both debug and staging-release SHA-1
+and SHA-256 fingerprints, and its regenerated `google-services.json` contains
+the matching Android OAuth clients. The web production build, lint, targeted
+TypeScript check, Capacitor sync, and Android staging-debug compilation pass.
+Build 18 must still be signed, published only to staging, and tested on a phone
+with both email/password and Google before this branch can be considered for
+production. No production Firebase configuration or rules changed.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before
