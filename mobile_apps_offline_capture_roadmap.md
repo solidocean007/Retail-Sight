@@ -98,7 +98,9 @@ app, Android launcher/adaptive icons, and iOS. The platform assets now come from
 one versioned source and generation script. No Firestore or Storage rule change
 was required. The mobile branch also already contains the current GitHub
 `origin/main` commit, so the November 26 main synchronization was a no-op.
-Signed staging Build `1.0-staging (16)` is now the current website beta. Its
+Signed staging Build `1.0-staging (17)` is now the current website beta. It also
+hides the Create Post draft-count badge when the count is zero; the raised,
+pulsing badge remains unchanged for positive counts. Its
 package/version, staging certificate, published size, download headers, and
 SHA-256 metadata were verified before release to `displaygram-staging`.
 

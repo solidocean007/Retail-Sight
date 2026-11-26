@@ -46,9 +46,9 @@ automatic recovery test completed successfully on October 8, 2026.
 - The next staging build will make the saved-post banner smaller and replace
   single-D and legacy native launcher assets with the arrow-D-arrow icon. This
   is a presentation-only update; Firestore and Storage rules are unchanged.
-- Build 16 is the current signed staging beta. Verify that it updates Build 15
-  in place, shows the arrow-D-arrow launcher icon, and uses the smaller saved-post
-  banner during one short airplane-mode capture and recovery check.
+- Build 17 is the current signed staging beta. It hides the draft-count badge
+  when the count is zero. Verify that it updates in place, shows no zero badge,
+  and restores the raised pulsing badge after an unfinished draft is created.
 - Remaining interruption, restart, retry-storm, authentication, and device
   coverage tests below are still required before production release.
 

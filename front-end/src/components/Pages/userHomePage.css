@@ -75,6 +75,12 @@
   animation: create-post-draft-badge-pulse 1.8s ease-out infinite;
 }
 
+/* The positioning transform above overrides MUI's scale-to-zero behavior. */
+.create-post-draft-badge .MuiBadge-badge.MuiBadge-invisible {
+  display: none;
+  animation: none;
+}
+
 @keyframes create-post-draft-badge-pulse {
   0%,
   100% {
