@@ -1,6 +1,6 @@
 # Displaygram Mobile Apps and Offline Capture Roadmap
 
-Status: Reintegration in progress  
+Status: Offline capture released to production web; native store pilot continues
 Created: September 7, 2026  
 Target platforms: Google Play, Apple App Store, and the existing web/PWA app
 
@@ -108,6 +108,19 @@ The production web build and full front-end lint completed with zero errors
 (51 pre-existing hook warnings remain). Local Firebase emulator tests also
 confirmed that two concurrent offline finalizations create one post and one
 receipt, and all five Storage rule access-control cases passed.
+
+On November 26, 2026, production `main` was fast-forwarded to the verified
+Build 17 source and published to `displaygram.com`. The Node 22
+`finalizeOfflineCapture` callable and the updated Firestore and Storage rules
+were deployed to the production `retail-sight` project. A live unauthenticated
+call was rejected with HTTP 401, confirming the callable's authentication
+boundary. The custom domain returned HTTP 200, referenced the production
+project rather than `displaygram-staging`, and served the Create Post and
+offline-sync bundles. The pre-release commit remains recoverable at
+`backup/main-pre-mobile-offline-2026-11-26`. The production rule change adds a
+server-only offline receipt collection and restricts temporary offline uploads
+by authenticated user, company path, image type, metadata, and a 20 MiB limit;
+the existing online posting path remains intact.
 
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up

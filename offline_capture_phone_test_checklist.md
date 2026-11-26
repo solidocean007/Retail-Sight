@@ -1,7 +1,8 @@
 # Displaygram Offline Capture Phone Test
 
-Status: Android staging pilot in progress. The first airplane-mode queue and
-automatic recovery test completed successfully on October 8, 2026.
+Status: Offline capture is live on the production web app. The signed Android
+Build 17 remains a staging pilot while native-store and broader failure testing
+continue.
 
 ## Pilot validation log
 
@@ -43,17 +44,19 @@ automatic recovery test completed successfully on October 8, 2026.
   a manual app refresh is not required to replace broken offline placeholders.
 - The November 26 Build 15 phone retest passed: the queued post uploaded once
   after reconnecting and its feed image appeared without a manual refresh.
-- The next staging build will make the saved-post banner smaller and replace
-  single-D and legacy native launcher assets with the arrow-D-arrow icon. This
-  is a presentation-only update; Firestore and Storage rules are unchanged.
-- Build 17 is the current signed staging beta. It hides the draft-count badge
-  when the count is zero. Verify that it updates in place, shows no zero badge,
-  and restores the raised pulsing badge after an unfinished draft is created.
+- Build 17 uses the compact saved-post banner and shared arrow-D-arrow icon
+  family. It hides the draft-count badge when the count is zero and retains the
+  raised pulsing badge for positive counts.
 - Build 17 retained the normal online posting path. The production build and
   lint passed, the concurrent-finalization emulator test produced one post and
   one receipt, and all five offline Storage rule tests passed.
-- Remaining interruption, restart, retry-storm, authentication, and device
-  coverage tests below are still required before production release.
+- On November 26, the verified source, finalizer, Firestore rules, Storage
+  rules, and Hosting release were published to production. Live checks found
+  the production project identifier, no staging identifier, and the expected
+  offline bundles. A pre-release backup branch was pushed before the release.
+- Remaining interruption, restart, retry-storm, authentication, and broader
+  device coverage tests remain follow-up work for the native pilot and gradual
+  rollout; they are not recorded as completed.
 
 ## Safety prerequisite
 
