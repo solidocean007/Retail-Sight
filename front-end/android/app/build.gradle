@@ -40,7 +40,7 @@ android {
         staging {
             dimension "environment"
             applicationIdSuffix ".staging"
-            versionCode 15
+            versionCode 16
             versionNameSuffix "-staging"
             if (stagingSigningPropertiesFile.exists()) {
                 signingConfig signingConfigs.stagingRelease

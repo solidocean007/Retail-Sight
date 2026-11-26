@@ -56,7 +56,7 @@ offline application-shell manifest.
 On November 25, 2026, current production `main` was merged into the mobile
 branch while preserving cached store selection, durable capture recovery,
 staging isolation, and the offline asset manifest. Signed staging Build
-`1.0-staging (12)` is now the current website beta. Production and staging web
+`1.0-staging (12)` established the refreshed website beta baseline. Production and staging web
 builds, front-end lint, the signed APK build, package/version inspection, and
 APK signature verification passed. The APK and release metadata were deployed
 only to `displaygram-staging`; a fresh download from Hosting matched the
@@ -98,6 +98,9 @@ app, Android launcher/adaptive icons, and iOS. The platform assets now come from
 one versioned source and generation script. No Firestore or Storage rule change
 was required. The mobile branch also already contains the current GitHub
 `origin/main` commit, so the November 26 main synchronization was a no-op.
+Signed staging Build `1.0-staging (16)` is now the current website beta. Its
+package/version, staging certificate, published size, download headers, and
+SHA-256 metadata were verified before release to `displaygram-staging`.
 
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
