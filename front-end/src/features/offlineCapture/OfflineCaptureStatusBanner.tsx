@@ -66,14 +66,14 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
       return {
         kind: "attention",
         icon: <WarningAmberOutlinedIcon />,
-        text: `${failed.length} saved ${failed.length === 1 ? "post needs" : "posts need"} attention before uploading. The ${failed.length === 1 ? "photo is" : "photos are"} still on this device.`,
+        text: `${failed.length} saved ${failed.length === 1 ? "post needs" : "posts need"} attention. ${failed.length === 1 ? "Its photo is" : "Their photos are"} safe on this device.`,
       };
     }
     if (syncing.length > 0) {
       return {
         kind: "syncing",
         icon: <SyncOutlinedIcon className="offline-capture-banner__spin" />,
-        text: `Displaygram is uploading ${syncing.length === 1 ? "your saved post" : `${syncing.length} saved posts`}. Keep the app open until it finishes.`,
+        text: `Uploading ${syncing.length === 1 ? "1 saved post" : `${syncing.length} saved posts`}. Keep Displaygram open.`,
       };
     }
     if (queued.length > 0) {
@@ -81,8 +81,8 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
         kind: online ? "waiting" : "offline",
         icon: online ? <CloudDoneOutlinedIcon /> : <CloudOffOutlinedIcon />,
         text: online
-          ? `${queued.length === 1 ? "A saved post is" : `${queued.length} saved posts are`} waiting to upload. Displaygram will retry automatically while the app is open.`
-          : `${queued.length === 1 ? "A post is" : `${queued.length} posts are`} saved on this device. Displaygram will upload ${queued.length === 1 ? "it" : "them"} automatically when you're online and the app is open.`,
+          ? `${queued.length === 1 ? "1 saved post is" : `${queued.length} saved posts are`} waiting to upload.`
+          : `${queued.length === 1 ? "1 post saved" : `${queued.length} posts saved`} on this device. Uploads automatically when you're online.`,
       };
     }
     if (recentlySynced) {
@@ -111,7 +111,7 @@ export const OfflineCaptureStatusBanner = ({ userId }: Props) => {
           className="offline-capture-banner__action"
           onClick={() => navigate("/saved-posts")}
         >
-          View saved posts
+          Saved posts
         </button>
       )}
     </aside>

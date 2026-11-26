@@ -197,8 +197,8 @@ self.addEventListener("push", (event) => {
       // browser's generic blank fallback.
       return self.registration.showNotification(title, {
         body,
-        icon: "/icons/displaygram-app-icon-192-v2.png",
-        badge: "/icons/displaygram-app-icon-192-v2.png",
+        icon: "/icons/displaygram-app-icon-192-v3.png",
+        badge: "/icons/displaygram-app-icon-192-v3.png",
         // tag dedupes if FCM redelivers the same notification
         tag: d.notificationId || undefined,
         data: {
