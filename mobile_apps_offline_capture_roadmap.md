@@ -165,6 +165,13 @@ pass. The AAB has not been uploaded to Google Play: Play Console access and the
 Play App Signing certificate fingerprints are still required before an internal
 track rollout. No production Firebase rules or application data changed.
 
+As a remote-access bridge, the exact verified production APK was installed and
+cold-started successfully on an isolated Android 11 emulator, with no fatal
+native startup exception. Firebase App Distribution release `3sunid48pbd2o`
+was then assigned only to `cwilliams@healywholesale.com` for physical-device
+production QA. This does not constitute a Google Play upload or public Android
+release.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before

@@ -23,6 +23,8 @@ Its registered Firebase fingerprints are:
 The local upload key and recovery properties are stored outside Git under
 `D:\Displaygram\.signing`. The populated local build properties file is
 `front-end/android/production-keystore.properties` and is ignored by Git.
+The non-secret upload certificate export is
+`D:\Displaygram\.signing\displaygram-production-upload-cert.pem`.
 
 Before uploading any bundle to Google Play, copy both the upload key and its
 recovery properties into a business-controlled password manager or encrypted
@@ -53,6 +55,20 @@ The first verified local build produced:
 Rebuilding can change these file hashes. Always calculate and record the hashes
 for the exact artifacts being distributed.
 
+## Firebase App Distribution QA release
+
+Production APK `1.0 (1)` was uploaded privately to Firebase App Distribution as
+release `3sunid48pbd2o` and assigned only to
+`cwilliams@healywholesale.com`. The stable tester page is:
+
+`https://appdistribution.firebase.google.com/testerapps/1:484872165965:android:3e148ebb298b4826105a04/releases/3sunid48pbd2o`
+
+Before upload, the exact APK installed successfully on the isolated Android 11
+Google APIs emulator, cold-started `com.displaygram.app/.MainActivity`, remained
+the resumed activity, and produced no fatal Android, Capacitor, or Firebase
+startup exception. Google account selection still requires testing on a real
+device.
+
 ## Google Play internal-track handoff
 
 1. Create or select the Displaygram app in Google Play Console for
@@ -69,4 +85,5 @@ for the exact artifacts being distributed.
    reconnect behavior.
 
 Do not promote beyond Internal testing until these checks pass. Google Play has
-not received an artifact from this repository yet.
+not received an artifact from this repository yet. Firebase App Distribution
+is a private QA bridge, not a substitute for the Play internal-track checks.
