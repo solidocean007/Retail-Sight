@@ -1,11 +1,13 @@
 // hooks/useNotificationHealth.ts
 import { useCallback, useEffect, useState } from "react";
+import {
+  getCurrentDevicePushPermission,
+  hasCurrentDevicePushToken,
+  requestCurrentDevicePushPermission,
+  type PushPermissionState,
+} from "../firebase/pushRegistration";
 
-export type NotificationPermissionState =
-  | "unsupported"
-  | "granted"
-  | "denied"
-  | "default";
+export type NotificationPermissionState = PushPermissionState;
 
 export type NotificationTokenStatus = "unknown" | "ok" | "none" | "error";
 
@@ -16,13 +18,8 @@ export const useNotificationHealth = (uid?: string) => {
   const [tokenStatus, setTokenStatus] =
     useState<NotificationTokenStatus>("unknown");
 
-  const refreshPermission = useCallback(() => {
-    if (typeof window === "undefined" || !("Notification" in window)) {
-      setPermission("unsupported");
-      return "unsupported";
-    }
-
-    const next = Notification.permission as NotificationPermissionState;
+  const refreshPermission = useCallback(async () => {
+    const next = await getCurrentDevicePushPermission();
     setPermission(next);
     return next;
   }, []);
@@ -34,10 +31,7 @@ export const useNotificationHealth = (uid?: string) => {
     }
 
     try {
-      const { hasTokenForThisDevice } = await import(
-        "../firebase/fcmTokenStore"
-      );
-      const exists = await hasTokenForThisDevice(uid);
+      const exists = await hasCurrentDevicePushToken(uid);
       setTokenStatus(exists ? "ok" : "none");
     } catch (err) {
       console.error("[notification-health] token check failed", err);
@@ -46,7 +40,7 @@ export const useNotificationHealth = (uid?: string) => {
   }, [uid]);
 
   const refreshHealth = useCallback(async () => {
-    const nextPermission = refreshPermission();
+    const nextPermission = await refreshPermission();
 
     console.log("[notification-health]", {
       uid,
@@ -78,13 +72,8 @@ export const useNotificationHealth = (uid?: string) => {
   }, [refreshHealth]);
 
   const requestPermission = async () => {
-    if (typeof window === "undefined" || !("Notification" in window)) {
-      setPermission("unsupported");
-      return "unsupported";
-    }
-
-    const result = await Notification.requestPermission();
-    setPermission(result as NotificationPermissionState);
+    const result = await requestCurrentDevicePushPermission();
+    setPermission(result);
 
     await refreshTokenStatus();
 

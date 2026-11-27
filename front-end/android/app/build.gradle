@@ -50,6 +50,8 @@ android {
     productFlavors {
         production {
             dimension "environment"
+            versionCode 2
+            versionName "1.0.1"
             if (productionSigningPropertiesFile.exists()) {
                 signingConfig signingConfigs.productionRelease
             }

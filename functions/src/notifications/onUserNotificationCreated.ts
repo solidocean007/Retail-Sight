@@ -1,5 +1,9 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import { getMessaging } from "firebase-admin/messaging";
+import {
+  getMessaging,
+  type MulticastMessage,
+  type SendResponse,
+} from "firebase-admin/messaging";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 
@@ -103,7 +107,16 @@ export const onUserNotificationCreated = onDocumentCreated(
       return;
     }
 
-    const tokens = tokenSnap.docs.map((d) => d.id);
+    const tokenEntries = tokenSnap.docs.map((tokenDoc) => ({
+      token: tokenDoc.id,
+      platform: tokenDoc.data().platform || "web",
+    }));
+    const nativeTokenEntries = tokenEntries.filter(
+      ({ platform }) => platform === "android-native"
+    );
+    const webTokenEntries = tokenEntries.filter(
+      ({ platform }) => platform !== "android-native"
+    );
 
     // ------------------------------------------
     // Build message
@@ -112,19 +125,19 @@ export const onUserNotificationCreated = onDocumentCreated(
     const body = notification.message || "";
     const link = "/notifications";
 
-    const msg = {
-      tokens,
-      // NOTE: data-only payload. SW MUST call showNotification().
-      data: {
-        title,
-        body,
-        notificationId,
-        type: notification.type || "generic",
-        postId: notification.postId || "",
-        goalId: notification.goalId || "",
-        link,
-      },
-      // Optional: helps Android devices consistently play sound when SW shows it.
+    const data = {
+      title,
+      body,
+      notificationId,
+      type: notification.type || "generic",
+      postId: notification.postId || "",
+      goalId: notification.goalId || "",
+      link,
+    };
+
+    const webMessage: Omit<MulticastMessage, "tokens"> = {
+      // Browser tokens remain data-only so the service worker controls display.
+      data,
       android: {
         priority: "high" as const,
       },
@@ -139,10 +152,26 @@ export const onUserNotificationCreated = onDocumentCreated(
       },
     };
 
-    logger.info("🧾 Sending multicast push (data-only)", {
+    const nativeMessage: Omit<MulticastMessage, "tokens"> = {
+      // Native Android needs a notification payload so the operating system can
+      // display it while the app is backgrounded or not running.
+      notification: { title, body },
+      data,
+      android: {
+        priority: "high" as const,
+        notification: {
+          channelId: "displaygram_activity",
+          sound: "default",
+        },
+      },
+    };
+
+    logger.info("🧾 Sending platform-aware multicast push", {
       ...logCtx,
-      tokenCount: tokens.length,
-      dataKeys: Object.keys(msg.data),
+      tokenCount: tokenEntries.length,
+      webTokenCount: webTokenEntries.length,
+      nativeAndroidTokenCount: nativeTokenEntries.length,
+      dataKeys: Object.keys(data),
       titlePreview: String(title).slice(0, 60),
       bodyPreview: String(body).slice(0, 80),
     });
@@ -151,12 +180,40 @@ export const onUserNotificationCreated = onDocumentCreated(
     // Send
     // ------------------------------------------
     const messaging = getMessaging();
+    const deliveryResults: Array<{
+      token: string;
+      platform: string;
+      response: SendResponse;
+    }> = [];
+    let successCount = 0;
+    let failureCount = 0;
 
-    let res;
     try {
-      res = await messaging.sendEachForMulticast(msg);
+      const sendGroup = async (
+        entries: typeof tokenEntries,
+        message: Omit<MulticastMessage, "tokens">
+      ) => {
+        if (entries.length === 0) return;
+
+        const response = await messaging.sendEachForMulticast({
+          ...message,
+          tokens: entries.map(({ token }) => token),
+        });
+
+        successCount += response.successCount;
+        failureCount += response.failureCount;
+        response.responses.forEach((item, index) => {
+          deliveryResults.push({
+            ...entries[index],
+            response: item,
+          });
+        });
+      };
+
+      await sendGroup(webTokenEntries, webMessage);
+      await sendGroup(nativeTokenEntries, nativeMessage);
     } catch (err: any) {
-      logger.error("🔥 messaging.sendEachForMulticast threw", {
+      logger.error("🔥 Platform-aware multicast push threw", {
         ...logCtx,
         error: err?.message ?? String(err),
         code: err?.code ?? null,
@@ -166,21 +223,22 @@ export const onUserNotificationCreated = onDocumentCreated(
 
     logger.info("✅ Multicast send completed", {
       ...logCtx,
-      successCount: res.successCount,
-      failureCount: res.failureCount,
+      successCount,
+      failureCount,
     });
 
     // ------------------------------------------
     // Log failures (high signal)
     // ------------------------------------------
-    const failures = res.responses
-      .map((r, idx) => {
-        if (r.success) return null;
+    const failures = deliveryResults
+      .map(({ token, platform, response }, idx) => {
+        if (response.success) return null;
         return {
           idx,
-          tokenPrefix: tokens[idx]?.slice(0, 10) + "…",
-          code: r.error?.code ?? null,
-          message: r.error?.message ?? null,
+          platform,
+          tokenPrefix: token.slice(0, 10) + "…",
+          code: response.error?.code ?? null,
+          message: response.error?.message ?? null,
         };
       })
       .filter(Boolean);
@@ -200,18 +258,13 @@ export const onUserNotificationCreated = onDocumentCreated(
 
     let invalidTokenDeletes = 0;
 
-    res.responses.forEach((r, idx) => {
-      if (!r.success) {
-        const code = r.error?.code;
+    deliveryResults.forEach(({ token, response }) => {
+      if (!response.success) {
+        const code = response.error?.code;
         if (code === "messaging/registration-token-not-registered") {
           invalidTokenDeletes++;
-          const badToken = tokens[idx];
           batch.delete(
-            db
-              .collection("users")
-              .doc(uid)
-              .collection("fcmTokens")
-              .doc(badToken)
+            db.collection("users").doc(uid).collection("fcmTokens").doc(token)
           );
         }
       }
@@ -222,9 +275,11 @@ export const onUserNotificationCreated = onDocumentCreated(
       "deliveredVia.push": FieldValue.serverTimestamp(),
       "deliveredVia.pushAttemptedAt": FieldValue.serverTimestamp(),
       "deliveredVia.pushResult": {
-        successCount: res.successCount,
-        failureCount: res.failureCount,
+        successCount,
+        failureCount,
         invalidTokenDeletes,
+        webTokenCount: webTokenEntries.length,
+        nativeAndroidTokenCount: nativeTokenEntries.length,
       },
     });
 
@@ -246,8 +301,8 @@ export const onUserNotificationCreated = onDocumentCreated(
 
     logger.info("🎉 Push pipeline finished", {
       ...logCtx,
-      successCount: res.successCount,
-      failureCount: res.failureCount,
+      successCount,
+      failureCount,
       invalidTokenDeletes,
     });
   }

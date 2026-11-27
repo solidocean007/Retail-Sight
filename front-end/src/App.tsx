@@ -1,12 +1,17 @@
 // App.tsx
 import React, { useEffect, useMemo } from "react";
-import { BrowserRouter as Router, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import Snackbar from "@mui/material/Snackbar";
 import { Alert, CssBaseline, ThemeProvider } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { httpsCallable } from "firebase/functions";
 
 import "./App.css";
 
@@ -16,6 +21,12 @@ import {
   subscribeToForegroundMessages,
   type PushPayload,
 } from "./firebase/foregroundMessages";
+import {
+  getCurrentDevicePushPermission,
+  isNativeAndroidPush,
+  registerCurrentDeviceForPush,
+  subscribeToNativeAndroidPush,
+} from "./firebase/pushRegistration";
 import { setDarkMode } from "./Slices/themeSlice";
 
 import { getTheme } from "./theme";
@@ -30,8 +41,7 @@ import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
 
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db, displaygramEnvironment } from "./utils/firebase";
+import { displaygramEnvironment, functions } from "./utils/firebase";
 import { handleLogout } from "./utils/validation/authenticate";
 import { stopViewAsCompany } from "./Slices/impersonationSlice";
 import { OfflineCaptureStatusBanner } from "./features/offlineCapture/OfflineCaptureStatusBanner";
@@ -39,6 +49,7 @@ import { OfflineCaptureStatusBanner } from "./features/offlineCapture/OfflineCap
 function AppContent() {
   const dispatch = useAppDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     currentUser,
     initializing,
@@ -61,6 +72,14 @@ function AppContent() {
   );
 
   const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
+  const trackPushClick = useMemo(
+    () =>
+      httpsCallable<
+        { notificationId: string; source: "push" },
+        { success: boolean }
+      >(functions, "trackNotificationClickCallable"),
+    [],
+  );
 
   const PUBLIC_ROUTES = useMemo(
     () =>
@@ -168,15 +187,14 @@ function AppContent() {
   // tokens not following the user across account switches.
   useEffect(() => {
     if (!currentUser?.uid) return;
-    if (typeof Notification === "undefined") return;
-    if (Notification.permission !== "granted") return;
 
     let cancelled = false;
 
-    void import("./firebase/messaging")
-      .then(({ registerFcmToken }) => {
+    void getCurrentDevicePushPermission()
+      .then((permission) => {
+        if (permission !== "granted") return;
         if (cancelled) return;
-        registerFcmToken().catch((err) =>
+        registerCurrentDeviceForPush().catch((err) =>
           console.warn("Silent FCM re-register failed:", err),
         );
       })
@@ -189,27 +207,75 @@ function AppContent() {
     };
   }, [currentUser?.uid]);
 
-  // Foreground push messages: FCM data-only messages received while
-  // the app is open fire here (the service worker only handles
-  // background pushes). Without this they were silently dropped.
+  // Foreground push messages received while the app is open fire here
+  // (the web service worker only handles background browser pushes).
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    const unsubscribe = subscribeToForegroundMessages(
-      (payload: PushPayload) => {
-        const d = payload?.data || {};
-        const title = payload?.notification?.title || d.title || "";
-        const body = payload?.notification?.body || d.body || "";
-        const text = [title, body].filter(Boolean).join(" — ");
+    const showForegroundPush = (payload: PushPayload) => {
+      const d = payload?.data || {};
+      const title = payload?.notification?.title || d.title || "";
+      const body = payload?.notification?.body || d.body || "";
+      const text = [title, body].filter(Boolean).join(" — ");
 
-        if (text) dispatch(showMessage(text));
-      },
+      if (text) dispatch(showMessage(text));
+    };
+
+    if (isNativeAndroidPush()) {
+      let unsubscribe = () => {};
+      let disposed = false;
+
+      void subscribeToNativeAndroidPush({
+        onReceived: showForegroundPush,
+        onAction: ({ data }) => {
+          const notificationId =
+            typeof data.notificationId === "string"
+              ? data.notificationId
+              : "";
+
+          if (notificationId) {
+            void trackPushClick({
+              notificationId,
+              source: "push",
+            }).catch((error) =>
+              console.error("Notification analytics update failed:", error),
+            );
+          }
+
+          const requestedLink =
+            typeof data.link === "string" ? data.link : "/notifications";
+          navigate(
+            requestedLink.startsWith("/")
+              ? requestedLink
+              : "/notifications",
+          );
+        },
+      })
+        .then((cleanup) => {
+          if (disposed) {
+            cleanup();
+            return;
+          }
+          unsubscribe = cleanup;
+        })
+        .catch((error) =>
+          console.error("Native push listeners could not be attached:", error),
+        );
+
+      return () => {
+        disposed = true;
+        unsubscribe();
+      };
+    }
+
+    const unsubscribe = subscribeToForegroundMessages(
+      showForegroundPush,
     );
 
     return () => {
       unsubscribe();
     };
-  }, [currentUser?.uid, dispatch]);
+  }, [currentUser?.uid, dispatch, navigate, trackPushClick]);
 
   // Push notification click tracking
   useEffect(() => {
@@ -223,17 +289,9 @@ function AppContent() {
       if (!notificationId) return;
 
       try {
-        const ref = doc(
-          db,
-          "users",
-          currentUser.uid,
-          "notifications",
+        await trackPushClick({
           notificationId,
-        );
-
-        await updateDoc(ref, {
-          "analytics.clickedAt": serverTimestamp(),
-          "analytics.clickedFrom": "push",
+          source: "push",
         });
       } catch (error) {
         console.error("Notification analytics update failed:", error);
@@ -245,7 +303,7 @@ function AppContent() {
     return () => {
       navigator.serviceWorker.removeEventListener("message", handler);
     };
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, trackPushClick]);
 
   const showAppLoader = shouldBootstrapApp && (initializing || !appReady);
 

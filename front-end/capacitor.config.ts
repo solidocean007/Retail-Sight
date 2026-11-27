@@ -1,4 +1,5 @@
 /// <reference types="@capacitor-firebase/authentication" />
+/// <reference types="@capacitor/push-notifications" />
 
 import type { CapacitorConfig } from "@capacitor/cli";
 
@@ -16,6 +17,9 @@ const config: CapacitorConfig = {
       // signs in through the Firebase JS SDK used by Firestore and Functions.
       skipNativeAuth: true,
       providers: ["google.com"],
+    },
+    PushNotifications: {
+      presentationOptions: ["sound", "alert"],
     },
   },
 };

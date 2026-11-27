@@ -10,6 +10,7 @@ import { auth } from "../firebase";
 import { db } from "../firebase";
 import { setDoc, getDoc, doc, collection } from "firebase/firestore";
 import { UserType } from "../types";
+import { unregisterCurrentDevicePushToken } from "../../firebase/pushRegistration";
 
 interface FirebaseError extends Error {
   code: string;
@@ -151,10 +152,7 @@ export const handleLogout = async () => {
     // pushes for account A still arriving after switching to account B.
     const uid = auth.currentUser?.uid;
     if (uid) {
-      const { unregisterCurrentDeviceToken } = await import(
-        "../../firebase/messaging"
-      );
-      await unregisterCurrentDeviceToken(uid);
+      await unregisterCurrentDevicePushToken(uid);
     }
   } catch (error) {
     // Never block logout on push cleanup

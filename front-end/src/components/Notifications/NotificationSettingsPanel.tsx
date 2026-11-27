@@ -10,6 +10,7 @@ import { ReactNode } from "react";
 import { useSelector } from "react-redux";
 
 import { selectUser } from "../../Slices/userSlice";
+import { registerCurrentDeviceForPush } from "../../firebase/pushRegistration";
 import { useNotificationHealth } from "../../hooks/useNotificationHealth";
 import {
   UserNotificationSettings,
@@ -53,23 +54,15 @@ const NotificationSettingsPanel = () => {
               : "Push alerts haven’t been enabled on this device.";
 
   const enablePush = async () => {
-    if (
-      typeof Notification === "undefined" ||
-      notificationsUnsupported ||
-      notificationsBlocked
-    ) {
+    if (notificationsUnsupported || notificationsBlocked) {
       await refreshHealth();
       return;
     }
 
-    const nextPermission = await Notification.requestPermission();
-    if (nextPermission === "granted") {
-      try {
-        const { registerFcmToken } = await import("../../firebase/messaging");
-        await registerFcmToken();
-      } catch (pushError) {
-        console.error("Could not register this device for push:", pushError);
-      }
+    try {
+      await registerCurrentDeviceForPush({ requestPermission: true });
+    } catch (pushError) {
+      console.error("Could not register this device for push:", pushError);
     }
 
     await refreshHealth();
@@ -123,7 +116,7 @@ const NotificationSettingsPanel = () => {
         <div className="notification-preferences__section-heading">
           <div>
             <h2>Delivery on this device</h2>
-            <p>Browser permission and device registration are managed here.</p>
+            <p>Notification permission and device registration are managed here.</p>
           </div>
         </div>
 
@@ -149,7 +142,7 @@ const NotificationSettingsPanel = () => {
 
         {notificationsBlocked && (
           <p className="notification-preferences__notice">
-            Allow notifications in your browser or device settings, then return
+            Allow notifications in the app or browser settings, then return
             here. On iPhone, Displaygram may need to be installed on the Home
             Screen first.
           </p>
