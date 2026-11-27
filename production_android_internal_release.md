@@ -6,11 +6,13 @@
 - Firebase project: `retail-sight`
 - Firebase Android app:
   `1:484872165965:android:3e148ebb298b4826105a04`
-- Release version: `1.0 (1)`
+- Release version: `1.0.1 (2)`
 - Minimum Android SDK: 24
 - Target Android SDK: 36
 - Google authentication: native account chooser followed by the existing
   Firebase JavaScript session
+- Push notifications: native Android FCM registration and delivery, with the
+  existing service-worker path retained for web browsers
 
 The production upload certificate is separate from the staging certificate.
 Its registered Firebase fingerprints are:
@@ -47,27 +49,44 @@ The signed outputs are:
 - Play upload: `front-end/android/app/build/outputs/bundle/productionRelease/app-production-release.aab`
 - Direct QA: `front-end/android/app/build/outputs/apk/production/release/app-production-release.apk`
 
-The first verified local build produced:
+The current verified `1.0.1 (2)` build produced:
 
-- AAB SHA-256: `B13D2269923275BEE049C7131E00C8AE7D6622C5056570E8392BA5AD1601ADFA`
-- APK SHA-256: `43C77C57976EE71CBFA889DD0363E0B6B6EA0A8A0AF79164DFFADA06BCA3F62E`
+- AAB SHA-256: `4D9A52C5BAD52B9576CA7616C527A8A8D09E7BE5F17B626D9F00E341955DC9CE`
+- APK SHA-256: `5A0C20737C6CE419DA938668F9AD103A139D08132D4FF2E9394AE756F1F8FF88`
 
 Rebuilding can change these file hashes. Always calculate and record the hashes
 for the exact artifacts being distributed.
 
 ## Firebase App Distribution QA release
 
-Production APK `1.0 (1)` was uploaded privately to Firebase App Distribution as
-release `3sunid48pbd2o` and assigned only to
+Production APK `1.0.1 (2)` was uploaded privately to Firebase App Distribution
+as release `751ssioibcpe8` and assigned only to
 `cwilliams@healywholesale.com`. The stable tester page is:
 
-`https://appdistribution.firebase.google.com/testerapps/1:484872165965:android:3e148ebb298b4826105a04/releases/3sunid48pbd2o`
+`https://appdistribution.firebase.google.com/testerapps/1:484872165965:android:3e148ebb298b4826105a04/releases/751ssioibcpe8`
 
 Before upload, the exact APK installed successfully on the isolated Android 11
-Google APIs emulator, cold-started `com.displaygram.app/.MainActivity`, remained
-the resumed activity, and produced no fatal Android, Capacitor, or Firebase
-startup exception. Google account selection still requires testing on a real
-device.
+emulator, cold-started `com.displaygram.app/.MainActivity`, and produced no
+fatal Android or Capacitor startup exception. The emulator image does not have
+Google Play Services, so native token registration and delivery require the
+focused physical-phone check below.
+
+The production `onUserNotificationCreated` function was updated in isolation to
+send browser tokens through the existing data-only service-worker path and
+Android-native tokens through a visible notification payload. No Firestore or
+Storage rules were deployed. The existing create-only token rule remains in
+force; the client checks for an existing token before attempting a create.
+
+Focused phone check for `1.0.1 (2)`:
+
+1. Update from the tester page without uninstalling the existing production app.
+2. Open **Notifications > Preferences**. The device card should offer **Enable**
+   or **Register again**, rather than report that notifications are unsupported.
+3. Tap the action and accept the Android notification permission prompt. The
+   card should then report that push alerts are active.
+4. From a second account, create a like or comment that targets the tester. Check
+   foreground delivery, background delivery, and that tapping the alert opens
+   Displaygram's Notifications page.
 
 ## Google Play internal-track handoff
 

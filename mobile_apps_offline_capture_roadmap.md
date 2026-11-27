@@ -172,6 +172,25 @@ was then assigned only to `cwilliams@healywholesale.com` for physical-device
 production QA. This does not constitute a Google Play upload or public Android
 release.
 
+The production phone check confirmed that native Google authentication loaded
+the correct Healy production data, then exposed that the Notifications screen
+was still using the browser-only Notification API inside the Android WebView.
+Production Android `1.0.1 (2)` now uses Capacitor Push Notifications for Android
+permission, FCM token registration, foreground receipt, tap navigation, logout
+cleanup, and a dedicated activity notification channel while retaining the web
+service-worker implementation for browsers. The production notification trigger
+now sends visible notification payloads only to tokens recorded as
+`android-native`; existing or unclassified tokens continue through the prior web
+delivery path. Push-click analytics use the existing authenticated callable so
+the client does not attempt a write prohibited by notification rules. The
+signed APK and AAB, package, version, notification permission, Firebase project,
+and upload certificate were verified, and the APK cold-started without a fatal
+exception on the isolated emulator. Only `onUserNotificationCreated` was
+deployed; no Firestore or Storage rules changed. Private App Distribution release
+`751ssioibcpe8` is assigned only to `cwilliams@healywholesale.com`. Live token
+registration and foreground/background delivery remain the focused physical
+phone checks before a Play internal-track handoff.
+
 The direct beta uses a long-lived **staging-only** signing certificate. The
 certificate and password configuration are outside Git and must be backed up
 together in a business-controlled password manager or encrypted archive before
